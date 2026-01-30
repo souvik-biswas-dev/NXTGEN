@@ -27,7 +27,7 @@ A complete React Native + Supabase real estate marketplace application inspired 
 ## 🛠 Tech Stack
 
 - **Frontend**: React Native 0.81 + Expo SDK 54
-- **Navigation**: Expo Router v6
+- **Navigation**: Expo Router v6 (file-based routing)
 - **Backend**: Supabase (PostgreSQL, Auth, Storage, Realtime)
 - **Styling**: NativeWind v4 (TailwindCSS for React Native)
 - **State Management**: Zustand
