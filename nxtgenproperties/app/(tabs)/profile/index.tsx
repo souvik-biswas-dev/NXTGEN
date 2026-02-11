@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { LinearGradient } from 'expo-linear-gradient';
+import { VerificationRequestCard } from '@/components/BrokerBadge';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -150,6 +151,53 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Broker Verification Card - Show for brokers who aren't verified */}
+        {user?.role === 'broker' && !user?.verified_broker && (
+          <VerificationRequestCard 
+            onRequest={() => {
+              Alert.alert(
+                'Verification Request',
+                'To get verified, you need to submit:\n\n• RERA Registration Number\n• Government ID Proof\n• Address Proof\n• Business Registration (if applicable)\n\nOur team will review your documents within 2-3 business days.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Start Verification', onPress: () => Alert.alert('Success', 'Verification request submitted! You will receive an email with next steps.') }
+                ]
+              );
+            }}
+          />
+        )}
+
+        {/* Verified Broker Benefits */}
+        {user?.role === 'broker' && user?.verified_broker && (
+          <View className="px-4 mt-4">
+            <View className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl p-4">
+              <View className="flex-row items-center">
+                <View className="bg-white/20 rounded-full p-2">
+                  <Ionicons name="shield-checkmark" size={24} color="white" />
+                </View>
+                <View className="ml-3 flex-1">
+                  <Text className="text-white font-bold text-lg">Verified Broker</Text>
+                  <Text className="text-white/80 text-sm">Your profile is trusted by buyers</Text>
+                </View>
+              </View>
+              <View className="flex-row mt-4">
+                <View className="flex-1 bg-white/20 rounded-xl p-3 mr-2">
+                  <Text className="text-white text-xl font-bold">3x</Text>
+                  <Text className="text-white/80 text-xs">More Leads</Text>
+                </View>
+                <View className="flex-1 bg-white/20 rounded-xl p-3 mr-2">
+                  <Text className="text-white text-xl font-bold">Top</Text>
+                  <Text className="text-white/80 text-xs">Search Rank</Text>
+                </View>
+                <View className="flex-1 bg-white/20 rounded-xl p-3">
+                  <Text className="text-white text-xl font-bold">Badge</Text>
+                  <Text className="text-white/80 text-xs">On Listings</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* My Activity Section */}
         {user?.role !== 'buyer' && (
           <View className="px-6 mt-6">
@@ -185,7 +233,7 @@ export default function ProfileScreen() {
               icon="heart-outline"
               label="Favorite Properties"
               count={stats.favorites}
-              onPress={() => router.push('/(tabs)/favorite/index')}
+              onPress={() => router.push('/shortlist')}
               showBorder
             />
             <MenuItem
