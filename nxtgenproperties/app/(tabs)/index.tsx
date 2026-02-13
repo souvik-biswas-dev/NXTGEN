@@ -8,6 +8,8 @@ import {
   Image,
   Dimensions,
   Animated,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +17,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { PropertyCard } from '@/components/PropertyCard';
 import { usePropertiesStore } from '@/stores/propertiesStore';
+import { useAuthStore } from '@/stores/authStore';
 import { popularCities, newLaunches, marketTrends } from '@/data/dummyProperties';
 import { PropertyType } from '@/types';
 
@@ -24,7 +27,10 @@ export default function HomeScreen() {
   const router = useRouter();
   const [activeType, setActiveType] = useState<PropertyType>('buy');
   const [searchQuery, setSearchQuery] = useState('');
+  const [menuVisible, setMenuVisible] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
+  
+  const { user, signOut } = useAuthStore();
   
   const { 
     getFeaturedProperties, 
@@ -59,6 +65,86 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+      {/* Side Drawer Menu */}
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <Pressable
+          className="flex-1 flex-row"
+          onPress={() => setMenuVisible(false)}
+        >
+          <Pressable
+            className="w-4/5 bg-white h-full"
+            onPress={(e) => e.stopPropagation()}
+          >
+            <SafeAreaView className="flex-1">
+              {/* Menu Header */}
+              <LinearGradient
+                colors={['#1B2838', '#0F1923']}
+                className="px-6 pt-8 pb-6"
+              >
+                <View className="flex-row items-center">
+                  <View className="w-14 h-14 bg-white/20 rounded-full items-center justify-center mr-4">
+                    <Ionicons name="person" size={28} color="white" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-white text-lg font-bold">
+                      {user?.name || 'Guest User'}
+                    </Text>
+                    <Text className="text-white/70 text-sm">
+                      {user?.email || 'Login to access all features'}
+                    </Text>
+                  </View>
+                </View>
+              </LinearGradient>
+
+              {/* Menu Items */}
+              <ScrollView className="flex-1 px-4 pt-4">
+                {[
+                  { icon: 'person-outline' as const, label: 'My Profile', onPress: () => { setMenuVisible(false); router.push('/(tabs)/profile'); } },
+                  { icon: 'heart-outline' as const, label: 'Shortlisted', onPress: () => { setMenuVisible(false); router.push('/(tabs)/favorite'); } },
+                  { icon: 'home-outline' as const, label: 'My Listings', onPress: () => { setMenuVisible(false); router.push('/(tabs)/post'); } },
+                  { icon: 'calculator-outline' as const, label: 'EMI Calculator', onPress: () => { setMenuVisible(false); router.push('/tools/emi-calculator' as any); } },
+                  { icon: 'wallet-outline' as const, label: 'Budget Calculator', onPress: () => { setMenuVisible(false); router.push('/tools/budget-calculator' as any); } },
+                  { icon: 'trending-up-outline' as const, label: 'Market Insights', onPress: () => { setMenuVisible(false); router.push('/insights' as any); } },
+                  { icon: 'settings-outline' as const, label: 'Settings', onPress: () => { setMenuVisible(false); } },
+                  { icon: 'help-circle-outline' as const, label: 'Help & Support', onPress: () => { setMenuVisible(false); } },
+                  { icon: 'information-circle-outline' as const, label: 'About', onPress: () => { setMenuVisible(false); } },
+                ].map((item, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={item.onPress}
+                    className="flex-row items-center py-4 px-2 border-b border-gray-100"
+                  >
+                    <Ionicons name={item.icon} size={22} color="#1B2838" />
+                    <Text className="text-gray-800 text-base ml-4 font-medium">{item.label}</Text>
+                  </TouchableOpacity>
+                ))}
+
+                {user && (
+                  <TouchableOpacity
+                    onPress={async () => {
+                      setMenuVisible(false);
+                      await signOut();
+                      router.replace('/(auth)');
+                    }}
+                    className="flex-row items-center py-4 px-2 mt-4"
+                  >
+                    <Ionicons name="log-out-outline" size={22} color="#EF4444" />
+                    <Text className="text-red-500 text-base ml-4 font-medium">Logout</Text>
+                  </TouchableOpacity>
+                )}
+              </ScrollView>
+            </SafeAreaView>
+          </Pressable>
+          {/* Dark overlay on right side */}
+          <View className="flex-1 bg-black/50" />
+        </Pressable>
+      </Modal>
+
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event(
@@ -69,14 +155,14 @@ export default function HomeScreen() {
       >
         {/* Header with Gradient */}
         <LinearGradient
-          colors={['#0066CC', '#0052A3']}
+          colors={['#1B2838', '#0F1923']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           className="pb-6"
         >
           {/* Top Bar */}
           <View className="flex-row items-center justify-between px-5 pt-2 pb-4">
-            <TouchableOpacity className="p-2">
+            <TouchableOpacity className="p-2" onPress={() => setMenuVisible(true)}>
               <Ionicons name="menu" size={26} color="white" />
             </TouchableOpacity>
             <Text className="text-white text-lg font-bold">NxtGen Properties</Text>
@@ -132,10 +218,10 @@ export default function HomeScreen() {
               }}
               className="items-center mr-4"
             >
-              <View className={`w-16 h-16 rounded-xl items-center justify-center border-2 ${activeType === 'buy' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}`}>
-                <Ionicons name="home" size={28} color={activeType === 'buy' ? '#0066CC' : '#666'} />
+              <View className={`w-16 h-16 rounded-xl items-center justify-center border-2 ${activeType === 'buy' ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'}`}>
+                <Ionicons name="home" size={28} color={activeType === 'buy' ? '#FF6B35' : '#666'} />
               </View>
-              <Text className={`text-sm mt-2 font-medium ${activeType === 'buy' ? 'text-blue-600' : 'text-gray-600'}`}>Buy</Text>
+              <Text className={`text-sm mt-2 font-medium ${activeType === 'buy' ? 'text-primary' : 'text-gray-600'}`}>Buy</Text>
             </TouchableOpacity>
 
             {/* Rent */}
@@ -146,10 +232,10 @@ export default function HomeScreen() {
               }}
               className="items-center mr-4"
             >
-              <View className={`w-16 h-16 rounded-xl items-center justify-center border-2 ${activeType === 'rent' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}`}>
-                <Ionicons name="key" size={28} color={activeType === 'rent' ? '#0066CC' : '#666'} />
+              <View className={`w-16 h-16 rounded-xl items-center justify-center border-2 ${activeType === 'rent' ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'}`}>
+                <Ionicons name="key" size={28} color={activeType === 'rent' ? '#FF6B35' : '#666'} />
               </View>
-              <Text className={`text-sm mt-2 font-medium ${activeType === 'rent' ? 'text-blue-600' : 'text-gray-600'}`}>Rent</Text>
+              <Text className={`text-sm mt-2 font-medium ${activeType === 'rent' ? 'text-primary' : 'text-gray-600'}`}>Rent</Text>
             </TouchableOpacity>
 
             {/* New Projects */}
@@ -190,10 +276,10 @@ export default function HomeScreen() {
         </View>
 
         {/* Popular Tools Section */}
-        <View className="bg-blue-50 px-5 py-5 mt-2">
+        <View className="bg-orange-50 px-5 py-5 mt-2">
           <View className="flex-row justify-between items-center mb-4">
             <View className="flex-row items-center">
-              <View className="bg-blue-500 p-2 rounded-lg mr-3">
+              <View className="bg-primary p-2 rounded-lg mr-3">
                 <Ionicons name="bulb" size={20} color="white" />
               </View>
               <View>
@@ -202,7 +288,7 @@ export default function HomeScreen() {
               </View>
             </View>
             <TouchableOpacity>
-              <Text className="text-blue-600 text-sm font-semibold">View All</Text>
+              <Text className="text-primary text-sm font-semibold">View All</Text>
             </TouchableOpacity>
           </View>
 
@@ -252,7 +338,7 @@ export default function HomeScreen() {
 
           <TouchableOpacity 
             onPress={() => navigateToSearch()}
-            className="bg-blue-600 rounded-xl py-3 mt-2"
+            className="bg-primary rounded-xl py-3 mt-2"
           >
             <Text className="text-white text-center font-semibold">
               See all {activeType === 'buy' ? 'Buy' : 'Rent'} properties
@@ -270,8 +356,8 @@ export default function HomeScreen() {
                 onPress={() => navigateToSearch(city.name)}
                 className="mr-3 items-center"
               >
-                <View className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center mb-2">
-                  <Ionicons name="location" size={24} color="#0066CC" />
+                <View className="w-16 h-16 bg-orange-100 rounded-full items-center justify-center mb-2">
+                  <Ionicons name="location" size={24} color="#FF6B35" />
                 </View>
                 <Text className="text-gray-900 text-sm font-medium">{city.name}</Text>
                 <Text className="text-gray-500 text-xs">{city.properties}+ properties</Text>
@@ -285,7 +371,7 @@ export default function HomeScreen() {
           <View className="flex-row justify-between items-center mb-4">
             <Text className="text-gray-900 text-xl font-bold">Featured Properties</Text>
             <TouchableOpacity onPress={() => navigateToSearch()}>
-              <Text className="text-blue-600 text-sm font-semibold">View All</Text>
+              <Text className="text-primary text-sm font-semibold">View All</Text>
             </TouchableOpacity>
           </View>
 
@@ -299,7 +385,7 @@ export default function HomeScreen() {
         </View>
 
         {/* New Launches */}
-        <View className="bg-blue-50 px-5 py-5">
+        <View className="bg-orange-50 px-5 py-5">
           <View className="flex-row justify-between items-center mb-4">
             <View className="flex-row items-center">
               <View className="bg-red-500 px-2 py-1 rounded mr-2">
@@ -329,7 +415,7 @@ export default function HomeScreen() {
                     <Text className="text-gray-500 text-xs ml-1" numberOfLines={1}>{project.location}</Text>
                   </View>
                   <View className="flex-row justify-between items-center mt-2">
-                    <Text className="text-blue-600 font-semibold text-sm">{project.priceRange}</Text>
+                    <Text className="text-primary font-semibold text-sm">{project.priceRange}</Text>
                     <View className="bg-green-100 px-2 py-0.5 rounded">
                       <Text className="text-green-700 text-xs">{project.launchDate}</Text>
                     </View>
@@ -345,7 +431,7 @@ export default function HomeScreen() {
           <View className="flex-row justify-between items-center mb-4">
             <Text className="text-gray-900 text-xl font-bold">Market Trends</Text>
             <TouchableOpacity onPress={() => router.push('/insights' as any)}>
-              <Text className="text-blue-600 text-sm font-semibold">View Details</Text>
+              <Text className="text-primary text-sm font-semibold">View Details</Text>
             </TouchableOpacity>
           </View>
 
@@ -389,6 +475,9 @@ export default function HomeScreen() {
             </View>
           </LinearGradient>
         </View>
+
+        {/* Bottom padding for floating tab bar */}
+        <View style={{ height: 100 }} />
       </Animated.ScrollView>
     </SafeAreaView>
   );
@@ -428,7 +517,7 @@ const FeaturedPropertyCard: React.FC<FeaturedPropertyCardProps> = ({ property })
           </View>
         )}
         {property.broker?.verified_broker && (
-          <View className="absolute top-2 right-2 bg-blue-500 px-2 py-1 rounded flex-row items-center">
+          <View className="absolute top-2 right-2 bg-secondary px-2 py-1 rounded flex-row items-center">
             <Ionicons name="shield-checkmark" size={12} color="white" />
             <Text className="text-white text-xs font-medium ml-1">Verified</Text>
           </View>

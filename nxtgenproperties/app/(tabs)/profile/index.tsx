@@ -7,6 +7,10 @@ import {
   Image,
   Switch,
   Alert,
+  Modal,
+  TextInput,
+  ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,12 +21,18 @@ import { VerificationRequestCard } from '@/components/BrokerBadge';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, signOut } = useAuthStore();
+  const { user, signOut, updateProfile } = useAuthStore();
   const [notifications, setNotifications] = React.useState({
     matched: true,
     newLaunched: false,
     propertyNews: false,
   });
+  const [editModalVisible, setEditModalVisible] = React.useState(false);
+  const [editForm, setEditForm] = React.useState({
+    name: user?.name || '',
+    phone: user?.phone || '',
+  });
+  const [saving, setSaving] = React.useState(false);
 
   const handleLogout = async () => {
     Alert.alert(
@@ -43,8 +53,31 @@ export default function ProfileScreen() {
   };
 
   const handleEditProfile = () => {
-    // Navigate to edit profile screen
-    Alert.alert('Edit Profile', 'Feature coming soon!');
+    setEditForm({
+      name: user?.name || '',
+      phone: user?.phone || '',
+    });
+    setEditModalVisible(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editForm.name.trim()) {
+      Alert.alert('Error', 'Name cannot be empty');
+      return;
+    }
+    setSaving(true);
+    try {
+      await updateProfile({
+        name: editForm.name.trim(),
+        phone: editForm.phone.trim(),
+      });
+      setEditModalVisible(false);
+      Alert.alert('Success', 'Profile updated successfully');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Mock stats - replace with real data from your store/API
@@ -109,9 +142,9 @@ export default function ProfileScreen() {
 
               {/* Broker Verification Badge */}
               {user?.role === 'broker' && (
-                <View className="mt-2 flex-row items-center bg-blue-50 px-3 py-1.5 rounded-full">
-                  <Ionicons name="shield-checkmark" size={16} color="#3B82F6" />
-                  <Text className="text-blue-600 text-xs font-medium ml-1">
+                <View className="mt-2 flex-row items-center bg-orange-50 px-3 py-1.5 rounded-full">
+                  <Ionicons name="shield-checkmark" size={16} color="#FF6B35" />
+                  <Text className="text-primary text-xs font-medium ml-1">
                     Verified Broker
                   </Text>
                 </View>
@@ -206,20 +239,20 @@ export default function ProfileScreen() {
               <MenuItem
                 icon="home-outline"
                 label="My Listings"
-                onPress={() => Alert.alert('My Listings', 'Feature coming soon!')}
+                onPress={() => router.push('/(tabs)/post')}
                 showBorder
               />
               <MenuItem
                 icon="bar-chart-outline"
                 label="Performance"
                 badge="New"
-                onPress={() => Alert.alert('Performance', 'Feature coming soon!')}
+                onPress={() => router.push('/insights' as any)}
                 showBorder
               />
               <MenuItem
                 icon="time-outline"
                 label="Recent Activity"
-                onPress={() => Alert.alert('Recent Activity', 'Feature coming soon!')}
+                onPress={() => router.push('/(tabs)/search')}
               />
             </View>
           </View>
@@ -239,13 +272,13 @@ export default function ProfileScreen() {
             <MenuItem
               icon="bookmark-outline"
               label="Saved Searches"
-              onPress={() => Alert.alert('Saved Searches', 'Feature coming soon!')}
+              onPress={() => router.push('/(tabs)/search')}
               showBorder
             />
             <MenuItem
               icon="eye-outline"
               label="Recently Viewed"
-              onPress={() => Alert.alert('Recently Viewed', 'Feature coming soon!')}
+              onPress={() => router.push('/(tabs)/search')}
             />
           </View>
         </View>
@@ -287,25 +320,25 @@ export default function ProfileScreen() {
             <MenuItem
               icon="lock-closed-outline"
               label="Privacy Policy"
-              onPress={() => Alert.alert('Privacy Policy', 'Feature coming soon!')}
+              onPress={() => Linking.openURL('https://nxtgenproperties.com/privacy')}
               showBorder
             />
             <MenuItem
               icon="document-text-outline"
               label="Terms of Use"
-              onPress={() => Alert.alert('Terms of Use', 'Feature coming soon!')}
+              onPress={() => Linking.openURL('https://nxtgenproperties.com/terms')}
               showBorder
             />
             <MenuItem
               icon="help-circle-outline"
               label="Help & Support"
-              onPress={() => Alert.alert('Help & Support', 'Feature coming soon!')}
+              onPress={() => Linking.openURL('mailto:support@nxtgenproperties.com?subject=Help%20Request')}
               showBorder
             />
             <MenuItem
               icon="bug-outline"
               label="Report a Bug"
-              onPress={() => Alert.alert('Report Bug', 'Feature coming soon!')}
+              onPress={() => Linking.openURL('mailto:bugs@nxtgenproperties.com?subject=Bug%20Report')}
               showBorder
             />
             <MenuItem
@@ -328,7 +361,111 @@ export default function ProfileScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Extra padding for floating tab bar */}
+        <View className="h-24" />
       </ScrollView>
+
+      {/* Edit Profile Modal */}
+      <Modal
+        visible={editModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView className="flex-1 bg-white">
+          {/* Modal Header */}
+          <View className="flex-row items-center justify-between px-5 py-4 border-b border-gray-100">
+            <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+            <Text className="text-gray-900 text-lg font-bold">Edit Profile</Text>
+            <TouchableOpacity onPress={handleSaveProfile} disabled={saving}>
+              <Text className={`font-semibold ${saving ? 'text-gray-400' : 'text-primary'}`}>
+                {saving ? 'Saving...' : 'Save'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView className="flex-1 px-5 pt-6" showsVerticalScrollIndicator={false}>
+            {/* Avatar */}
+            <View className="items-center mb-8">
+              <View className="relative">
+                <Image
+                  source={{
+                    uri: user?.avatar_url || 'https://ui-avatars.com/api/?name=' + (user?.name || 'User') + '&size=200&background=FF6B35&color=fff'
+                  }}
+                  className="w-24 h-24 rounded-full border-4 border-gray-100"
+                />
+                <TouchableOpacity className="absolute bottom-0 right-0 bg-primary rounded-full p-2 border-2 border-white">
+                  <Ionicons name="camera" size={16} color="white" />
+                </TouchableOpacity>
+              </View>
+              <Text className="text-gray-400 text-xs mt-2">Tap camera to change photo</Text>
+            </View>
+
+            {/* Full Name */}
+            <View className="mb-5">
+              <Text className="text-gray-500 text-sm font-medium mb-2">Full Name</Text>
+              <TextInput
+                value={editForm.name}
+                onChangeText={(text) => setEditForm(prev => ({ ...prev, name: text }))}
+                className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base"
+                placeholder="Enter your name"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            {/* Email (read-only) */}
+            <View className="mb-5">
+              <Text className="text-gray-500 text-sm font-medium mb-2">Email</Text>
+              <View className="bg-gray-100 rounded-xl px-4 py-3">
+                <Text className="text-gray-500 text-base">{user?.email || 'Not set'}</Text>
+              </View>
+              <Text className="text-gray-400 text-xs mt-1">Email cannot be changed</Text>
+            </View>
+
+            {/* Phone */}
+            <View className="mb-5">
+              <Text className="text-gray-500 text-sm font-medium mb-2">Phone Number</Text>
+              <TextInput
+                value={editForm.phone}
+                onChangeText={(text) => setEditForm(prev => ({ ...prev, phone: text }))}
+                className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-base"
+                placeholder="Enter phone number"
+                placeholderTextColor="#999"
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            {/* Role (read-only) */}
+            <View className="mb-5">
+              <Text className="text-gray-500 text-sm font-medium mb-2">I am a</Text>
+              <View className="bg-gray-100 rounded-xl px-4 py-3">
+                <Text className="text-gray-500 text-base capitalize">{user?.role || 'Buyer'}</Text>
+              </View>
+              <Text className="text-gray-400 text-xs mt-1">Contact support to change role</Text>
+            </View>
+          </ScrollView>
+
+          {/* Save Button */}
+          <View className="px-5 py-4 border-t border-gray-100">
+            <TouchableOpacity
+              onPress={handleSaveProfile}
+              disabled={saving}
+              className={`rounded-xl py-4 flex-row items-center justify-center ${saving ? 'bg-gray-300' : 'bg-primary'}`}
+            >
+              {saving ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle" size={20} color="white" />
+                  <Text className="text-white text-base font-semibold ml-2">Save Changes</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }

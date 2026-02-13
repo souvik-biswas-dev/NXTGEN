@@ -7,24 +7,35 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#0066CC',
+        tabBarActiveTintColor: '#FF6B35',
         tabBarInactiveTintColor: '#9CA3AF',
         tabBarStyle: {
-          backgroundColor: 'white',
-          borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
-          height: Platform.OS === 'ios' ? 88 : 65,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
+          position: 'absolute',
+          bottom: Platform.OS === 'ios' ? 24 : 16,
+          left: 20,
+          right: 20,
+          height: 68,
+          backgroundColor: 'rgba(255, 255, 255, 0.92)',
+          borderRadius: 28,
+          borderTopWidth: 0,
+          paddingBottom: 8,
           paddingTop: 8,
-          elevation: 10,
+          paddingHorizontal: 4,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.05,
-          shadowRadius: 3,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.12,
+          shadowRadius: 24,
+          elevation: 20,
+          borderWidth: 1,
+          borderColor: 'rgba(200, 200, 200, 0.3)',
         },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
+          fontSize: 10,
+          fontWeight: '600',
+          marginTop: 2,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 4,
         },
       }}
     >
@@ -33,9 +44,7 @@ export default function TabsLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <View className={`${focused ? 'bg-blue-50' : ''} p-1.5 rounded-lg`}>
-              <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
-            </View>
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />
           ),
         }}
       />
@@ -44,18 +53,29 @@ export default function TabsLayout() {
         options={{
           title: 'Search',
           tabBarIcon: ({ color, focused }) => (
-            <View className={`${focused ? 'bg-blue-50' : ''} p-1.5 rounded-lg`}>
-              <Ionicons name={focused ? 'search' : 'search-outline'} size={24} color={color} />
-            </View>
+            <Ionicons name={focused ? 'search' : 'search-outline'} size={22} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="post"
         options={{
-          title: 'Sell/Rent',
+          title: 'Post',
           tabBarIcon: ({ color, focused }) => (
-            <View className="bg-blue-600 p-2.5 rounded-xl -mt-4 shadow-lg">
+            <View style={{
+              width: 48,
+              height: 48,
+              borderRadius: 16,
+              backgroundColor: '#FF6B35',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 20,
+              shadowColor: '#FF6B35',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 8,
+            }}>
               <Ionicons name="add" size={28} color="white" />
             </View>
           ),
@@ -65,11 +85,9 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="favorite"
         options={{
-          title: 'Shortlisted',
+          title: 'Saved',
           tabBarIcon: ({ color, focused }) => (
-            <View className={`${focused ? 'bg-blue-50' : ''} p-1.5 rounded-lg`}>
-              <Ionicons name={focused ? 'heart' : 'heart-outline'} size={24} color={color} />
-            </View>
+            <Ionicons name={focused ? 'heart' : 'heart-outline'} size={22} color={color} />
           ),
         }}
       />
@@ -78,19 +96,12 @@ export default function TabsLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <View className={`${focused ? 'bg-blue-50' : ''} p-1.5 rounded-lg`}>
-              <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
-            </View>
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={22} color={color} />
           ),
         }}
       />
-      {/* Hide inbox from tabs but keep it accessible */}
-      <Tabs.Screen
-        name="inbox"
-        options={{
-          href: null, // Hide from tab bar
-        }}
-      />
+      {/* Hide non-tab routes */}
+      <Tabs.Screen name="inbox" options={{ href: null }} />
     </Tabs>
   );
 }

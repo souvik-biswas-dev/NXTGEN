@@ -42,7 +42,7 @@ export default function InsightsScreen() {
     <ScrollView className="flex-1 bg-gray-50">
       {/* Header */}
       <LinearGradient
-        colors={['#1E40AF', '#3B82F6']}
+        colors={['#1B2838', '#2A3F55']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         className="pt-14 pb-8 px-4"
@@ -68,7 +68,7 @@ export default function InsightsScreen() {
                 key={city.name}
                 onPress={() => setSelectedCity(city.name)}
                 className={`px-4 py-2 rounded-full mr-2 ${
-                  selectedCity === city.name ? 'bg-blue-600' : 'bg-gray-100'
+                  selectedCity === city.name ? 'bg-primary' : 'bg-gray-100'
                 }`}
               >
                 <Text className={`font-medium ${
@@ -127,7 +127,7 @@ export default function InsightsScreen() {
                   key={range}
                   onPress={() => setTimeRange(range)}
                   className={`px-3 py-1 rounded-md ${
-                    timeRange === range ? 'bg-blue-600' : ''
+                    timeRange === range ? 'bg-primary' : ''
                   }`}
                 >
                   <Text className={`text-sm font-medium ${
@@ -145,7 +145,7 @@ export default function InsightsScreen() {
             {[65, 72, 68, 78, 82, 75, 85, 88, 92, 95, 90, 98].map((value, index) => (
               <View key={index} className="items-center flex-1 mx-0.5">
                 <LinearGradient
-                  colors={['#3B82F6', '#60A5FA']}
+                  colors={['#FF6B35', '#FF8C5A']}
                   className="w-full rounded-t-sm"
                   style={{ height: value * 1.2 }}
                 />
@@ -171,7 +171,7 @@ export default function InsightsScreen() {
             <TouchableOpacity
               onPress={() => setPropertyType('residential')}
               className={`flex-1 py-2 rounded-md ${
-                propertyType === 'residential' ? 'bg-blue-600' : ''
+                propertyType === 'residential' ? 'bg-primary' : ''
               }`}
             >
               <Text className={`text-center font-medium ${
@@ -183,7 +183,7 @@ export default function InsightsScreen() {
             <TouchableOpacity
               onPress={() => setPropertyType('commercial')}
               className={`flex-1 py-2 rounded-md ${
-                propertyType === 'commercial' ? 'bg-blue-600' : ''
+                propertyType === 'commercial' ? 'bg-primary' : ''
               }`}
             >
               <Text className={`text-center font-medium ${
@@ -197,8 +197,8 @@ export default function InsightsScreen() {
           {/* Stats */}
           <View className="flex-row flex-wrap">
             <View className="w-1/2 p-2">
-              <View className="bg-blue-50 rounded-xl p-3">
-                <Text className="text-blue-600 text-lg font-bold">₹{avgPrices.apartment}L</Text>
+              <View className="bg-orange-50 rounded-xl p-3">
+                <Text className="text-primary text-lg font-bold">₹{avgPrices.apartment}L</Text>
                 <Text className="text-gray-600 text-sm">Avg. Apartment Price</Text>
                 <View className="flex-row items-center mt-1">
                   <Ionicons name="trending-up" size={14} color="#22C55E" />
@@ -251,8 +251,8 @@ export default function InsightsScreen() {
               }`}
             >
               <View className="flex-row items-center">
-                <View className="w-8 h-8 bg-blue-100 rounded-full items-center justify-center">
-                  <Text className="text-blue-600 font-bold">{index + 1}</Text>
+                <View className="w-8 h-8 bg-orange-100 rounded-full items-center justify-center">
+                  <Text className="text-primary font-bold">{index + 1}</Text>
                 </View>
                 <View className="ml-3">
                   <Text className="font-medium text-gray-900">{locality.name}</Text>
@@ -322,7 +322,7 @@ export default function InsightsScreen() {
       <View className="px-4 mt-6 mb-8">
         <Text className="text-lg font-bold text-gray-900 mb-4">Investment Tips</Text>
         
-        <View className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5">
+        <View className="bg-gradient-to-br from-primary to-orange-600 rounded-2xl p-5">
           <View className="flex-row items-start mb-4">
             <View className="bg-white/20 rounded-full p-2">
               <Ionicons name="bulb" size={24} color="white" />

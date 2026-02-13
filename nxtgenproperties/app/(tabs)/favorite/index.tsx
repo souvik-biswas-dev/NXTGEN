@@ -82,7 +82,7 @@ export default function FavoritesScreen() {
           data={properties}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <PropertyCard property={item} />}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           numColumns={2}
           columnWrapperStyle={{ justifyContent: 'space-between' }}

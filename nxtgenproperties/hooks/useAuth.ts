@@ -38,10 +38,11 @@ export const useAuth = () => {
         .from('users_profiles')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      setUser(data);
+      // If no profile row exists yet, set user to null (profile not created)
+      setUser(data ?? null);
     } catch (error) {
       console.error('Error fetching user profile:', error);
     } finally {

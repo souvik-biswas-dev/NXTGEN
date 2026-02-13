@@ -73,7 +73,7 @@ export default function EMICalculatorScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
         {/* EMI Display Card */}
-        <View className="bg-blue-600 mx-5 mt-5 rounded-2xl p-6">
+        <View className="bg-accent mx-5 mt-5 rounded-2xl p-6">
           <Text className="text-white/80 text-sm mb-2">Your Monthly EMI</Text>
           <Text className="text-white text-4xl font-bold">
             {formatCurrencyFull(emiDetails.emi)}
@@ -101,7 +101,7 @@ export default function EMICalculatorScreen() {
           {/* Progress Bar */}
           <View className="h-6 bg-gray-100 rounded-full overflow-hidden flex-row mb-4">
             <View 
-              className="bg-blue-500 h-full" 
+              className="bg-primary h-full" 
               style={{ width: `${principalPercent}%` }} 
             />
             <View 
@@ -112,7 +112,7 @@ export default function EMICalculatorScreen() {
 
           <View className="flex-row justify-between">
             <View className="flex-row items-center">
-              <View className="w-3 h-3 bg-blue-500 rounded-full mr-2" />
+              <View className="w-3 h-3 bg-primary rounded-full mr-2" />
               <Text className="text-gray-600 text-sm">Principal ({principalPercent.toFixed(0)}%)</Text>
             </View>
             <Text className="text-gray-900 font-semibold">{formatCurrency(emiDetails.principal)}</Text>
@@ -131,8 +131,8 @@ export default function EMICalculatorScreen() {
         <View className="bg-white mx-5 mt-4 rounded-2xl p-5">
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-gray-900 text-base font-semibold">Loan Amount</Text>
-            <View className="bg-blue-50 px-3 py-1 rounded-lg">
-              <Text className="text-blue-600 font-bold">{formatCurrency(loanAmount)}</Text>
+            <View className="bg-orange-50 px-3 py-1 rounded-lg">
+              <Text className="text-primary font-bold">{formatCurrency(loanAmount)}</Text>
             </View>
           </View>
           
@@ -143,9 +143,9 @@ export default function EMICalculatorScreen() {
             step={100000}
             value={loanAmount}
             onValueChange={setLoanAmount}
-            minimumTrackTintColor="#0066CC"
+            minimumTrackTintColor="#FF6B35"
             maximumTrackTintColor="#E5E7EB"
-            thumbTintColor="#0066CC"
+            thumbTintColor="#FF6B35"
           />
           
           <View className="flex-row justify-between">
@@ -158,8 +158,8 @@ export default function EMICalculatorScreen() {
         <View className="bg-white mx-5 mt-4 rounded-2xl p-5">
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-gray-900 text-base font-semibold">Interest Rate (p.a.)</Text>
-            <View className="bg-blue-50 px-3 py-1 rounded-lg">
-              <Text className="text-blue-600 font-bold">{interestRate.toFixed(1)}%</Text>
+            <View className="bg-orange-50 px-3 py-1 rounded-lg">
+              <Text className="text-primary font-bold">{interestRate.toFixed(1)}%</Text>
             </View>
           </View>
           
@@ -170,9 +170,9 @@ export default function EMICalculatorScreen() {
             step={0.1}
             value={interestRate}
             onValueChange={setInterestRate}
-            minimumTrackTintColor="#0066CC"
+            minimumTrackTintColor="#FF6B35"
             maximumTrackTintColor="#E5E7EB"
-            thumbTintColor="#0066CC"
+            thumbTintColor="#FF6B35"
           />
           
           <View className="flex-row justify-between">
@@ -185,8 +185,8 @@ export default function EMICalculatorScreen() {
         <View className="bg-white mx-5 mt-4 rounded-2xl p-5 mb-6">
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-gray-900 text-base font-semibold">Loan Tenure</Text>
-            <View className="bg-blue-50 px-3 py-1 rounded-lg">
-              <Text className="text-blue-600 font-bold">{loanTenure} Years</Text>
+            <View className="bg-orange-50 px-3 py-1 rounded-lg">
+              <Text className="text-primary font-bold">{loanTenure} Years</Text>
             </View>
           </View>
           
@@ -197,9 +197,9 @@ export default function EMICalculatorScreen() {
             step={1}
             value={loanTenure}
             onValueChange={setLoanTenure}
-            minimumTrackTintColor="#0066CC"
+            minimumTrackTintColor="#FF6B35"
             maximumTrackTintColor="#E5E7EB"
-            thumbTintColor="#0066CC"
+            thumbTintColor="#FF6B35"
           />
           
           <View className="flex-row justify-between">
@@ -209,22 +209,22 @@ export default function EMICalculatorScreen() {
         </View>
 
         {/* Quick Tips */}
-        <View className="bg-blue-50 mx-5 rounded-2xl p-5 mb-6">
+        <View className="bg-orange-50 mx-5 rounded-2xl p-5 mb-6">
           <View className="flex-row items-center mb-3">
-            <Ionicons name="bulb" size={20} color="#0066CC" />
+            <Ionicons name="bulb" size={20} color="#FF6B35" />
             <Text className="text-gray-900 font-semibold ml-2">Tips to Reduce EMI</Text>
           </View>
           <View className="space-y-2">
             <View className="flex-row items-start">
-              <Text className="text-blue-600 mr-2">•</Text>
+              <Text className="text-primary mr-2">•</Text>
               <Text className="text-gray-600 text-sm flex-1">Increase down payment to reduce loan amount</Text>
             </View>
             <View className="flex-row items-start">
-              <Text className="text-blue-600 mr-2">•</Text>
+              <Text className="text-primary mr-2">•</Text>
               <Text className="text-gray-600 text-sm flex-1">Opt for longer tenure for lower EMI (but higher total interest)</Text>
             </View>
             <View className="flex-row items-start">
-              <Text className="text-blue-600 mr-2">•</Text>
+              <Text className="text-primary mr-2">•</Text>
               <Text className="text-gray-600 text-sm flex-1">Compare rates from multiple banks to get the best deal</Text>
             </View>
           </View>

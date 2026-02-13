@@ -122,8 +122,8 @@ export const BrokerCard: React.FC<BrokerCardProps> = ({
     <View className="bg-white rounded-2xl p-4 shadow-lg border border-gray-100">
       {/* Header */}
       <View className="flex-row items-center mb-4">
-        <View className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center">
-          <Text className="text-2xl font-bold text-blue-600">
+        <View className="w-16 h-16 bg-orange-100 rounded-full items-center justify-center">
+          <Text className="text-2xl font-bold text-primary">
             {name.charAt(0).toUpperCase()}
           </Text>
         </View>
@@ -131,7 +131,7 @@ export const BrokerCard: React.FC<BrokerCardProps> = ({
           <View className="flex-row items-center">
             <Text className="text-lg font-bold text-gray-900">{name}</Text>
             {verified && (
-              <View className="ml-2 bg-blue-500 rounded-full p-0.5">
+              <View className="ml-2 bg-primary rounded-full p-0.5">
                 <Ionicons name="checkmark" size={12} color="white" />
               </View>
             )}
@@ -151,7 +151,7 @@ export const BrokerCard: React.FC<BrokerCardProps> = ({
       {/* Stats */}
       <View className="flex-row bg-gray-50 rounded-xl p-3 mb-4">
         <View className="flex-1 items-center border-r border-gray-200">
-          <Text className="text-xl font-bold text-blue-600">{experience}+</Text>
+          <Text className="text-xl font-bold text-primary">{experience}+</Text>
           <Text className="text-xs text-gray-500">Years Exp</Text>
         </View>
         <View className="flex-1 items-center border-r border-gray-200">
@@ -170,8 +170,8 @@ export const BrokerCard: React.FC<BrokerCardProps> = ({
           <Text className="text-xs text-gray-500 mb-2">Specializes in</Text>
           <View className="flex-row flex-wrap">
             {specialization.map((spec, index) => (
-              <View key={index} className="bg-blue-50 rounded-full px-3 py-1 mr-2 mb-2">
-                <Text className="text-blue-600 text-xs font-medium">{spec}</Text>
+              <View key={index} className="bg-orange-50 rounded-full px-3 py-1 mr-2 mb-2">
+                <Text className="text-primary text-xs font-medium">{spec}</Text>
               </View>
             ))}
           </View>
@@ -188,7 +188,7 @@ export const BrokerCard: React.FC<BrokerCardProps> = ({
       <View className="flex-row">
         <TouchableOpacity 
           onPress={handleCall}
-          className="flex-1 bg-blue-600 rounded-xl py-3 flex-row items-center justify-center mr-2"
+          className="flex-1 bg-primary rounded-xl py-3 flex-row items-center justify-center mr-2"
         >
           <Ionicons name="call" size={18} color="white" />
           <Text className="text-white font-semibold ml-2">Call Now</Text>
@@ -256,7 +256,7 @@ export const BrokerProfileModal: React.FC<BrokerProfileModalProps> = ({
           <View className="px-4 pb-8">
             {/* Profile Header */}
             <View className="items-center mb-6">
-              <View className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full items-center justify-center mb-3">
+              <View className="w-24 h-24 bg-gradient-to-br from-primary to-orange-600 rounded-full items-center justify-center mb-3">
                 <Text className="text-4xl font-bold text-white">
                   {broker.name.charAt(0).toUpperCase()}
                 </Text>
@@ -264,7 +264,7 @@ export const BrokerProfileModal: React.FC<BrokerProfileModalProps> = ({
               <View className="flex-row items-center">
                 <Text className="text-xl font-bold text-gray-900">{broker.name}</Text>
                 {broker.verified && (
-                  <View className="ml-2 bg-blue-500 rounded-full p-1">
+                  <View className="ml-2 bg-primary rounded-full p-1">
                     <Ionicons name="checkmark" size={14} color="white" />
                   </View>
                 )}
@@ -285,7 +285,7 @@ export const BrokerProfileModal: React.FC<BrokerProfileModalProps> = ({
             {/* Stats Grid */}
             <View className="flex-row bg-gray-50 rounded-2xl p-4 mb-6">
               <View className="flex-1 items-center">
-                <Text className="text-2xl font-bold text-blue-600">{broker.experience || 5}+</Text>
+                <Text className="text-2xl font-bold text-primary">{broker.experience || 5}+</Text>
                 <Text className="text-sm text-gray-500">Years Experience</Text>
               </View>
               <View className="flex-1 items-center border-l border-gray-200">
@@ -300,8 +300,8 @@ export const BrokerProfileModal: React.FC<BrokerProfileModalProps> = ({
                 <Text className="text-sm font-semibold text-gray-700 mb-3">Specializes in</Text>
                 <View className="flex-row flex-wrap">
                   {broker.specialization.map((spec, index) => (
-                    <View key={index} className="bg-blue-50 rounded-full px-4 py-2 mr-2 mb-2">
-                      <Text className="text-blue-600 font-medium">{spec}</Text>
+                    <View key={index} className="bg-orange-50 rounded-full px-4 py-2 mr-2 mb-2">
+                      <Text className="text-primary font-medium">{spec}</Text>
                     </View>
                   ))}
                 </View>
@@ -321,15 +321,15 @@ export const BrokerProfileModal: React.FC<BrokerProfileModalProps> = ({
               <Text className="text-sm font-semibold text-gray-700 mb-3">Trust Indicators</Text>
               <View className="space-y-2">
                 <View className="flex-row items-center">
-                  <Ionicons name="shield-checkmark" size={20} color="#3B82F6" />
+                  <Ionicons name="shield-checkmark" size={20} color="#FF6B35" />
                   <Text className="text-gray-600 ml-3">Identity Verified</Text>
                 </View>
                 <View className="flex-row items-center mt-2">
-                  <Ionicons name="call" size={20} color="#3B82F6" />
+                  <Ionicons name="call" size={20} color="#FF6B35" />
                   <Text className="text-gray-600 ml-3">Phone Number Verified</Text>
                 </View>
                 <View className="flex-row items-center mt-2">
-                  <Ionicons name="document-text" size={20} color="#3B82F6" />
+                  <Ionicons name="document-text" size={20} color="#FF6B35" />
                   <Text className="text-gray-600 ml-3">RERA Registered</Text>
                 </View>
               </View>
@@ -339,7 +339,7 @@ export const BrokerProfileModal: React.FC<BrokerProfileModalProps> = ({
             <View className="flex-row mb-4">
               <TouchableOpacity 
                 onPress={handleCall}
-                className="flex-1 bg-blue-600 rounded-xl py-4 flex-row items-center justify-center mr-2"
+                className="flex-1 bg-primary rounded-xl py-4 flex-row items-center justify-center mr-2"
               >
                 <Ionicons name="call" size={20} color="white" />
                 <Text className="text-white font-bold ml-2">Call Now</Text>
@@ -372,7 +372,7 @@ export const BrokerProfileModal: React.FC<BrokerProfileModalProps> = ({
 export const VerificationRequestCard: React.FC<{ onRequest: () => void }> = ({ onRequest }) => {
   return (
     <LinearGradient
-      colors={['#3B82F6', '#1D4ED8']}
+      colors={['#FF6B35', '#E5571E']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       className="rounded-2xl p-5 mx-4 my-4"
@@ -390,7 +390,7 @@ export const VerificationRequestCard: React.FC<{ onRequest: () => void }> = ({ o
             onPress={onRequest}
             className="bg-white rounded-xl py-3 items-center"
           >
-            <Text className="text-blue-600 font-bold">Request Verification</Text>
+            <Text className="text-primary font-bold">Request Verification</Text>
           </TouchableOpacity>
         </View>
       </View>

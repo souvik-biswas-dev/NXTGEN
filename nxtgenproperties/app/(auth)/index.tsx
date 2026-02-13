@@ -10,6 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
@@ -18,18 +19,8 @@ import { Ionicons } from '@expo/vector-icons';
 export default function LoginScreen() {
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [countryCode, setCountryCode] = useState('+1');
   const [loading, setLoading] = useState(false);
-  const [showCountryPicker, setShowCountryPicker] = useState(false);
-
-  const countries = [
-    { name: 'United States', code: '+1', flag: '🇺🇸' },
-    { name: 'India', code: '+91', flag: '🇮🇳' },
-    { name: 'United Kingdom', code: '+44', flag: '🇬🇧' },
-    { name: 'Afghanistan', code: '+93', flag: '🇦🇫' },
-    { name: 'Albania', code: '+355', flag: '🇦🇱' },
-    { name: 'Algeria', code: '+213', flag: '🇩🇿' },
-  ];
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handlePhoneAuth = async () => {
     if (!phoneNumber) {
@@ -39,7 +30,8 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const fullPhone = `${phoneNumber}`;
+      // Supabase requires international format without + prefix
+      const fullPhone = `91${phoneNumber}`;
       console.log('Sending OTP to:', fullPhone);
       const { error } = await supabase.auth.signInWithOtp({
         phone: fullPhone,
@@ -55,6 +47,27 @@ export default function LoginScreen() {
       Alert.alert('Error', error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: 'nxtgenproperties://auth/callback',
+        },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        await Linking.openURL(data.url);
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Google login failed. Please try again.');
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -84,48 +97,23 @@ export default function LoginScreen() {
               <Text className="text-white/80 text-base">Login your account</Text>
             </View>
 
-            {/* Phone Input */}
+            {/* Phone Input - India Only */}
             <View className="mb-6">
               <View className="bg-white/90 rounded-2xl flex-row items-center px-4 py-4">
-                <TouchableOpacity
-                  onPress={() => setShowCountryPicker(!showCountryPicker)}
-                  className="flex-row items-center mr-3"
-                >
-                  <Text className="text-xl mr-1">🇺🇸</Text>
-                  <Text className="text-gray-700 font-medium">{countryCode}</Text>
-                </TouchableOpacity>
+                <View className="flex-row items-center mr-3 bg-gray-100 px-3 py-1.5 rounded-lg">
+                  <Text className="text-xl mr-1">🇮🇳</Text>
+                  <Text className="text-gray-700 font-medium">+91</Text>
+                </View>
                 <TextInput
                   placeholder="Phone Number"
                   placeholderTextColor="#9CA3AF"
                   value={phoneNumber}
-                  onChangeText={setPhoneNumber}
+                  onChangeText={(text) => setPhoneNumber(text.replace(/[^0-9]/g, ''))}
                   keyboardType="phone-pad"
+                  maxLength={10}
                   className="flex-1 text-gray-900 text-base"
                 />
               </View>
-
-              {showCountryPicker && (
-                <View className="bg-white rounded-2xl mt-2 p-2 max-h-48">
-                  <ScrollView>
-                    {countries.map((country) => (
-                      <TouchableOpacity
-                        key={country.code}
-                        onPress={() => {
-                          setCountryCode(country.code);
-                          setShowCountryPicker(false);
-                        }}
-                        className="flex-row items-center p-3 border-b border-gray-100"
-                      >
-                        <Text className="text-xl mr-3">{country.flag}</Text>
-                        <View className="flex-1">
-                          <Text className="text-gray-900 font-medium">{country.name}</Text>
-                          <Text className="text-gray-500 text-sm">{country.code}</Text>
-                        </View>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-              )}
             </View>
 
             {/* Continue Button */}
@@ -158,14 +146,21 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => router.push('/(auth)/signup')}
+              onPress={handleGoogleLogin}
+              disabled={googleLoading}
               className="bg-white rounded-2xl py-4 flex-row items-center justify-center"
               activeOpacity={0.8}
             >
-              <Ionicons name="logo-google" size={24} color="#EA4335" />
-              <Text className="text-gray-900 text-base font-semibold ml-3">
-                Log in with Google
-              </Text>
+              {googleLoading ? (
+                <ActivityIndicator color="#EA4335" />
+              ) : (
+                <>
+                  <Ionicons name="logo-google" size={24} color="#EA4335" />
+                  <Text className="text-gray-900 text-base font-semibold ml-3">
+                    Log in with Google
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>

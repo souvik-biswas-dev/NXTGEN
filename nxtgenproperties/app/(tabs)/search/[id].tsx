@@ -36,7 +36,7 @@ export default function PropertyDetailScreen() {
   if (!property) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#0066CC" />
+        <ActivityIndicator size="large" color="#FF6B35" />
       </View>
     );
   }
@@ -137,14 +137,14 @@ export default function PropertyDetailScreen() {
         </View>
 
         {/* Quick Info Bar */}
-        <View className="bg-blue-50 px-5 py-3 flex-row items-center justify-between">
+        <View className="bg-orange-50 px-5 py-3 flex-row items-center justify-between">
           <View className="flex-row items-center">
-            <Ionicons name="eye-outline" size={18} color="#0066CC" />
-            <Text className="text-blue-600 text-sm ml-1">125 views</Text>
+            <Ionicons name="eye-outline" size={18} color="#FF6B35" />
+            <Text className="text-primary text-sm ml-1">125 views</Text>
           </View>
           <View className="flex-row items-center">
-            <Ionicons name="time-outline" size={18} color="#0066CC" />
-            <Text className="text-blue-600 text-sm ml-1">Posted 2 days ago</Text>
+            <Ionicons name="time-outline" size={18} color="#FF6B35" />
+            <Text className="text-primary text-sm ml-1">Posted 2 days ago</Text>
           </View>
         </View>
 
@@ -172,32 +172,32 @@ export default function PropertyDetailScreen() {
 
           {/* Location */}
           <TouchableOpacity className="flex-row items-center mb-4">
-            <Ionicons name="location" size={18} color="#0066CC" />
-            <Text className="text-blue-600 ml-1">
+            <Ionicons name="location" size={18} color="#FF6B35" />
+            <Text className="text-primary ml-1">
               {property.locality}, {property.city}
             </Text>
-            <Ionicons name="chevron-forward" size={16} color="#0066CC" />
+            <Ionicons name="chevron-forward" size={16} color="#FF6B35" />
           </TouchableOpacity>
 
           {/* Key Stats */}
           <View className="flex-row bg-gray-50 rounded-2xl p-4 mb-4">
             <View className="flex-1 items-center border-r border-gray-200">
-              <Ionicons name="bed-outline" size={24} color="#0066CC" />
+              <Ionicons name="bed-outline" size={24} color="#FF6B35" />
               <Text className="text-gray-900 text-lg font-bold mt-1">{property.bedrooms}</Text>
               <Text className="text-gray-500 text-xs">Bedrooms</Text>
             </View>
             <View className="flex-1 items-center border-r border-gray-200">
-              <Ionicons name="water-outline" size={24} color="#0066CC" />
+              <Ionicons name="water-outline" size={24} color="#FF6B35" />
               <Text className="text-gray-900 text-lg font-bold mt-1">{property.bathrooms}</Text>
               <Text className="text-gray-500 text-xs">Bathrooms</Text>
             </View>
             <View className="flex-1 items-center border-r border-gray-200">
-              <Ionicons name="resize-outline" size={24} color="#0066CC" />
+              <Ionicons name="resize-outline" size={24} color="#FF6B35" />
               <Text className="text-gray-900 text-lg font-bold mt-1">{property.area_sqft}</Text>
               <Text className="text-gray-500 text-xs">Sq.ft</Text>
             </View>
             <View className="flex-1 items-center">
-              <Ionicons name="car-outline" size={24} color="#0066CC" />
+              <Ionicons name="car-outline" size={24} color="#FF6B35" />
               <Text className="text-gray-900 text-lg font-bold mt-1">{property.parkings}</Text>
               <Text className="text-gray-500 text-xs">Parking</Text>
             </View>
@@ -210,10 +210,10 @@ export default function PropertyDetailScreen() {
             <TouchableOpacity
               key={tab}
               onPress={() => setActiveTab(tab)}
-              className={`flex-1 py-3 ${activeTab === tab ? 'border-b-2 border-blue-600' : ''}`}
+              className={`flex-1 py-3 ${activeTab === tab ? 'border-b-2 border-primary' : ''}`}
             >
               <Text className={`text-center font-semibold capitalize ${
-                activeTab === tab ? 'text-blue-600' : 'text-gray-500'
+                activeTab === tab ? 'text-primary' : 'text-gray-500'
               }`}>
                 {tab}
               </Text>
@@ -237,7 +237,7 @@ export default function PropertyDetailScreen() {
                 onPress={() => setShowFullDescription(!showFullDescription)}
                 className="mt-2"
               >
-                <Text className="text-blue-600 font-medium">
+                <Text className="text-primary font-medium">
                   {showFullDescription ? 'Show less' : 'Read more'}
                 </Text>
               </TouchableOpacity>
@@ -248,8 +248,8 @@ export default function PropertyDetailScreen() {
               <Text className="text-gray-900 text-lg font-bold mb-3">Property Highlights</Text>
               <View className="flex-row flex-wrap">
                 <View className="w-1/2 flex-row items-center mb-3">
-                  <View className="w-8 h-8 bg-blue-50 rounded-lg items-center justify-center mr-2">
-                    <Ionicons name="home-outline" size={16} color="#0066CC" />
+                  <View className="w-8 h-8 bg-orange-50 rounded-lg items-center justify-center mr-2">
+                    <Ionicons name="home-outline" size={16} color="#FF6B35" />
                   </View>
                   <View>
                     <Text className="text-gray-500 text-xs">Property Type</Text>
@@ -257,8 +257,8 @@ export default function PropertyDetailScreen() {
                   </View>
                 </View>
                 <View className="w-1/2 flex-row items-center mb-3">
-                  <View className="w-8 h-8 bg-blue-50 rounded-lg items-center justify-center mr-2">
-                    <Ionicons name="layers-outline" size={16} color="#0066CC" />
+                  <View className="w-8 h-8 bg-orange-50 rounded-lg items-center justify-center mr-2">
+                    <Ionicons name="layers-outline" size={16} color="#FF6B35" />
                   </View>
                   <View>
                     <Text className="text-gray-500 text-xs">Floor</Text>
@@ -266,8 +266,8 @@ export default function PropertyDetailScreen() {
                   </View>
                 </View>
                 <View className="w-1/2 flex-row items-center mb-3">
-                  <View className="w-8 h-8 bg-blue-50 rounded-lg items-center justify-center mr-2">
-                    <Ionicons name="compass-outline" size={16} color="#0066CC" />
+                  <View className="w-8 h-8 bg-orange-50 rounded-lg items-center justify-center mr-2">
+                    <Ionicons name="compass-outline" size={16} color="#FF6B35" />
                   </View>
                   <View>
                     <Text className="text-gray-500 text-xs">Facing</Text>
@@ -275,8 +275,8 @@ export default function PropertyDetailScreen() {
                   </View>
                 </View>
                 <View className="w-1/2 flex-row items-center mb-3">
-                  <View className="w-8 h-8 bg-blue-50 rounded-lg items-center justify-center mr-2">
-                    <Ionicons name="construct-outline" size={16} color="#0066CC" />
+                  <View className="w-8 h-8 bg-orange-50 rounded-lg items-center justify-center mr-2">
+                    <Ionicons name="construct-outline" size={16} color="#FF6B35" />
                   </View>
                   <View>
                     <Text className="text-gray-500 text-xs">Furnishing</Text>
@@ -284,8 +284,8 @@ export default function PropertyDetailScreen() {
                   </View>
                 </View>
                 <View className="w-1/2 flex-row items-center mb-3">
-                  <View className="w-8 h-8 bg-blue-50 rounded-lg items-center justify-center mr-2">
-                    <Ionicons name="calendar-outline" size={16} color="#0066CC" />
+                  <View className="w-8 h-8 bg-orange-50 rounded-lg items-center justify-center mr-2">
+                    <Ionicons name="calendar-outline" size={16} color="#FF6B35" />
                   </View>
                   <View>
                     <Text className="text-gray-500 text-xs">Possession</Text>
@@ -293,8 +293,8 @@ export default function PropertyDetailScreen() {
                   </View>
                 </View>
                 <View className="w-1/2 flex-row items-center mb-3">
-                  <View className="w-8 h-8 bg-blue-50 rounded-lg items-center justify-center mr-2">
-                    <Ionicons name="time-outline" size={16} color="#0066CC" />
+                  <View className="w-8 h-8 bg-orange-50 rounded-lg items-center justify-center mr-2">
+                    <Ionicons name="time-outline" size={16} color="#FF6B35" />
                   </View>
                   <View>
                     <Text className="text-gray-500 text-xs">Property Age</Text>
@@ -375,7 +375,7 @@ export default function PropertyDetailScreen() {
             <View className="bg-gray-50 rounded-xl p-4">
               <Text className="text-gray-700 font-semibold mb-3">Location</Text>
               <View className="flex-row items-start">
-                <Ionicons name="location" size={20} color="#0066CC" />
+                <Ionicons name="location" size={20} color="#FF6B35" />
                 <Text className="text-gray-700 ml-2 flex-1">
                   {property.address || `${property.locality}, ${property.city}`}
                 </Text>
@@ -391,7 +391,7 @@ export default function PropertyDetailScreen() {
               <View className="flex-row items-center mb-4">
                 <Image
                   source={{ 
-                    uri: contact.avatar_url || `https://ui-avatars.com/api/?name=${contact.name}&size=100&background=0066CC&color=fff`
+                    uri: contact.avatar_url || `https://ui-avatars.com/api/?name=${contact.name}&size=100&background=FF6B35&color=fff`
                   }}
                   className="w-14 h-14 rounded-full"
                 />
@@ -417,7 +417,7 @@ export default function PropertyDetailScreen() {
               <View className="flex-row">
                 <TouchableOpacity
                   onPress={handleCall}
-                  className="flex-1 bg-blue-600 rounded-xl py-3.5 flex-row items-center justify-center mr-2"
+                  className="flex-1 bg-primary rounded-xl py-3.5 flex-row items-center justify-center mr-2"
                 >
                   <Ionicons name="call" size={20} color="white" />
                   <Text className="text-white font-semibold ml-2">Call Now</Text>
@@ -440,7 +440,7 @@ export default function PropertyDetailScreen() {
           className="mx-5 mb-4"
         >
           <LinearGradient
-            colors={['#0066CC', '#0052A3']}
+            colors={['#FF6B35', '#0F1923']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             className="rounded-2xl p-4 flex-row items-center justify-between"
@@ -486,7 +486,7 @@ export default function PropertyDetailScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           onPress={handleCall}
-          className="flex-1 bg-blue-600 rounded-xl py-4 flex-row items-center justify-center"
+          className="flex-1 bg-primary rounded-xl py-4 flex-row items-center justify-center"
         >
           <Ionicons name="call" size={20} color="white" />
           <Text className="text-white font-semibold text-lg ml-2">Contact Now</Text>

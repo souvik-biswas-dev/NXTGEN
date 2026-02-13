@@ -119,8 +119,8 @@ export default function BudgetCalculatorScreen() {
           <View className="space-y-3">
             <View className="flex-row justify-between items-center py-2 border-b border-gray-100">
               <View className="flex-row items-center">
-                <View className="w-8 h-8 bg-blue-100 rounded-full items-center justify-center mr-3">
-                  <Ionicons name="wallet" size={16} color="#0066CC" />
+                <View className="w-8 h-8 bg-orange-100 rounded-full items-center justify-center mr-3">
+                  <Ionicons name="wallet" size={16} color="#FF6B35" />
                 </View>
                 <Text className="text-gray-600">Down Payment</Text>
               </View>
@@ -207,8 +207,8 @@ export default function BudgetCalculatorScreen() {
         <View className="bg-white mx-5 mt-4 rounded-2xl p-5">
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-gray-900 text-base font-semibold">Down Payment</Text>
-            <View className="bg-blue-50 px-3 py-1 rounded-lg">
-              <Text className="text-blue-600 font-bold">{formatCurrency(downPayment)}</Text>
+            <View className="bg-orange-50 px-3 py-1 rounded-lg">
+              <Text className="text-primary font-bold">{formatCurrency(downPayment)}</Text>
             </View>
           </View>
           
@@ -219,9 +219,9 @@ export default function BudgetCalculatorScreen() {
             step={100000}
             value={downPayment}
             onValueChange={setDownPayment}
-            minimumTrackTintColor="#0066CC"
+            minimumTrackTintColor="#FF6B35"
             maximumTrackTintColor="#E5E7EB"
-            thumbTintColor="#0066CC"
+            thumbTintColor="#FF6B35"
           />
           
           <View className="flex-row justify-between">
@@ -284,9 +284,9 @@ export default function BudgetCalculatorScreen() {
         </TouchableOpacity>
 
         {/* Info Card */}
-        <View className="bg-blue-50 mx-5 rounded-2xl p-5 mb-6">
+        <View className="bg-orange-50 mx-5 rounded-2xl p-5 mb-6">
           <View className="flex-row items-center mb-3">
-            <Ionicons name="information-circle" size={20} color="#0066CC" />
+            <Ionicons name="information-circle" size={20} color="#FF6B35" />
             <Text className="text-gray-900 font-semibold ml-2">How we calculate</Text>
           </View>
           <Text className="text-gray-600 text-sm leading-5">

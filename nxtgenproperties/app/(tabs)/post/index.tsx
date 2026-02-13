@@ -138,7 +138,7 @@ export default function PostPropertyScreen() {
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
           <Text className="text-gray-900 text-lg font-bold">Post Property</Text>
-          <Text className="text-blue-600 font-medium">
+          <Text className="text-primary font-medium">
             {currentStepIndex + 1}/{steps.length}
           </Text>
         </View>
@@ -149,7 +149,7 @@ export default function PostPropertyScreen() {
             <View key={step.id} className="flex-1 flex-row items-center">
               <View 
                 className={`h-1 flex-1 rounded-full ${
-                  index <= currentStepIndex ? 'bg-blue-600' : 'bg-gray-200'
+                  index <= currentStepIndex ? 'bg-primary' : 'bg-gray-200'
                 }`} 
               />
             </View>
@@ -163,12 +163,12 @@ export default function PostPropertyScreen() {
               key={step.id}
               onPress={() => setCurrentStep(step.id)}
               className={`flex-row items-center mr-6 pb-2 ${
-                currentStep === step.id ? 'border-b-2 border-blue-600' : ''
+                currentStep === step.id ? 'border-b-2 border-primary' : ''
               }`}
             >
               <View className={`w-8 h-8 rounded-full items-center justify-center mr-2 ${
                 index < currentStepIndex ? 'bg-green-500' :
-                currentStep === step.id ? 'bg-blue-600' : 'bg-gray-200'
+                currentStep === step.id ? 'bg-primary' : 'bg-gray-200'
               }`}>
                 {index < currentStepIndex ? (
                   <Ionicons name="checkmark" size={16} color="white" />
@@ -177,7 +177,7 @@ export default function PostPropertyScreen() {
                 )}
               </View>
               <Text className={`text-sm font-medium ${
-                currentStep === step.id ? 'text-blue-600' : 'text-gray-500'
+                currentStep === step.id ? 'text-primary' : 'text-gray-500'
               }`}>
                 {step.title}
               </Text>
@@ -211,7 +211,7 @@ export default function PostPropertyScreen() {
           
           <TouchableOpacity
             onPress={currentStepIndex === steps.length - 1 ? handleSubmit : goToNextStep}
-            className="flex-1 bg-blue-600 rounded-xl py-4"
+            className="flex-1 bg-primary rounded-xl py-4"
           >
             <Text className="text-white text-center font-semibold">
               {currentStepIndex === steps.length - 1 ? 'Post Property' : 'Next'}
@@ -238,11 +238,11 @@ const BasicInfoStep: React.FC<{ formData: any; updateFormData: (key: string, val
             key={type}
             onPress={() => updateFormData('type', type)}
             className={`flex-1 py-4 rounded-xl mr-2 border-2 ${
-              formData.type === type ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+              formData.type === type ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
             }`}
           >
             <Text className={`text-center font-semibold capitalize ${
-              formData.type === type ? 'text-blue-600' : 'text-gray-600'
+              formData.type === type ? 'text-primary' : 'text-gray-600'
             }`}>
               {type === 'buy' ? 'Sell' : 'Rent Out'}
             </Text>
@@ -260,11 +260,11 @@ const BasicInfoStep: React.FC<{ formData: any; updateFormData: (key: string, val
             key={category}
             onPress={() => updateFormData('category', category)}
             className={`flex-1 py-4 rounded-xl mr-2 border-2 ${
-              formData.category === category ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+              formData.category === category ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
             }`}
           >
             <Text className={`text-center font-semibold capitalize ${
-              formData.category === category ? 'text-blue-600' : 'text-gray-600'
+              formData.category === category ? 'text-primary' : 'text-gray-600'
             }`}>
               {category}
             </Text>
@@ -316,10 +316,10 @@ const PropertyDetailsStep: React.FC<{ formData: any; updateFormData: (key: strin
             key={bhk}
             onPress={() => updateFormData('bhk', bhk)}
             className={`px-5 py-3 rounded-xl mr-2 mb-2 border-2 ${
-              formData.bhk === bhk ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+              formData.bhk === bhk ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
             }`}
           >
-            <Text className={`font-medium ${formData.bhk === bhk ? 'text-blue-600' : 'text-gray-600'}`}>
+            <Text className={`font-medium ${formData.bhk === bhk ? 'text-primary' : 'text-gray-600'}`}>
               {bhk}
             </Text>
           </TouchableOpacity>
@@ -336,11 +336,11 @@ const PropertyDetailsStep: React.FC<{ formData: any; updateFormData: (key: strin
             key={furnishing}
             onPress={() => updateFormData('furnishing', furnishing)}
             className={`px-5 py-3 rounded-xl mr-2 mb-2 border-2 ${
-              formData.furnishing === furnishing ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+              formData.furnishing === furnishing ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
             }`}
           >
             <Text className={`font-medium capitalize ${
-              formData.furnishing === furnishing ? 'text-blue-600' : 'text-gray-600'
+              formData.furnishing === furnishing ? 'text-primary' : 'text-gray-600'
             }`}>
               {furnishing}
             </Text>
@@ -442,11 +442,11 @@ const PropertyDetailsStep: React.FC<{ formData: any; updateFormData: (key: strin
             key={possession}
             onPress={() => updateFormData('possession', possession)}
             className={`flex-1 py-4 rounded-xl mr-2 border-2 ${
-              formData.possession === possession ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+              formData.possession === possession ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
             }`}
           >
             <Text className={`text-center font-medium ${
-              formData.possession === possession ? 'text-blue-600' : 'text-gray-600'
+              formData.possession === possession ? 'text-primary' : 'text-gray-600'
             }`}>
               {possession === 'ready' ? 'Ready to Move' : 'Under Construction'}
             </Text>
@@ -471,10 +471,10 @@ const LocationStep: React.FC<{ formData: any; updateFormData: (key: string, valu
             key={city.id}
             onPress={() => updateFormData('city', city.name)}
             className={`px-5 py-3 rounded-xl mr-2 mb-2 border-2 ${
-              formData.city === city.name ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+              formData.city === city.name ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
             }`}
           >
-            <Text className={`font-medium ${formData.city === city.name ? 'text-blue-600' : 'text-gray-600'}`}>
+            <Text className={`font-medium ${formData.city === city.name ? 'text-primary' : 'text-gray-600'}`}>
               {city.name}
             </Text>
           </TouchableOpacity>
@@ -492,10 +492,10 @@ const LocationStep: React.FC<{ formData: any; updateFormData: (key: string, valu
               key={locality}
               onPress={() => updateFormData('locality', locality)}
               className={`px-5 py-3 rounded-xl mr-2 mb-2 border-2 ${
-                formData.locality === locality ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+                formData.locality === locality ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
               }`}
             >
-              <Text className={`font-medium ${formData.locality === locality ? 'text-blue-600' : 'text-gray-600'}`}>
+              <Text className={`font-medium ${formData.locality === locality ? 'text-primary' : 'text-gray-600'}`}>
                 {locality}
               </Text>
             </TouchableOpacity>
@@ -551,16 +551,16 @@ const AmenitiesStep: React.FC<{ formData: any; toggleAmenity: (amenity: string) 
           key={amenity}
           onPress={() => toggleAmenity(amenity)}
           className={`px-4 py-3 rounded-xl mr-2 mb-3 border-2 flex-row items-center ${
-            formData.amenities.includes(amenity) ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
+            formData.amenities.includes(amenity) ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
           }`}
         >
           <Ionicons 
             name={formData.amenities.includes(amenity) ? 'checkbox' : 'square-outline'} 
             size={18} 
-            color={formData.amenities.includes(amenity) ? '#0066CC' : '#999'} 
+            color={formData.amenities.includes(amenity) ? '#FF6B35' : '#999'} 
           />
           <Text className={`ml-2 font-medium ${
-            formData.amenities.includes(amenity) ? 'text-blue-600' : 'text-gray-600'
+            formData.amenities.includes(amenity) ? 'text-primary' : 'text-gray-600'
           }`}>
             {amenity}
           </Text>
@@ -568,9 +568,9 @@ const AmenitiesStep: React.FC<{ formData: any; toggleAmenity: (amenity: string) 
       ))}
     </View>
 
-    <View className="mt-4 p-4 bg-blue-50 rounded-xl flex-row items-center">
-      <Ionicons name="information-circle" size={20} color="#0066CC" />
-      <Text className="text-blue-800 text-sm ml-2 flex-1">
+    <View className="mt-4 p-4 bg-orange-50 rounded-xl flex-row items-center">
+      <Ionicons name="information-circle" size={20} color="#FF6B35" />
+      <Text className="text-orange-800 text-sm ml-2 flex-1">
         Properties with more amenities get 2x more views
       </Text>
     </View>
@@ -590,8 +590,8 @@ const PhotosStep: React.FC<{ formData: any; updateFormData: (key: string, value:
     {/* Upload Button */}
     <TouchableOpacity className="bg-white border-2 border-dashed border-gray-300 rounded-2xl h-48 items-center justify-center mb-6">
       <View className="items-center">
-        <View className="w-16 h-16 bg-blue-50 rounded-full items-center justify-center mb-3">
-          <Ionicons name="camera" size={28} color="#0066CC" />
+        <View className="w-16 h-16 bg-orange-50 rounded-full items-center justify-center mb-3">
+          <Ionicons name="camera" size={28} color="#FF6B35" />
         </View>
         <Text className="text-gray-900 font-semibold">Upload Photos</Text>
         <Text className="text-gray-500 text-sm mt-1">JPG, PNG up to 10MB each</Text>
@@ -640,7 +640,7 @@ const PhotosStep: React.FC<{ formData: any; updateFormData: (key: string, value:
               className="w-24 h-24 rounded-xl"
             />
             <View className="absolute bottom-1 right-1 bg-white rounded-full p-1">
-              <Ionicons name="add-circle" size={20} color="#0066CC" />
+              <Ionicons name="add-circle" size={20} color="#FF6B35" />
             </View>
           </TouchableOpacity>
         ))}
@@ -712,14 +712,14 @@ const PricingStep: React.FC<{ formData: any; updateFormData: (key: string, value
       className="flex-row items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-4 mb-6"
     >
       <Text className="text-gray-900 font-medium">Price is negotiable</Text>
-      <View className={`w-12 h-7 rounded-full p-1 ${formData.priceNegotiable ? 'bg-blue-600' : 'bg-gray-200'}`}>
+      <View className={`w-12 h-7 rounded-full p-1 ${formData.priceNegotiable ? 'bg-primary' : 'bg-gray-200'}`}>
         <View className={`w-5 h-5 rounded-full bg-white shadow ${formData.priceNegotiable ? 'ml-auto' : ''}`} />
       </View>
     </TouchableOpacity>
 
     {/* Summary Card */}
     <LinearGradient
-      colors={['#0066CC', '#0052A3']}
+      colors={['#FF6B35', '#0F1923']}
       className="rounded-2xl p-5"
     >
       <Text className="text-white/80 text-sm mb-2">Property Summary</Text>

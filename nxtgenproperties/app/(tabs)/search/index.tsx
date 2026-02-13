@@ -59,6 +59,7 @@ export default function SearchScreen() {
 
   const applyFilters = () => {
     searchStore.setFilters(localFilters);
+    usePropertiesStore.getState().filterProperties(localFilters);
     setShowFilters(false);
   };
 
@@ -75,6 +76,7 @@ export default function SearchScreen() {
       ownerOnly: false,
     });
     searchStore.resetFilters();
+    usePropertiesStore.getState().filterProperties({});
   };
 
   const toggleBHK = (bhk: BHKType) => {
@@ -121,9 +123,9 @@ export default function SearchScreen() {
           
           <TouchableOpacity 
             onPress={() => setShowFilters(true)}
-            className="ml-3 bg-blue-50 p-3 rounded-xl relative"
+            className="ml-3 bg-orange-50 p-3 rounded-xl relative"
           >
-            <Ionicons name="options" size={22} color="#0066CC" />
+            <Ionicons name="options" size={22} color="#FF6B35" />
             {activeFilterCount > 0 && (
               <View className="absolute -top-1 -right-1 bg-red-500 w-5 h-5 rounded-full items-center justify-center">
                 <Text className="text-white text-xs font-bold">{activeFilterCount}</Text>
@@ -136,20 +138,26 @@ export default function SearchScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3">
           <TouchableOpacity
             onPress={() => {
-              setLocalFilters(prev => ({ ...prev, type: prev.type === 'buy' ? undefined : 'buy' }));
-              searchStore.setFilters({ type: localFilters.type === 'buy' ? undefined : 'buy' });
+              const newType = localFilters.type === 'buy' ? undefined : 'buy' as PropertyType | undefined;
+              const newFilters = { ...localFilters, type: newType };
+              setLocalFilters(newFilters);
+              searchStore.setFilters(newFilters);
+              usePropertiesStore.getState().filterProperties(newFilters);
             }}
-            className={`px-4 py-2 rounded-full mr-2 ${localFilters.type === 'buy' ? 'bg-blue-600' : 'bg-gray-100'}`}
+            className={`px-4 py-2 rounded-full mr-2 ${localFilters.type === 'buy' ? 'bg-primary' : 'bg-gray-100'}`}
           >
             <Text className={`text-sm font-medium ${localFilters.type === 'buy' ? 'text-white' : 'text-gray-700'}`}>Buy</Text>
           </TouchableOpacity>
           
           <TouchableOpacity
             onPress={() => {
-              setLocalFilters(prev => ({ ...prev, type: prev.type === 'rent' ? undefined : 'rent' }));
-              searchStore.setFilters({ type: localFilters.type === 'rent' ? undefined : 'rent' });
+              const newType = localFilters.type === 'rent' ? undefined : 'rent' as PropertyType | undefined;
+              const newFilters = { ...localFilters, type: newType };
+              setLocalFilters(newFilters);
+              searchStore.setFilters(newFilters);
+              usePropertiesStore.getState().filterProperties(newFilters);
             }}
-            className={`px-4 py-2 rounded-full mr-2 ${localFilters.type === 'rent' ? 'bg-blue-600' : 'bg-gray-100'}`}
+            className={`px-4 py-2 rounded-full mr-2 ${localFilters.type === 'rent' ? 'bg-primary' : 'bg-gray-100'}`}
           >
             <Text className={`text-sm font-medium ${localFilters.type === 'rent' ? 'text-white' : 'text-gray-700'}`}>Rent</Text>
           </TouchableOpacity>
@@ -172,8 +180,11 @@ export default function SearchScreen() {
 
           <TouchableOpacity
             onPress={() => {
-              setLocalFilters(prev => ({ ...prev, ownerOnly: !prev.ownerOnly }));
-              searchStore.setFilters({ ownerOnly: !localFilters.ownerOnly });
+              const newOwnerOnly = !localFilters.ownerOnly;
+              const newFilters = { ...localFilters, ownerOnly: newOwnerOnly };
+              setLocalFilters(newFilters);
+              searchStore.setFilters(newFilters);
+              usePropertiesStore.getState().filterProperties(newFilters);
             }}
             className={`px-4 py-2 rounded-full mr-2 ${localFilters.ownerOnly ? 'bg-green-600' : 'bg-gray-100'}`}
           >
@@ -183,7 +194,7 @@ export default function SearchScreen() {
       </View>
 
       {/* Results or Recent Searches */}
-      {searchQuery.length === 0 && filteredProperties.length === 10 ? (
+      {searchQuery.length === 0 && activeFilterCount === 0 ? (
         <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
           {/* Recent Searches */}
           {recentSearches.length > 0 && (
@@ -191,7 +202,7 @@ export default function SearchScreen() {
               <View className="flex-row justify-between items-center mb-3">
                 <Text className="text-gray-900 text-lg font-bold">Recent Searches</Text>
                 <TouchableOpacity>
-                  <Text className="text-blue-600 text-sm">Clear All</Text>
+                  <Text className="text-primary text-sm">Clear All</Text>
                 </TouchableOpacity>
               </View>
               {recentSearches.map((search, index) => (
@@ -240,7 +251,7 @@ export default function SearchScreen() {
           keyExtractor={(item) => item.id}
           numColumns={2}
           columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: 20 }}
-          contentContainerStyle={{ paddingTop: 16, paddingBottom: 24 }}
+          contentContainerStyle={{ paddingTop: 16, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => <PropertyCard property={item} />}
           ListEmptyComponent={
@@ -274,7 +285,7 @@ export default function SearchScreen() {
             </TouchableOpacity>
             <Text className="text-gray-900 text-lg font-bold">Filters</Text>
             <TouchableOpacity onPress={resetFilters}>
-              <Text className="text-blue-600 font-medium">Reset</Text>
+              <Text className="text-primary font-medium">Reset</Text>
             </TouchableOpacity>
           </View>
 
@@ -285,13 +296,13 @@ export default function SearchScreen() {
               <View className="flex-row">
                 <TouchableOpacity
                   onPress={() => setLocalFilters(prev => ({ ...prev, type: 'buy' }))}
-                  className={`flex-1 py-3 rounded-l-xl border ${localFilters.type === 'buy' ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-200'}`}
+                  className={`flex-1 py-3 rounded-l-xl border ${localFilters.type === 'buy' ? 'bg-primary border-primary' : 'bg-white border-gray-200'}`}
                 >
                   <Text className={`text-center font-medium ${localFilters.type === 'buy' ? 'text-white' : 'text-gray-700'}`}>Buy</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setLocalFilters(prev => ({ ...prev, type: 'rent' }))}
-                  className={`flex-1 py-3 rounded-r-xl border-t border-b border-r ${localFilters.type === 'rent' ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-200'}`}
+                  className={`flex-1 py-3 rounded-r-xl border-t border-b border-r ${localFilters.type === 'rent' ? 'bg-primary border-primary' : 'bg-white border-gray-200'}`}
                 >
                   <Text className={`text-center font-medium ${localFilters.type === 'rent' ? 'text-white' : 'text-gray-700'}`}>Rent</Text>
                 </TouchableOpacity>
@@ -304,13 +315,13 @@ export default function SearchScreen() {
               <View className="flex-row">
                 <TouchableOpacity
                   onPress={() => setLocalFilters(prev => ({ ...prev, category: 'residential' }))}
-                  className={`flex-1 py-3 rounded-l-xl border ${localFilters.category === 'residential' ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-200'}`}
+                  className={`flex-1 py-3 rounded-l-xl border ${localFilters.category === 'residential' ? 'bg-primary border-primary' : 'bg-white border-gray-200'}`}
                 >
                   <Text className={`text-center font-medium ${localFilters.category === 'residential' ? 'text-white' : 'text-gray-700'}`}>Residential</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setLocalFilters(prev => ({ ...prev, category: 'commercial' }))}
-                  className={`flex-1 py-3 rounded-r-xl border-t border-b border-r ${localFilters.category === 'commercial' ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-200'}`}
+                  className={`flex-1 py-3 rounded-r-xl border-t border-b border-r ${localFilters.category === 'commercial' ? 'bg-primary border-primary' : 'bg-white border-gray-200'}`}
                 >
                   <Text className={`text-center font-medium ${localFilters.category === 'commercial' ? 'text-white' : 'text-gray-700'}`}>Commercial</Text>
                 </TouchableOpacity>
@@ -325,7 +336,7 @@ export default function SearchScreen() {
                   <TouchableOpacity
                     key={bhk}
                     onPress={() => toggleBHK(bhk)}
-                    className={`px-4 py-2 rounded-full mr-2 mb-2 border ${localFilters.bhk.includes(bhk) ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-200'}`}
+                    className={`px-4 py-2 rounded-full mr-2 mb-2 border ${localFilters.bhk.includes(bhk) ? 'bg-primary border-primary' : 'bg-white border-gray-200'}`}
                   >
                     <Text className={`font-medium ${localFilters.bhk.includes(bhk) ? 'text-white' : 'text-gray-700'}`}>{bhk}</Text>
                   </TouchableOpacity>
@@ -341,7 +352,7 @@ export default function SearchScreen() {
                   <TouchableOpacity
                     key={index}
                     onPress={() => setLocalFilters(prev => ({ ...prev, minPrice: range.min, maxPrice: range.max }))}
-                    className={`px-4 py-2 rounded-full mr-2 mb-2 border ${localFilters.minPrice === range.min ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-200'}`}
+                    className={`px-4 py-2 rounded-full mr-2 mb-2 border ${localFilters.minPrice === range.min ? 'bg-primary border-primary' : 'bg-white border-gray-200'}`}
                   >
                     <Text className={`font-medium ${localFilters.minPrice === range.min ? 'text-white' : 'text-gray-700'}`}>{range.label}</Text>
                   </TouchableOpacity>
@@ -357,7 +368,7 @@ export default function SearchScreen() {
                   <TouchableOpacity
                     key={furnishing}
                     onPress={() => toggleFurnishing(furnishing)}
-                    className={`px-4 py-2 rounded-full mr-2 mb-2 border ${localFilters.furnishing.includes(furnishing) ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-200'}`}
+                    className={`px-4 py-2 rounded-full mr-2 mb-2 border ${localFilters.furnishing.includes(furnishing) ? 'bg-primary border-primary' : 'bg-white border-gray-200'}`}
                   >
                     <Text className={`font-medium capitalize ${localFilters.furnishing.includes(furnishing) ? 'text-white' : 'text-gray-700'}`}>{furnishing}</Text>
                   </TouchableOpacity>
@@ -371,13 +382,13 @@ export default function SearchScreen() {
               <View className="flex-row">
                 <TouchableOpacity
                   onPress={() => setLocalFilters(prev => ({ ...prev, possession: 'ready' }))}
-                  className={`flex-1 py-3 rounded-l-xl border ${localFilters.possession === 'ready' ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-200'}`}
+                  className={`flex-1 py-3 rounded-l-xl border ${localFilters.possession === 'ready' ? 'bg-primary border-primary' : 'bg-white border-gray-200'}`}
                 >
                   <Text className={`text-center font-medium ${localFilters.possession === 'ready' ? 'text-white' : 'text-gray-700'}`}>Ready to Move</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setLocalFilters(prev => ({ ...prev, possession: 'under-construction' }))}
-                  className={`flex-1 py-3 rounded-r-xl border-t border-b border-r ${localFilters.possession === 'under-construction' ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-200'}`}
+                  className={`flex-1 py-3 rounded-r-xl border-t border-b border-r ${localFilters.possession === 'under-construction' ? 'bg-primary border-primary' : 'bg-white border-gray-200'}`}
                 >
                   <Text className={`text-center font-medium ${localFilters.possession === 'under-construction' ? 'text-white' : 'text-gray-700'}`}>Under Construction</Text>
                 </TouchableOpacity>
@@ -394,7 +405,7 @@ export default function SearchScreen() {
                   <Text className="text-gray-900 font-semibold">Owner Properties Only</Text>
                   <Text className="text-gray-500 text-sm mt-1">Hide broker listings</Text>
                 </View>
-                <View className={`w-12 h-7 rounded-full p-1 ${localFilters.ownerOnly ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                <View className={`w-12 h-7 rounded-full p-1 ${localFilters.ownerOnly ? 'bg-primary' : 'bg-gray-200'}`}>
                   <View className={`w-5 h-5 rounded-full bg-white shadow ${localFilters.ownerOnly ? 'ml-auto' : ''}`} />
                 </View>
               </TouchableOpacity>
@@ -405,7 +416,7 @@ export default function SearchScreen() {
           <View className="px-5 py-4 border-t border-gray-100">
             <TouchableOpacity
               onPress={applyFilters}
-              className="bg-blue-600 rounded-xl py-4"
+              className="bg-primary rounded-xl py-4"
             >
               <Text className="text-white text-center font-semibold text-lg">
                 Apply Filters
