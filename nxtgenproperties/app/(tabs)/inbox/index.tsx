@@ -2,47 +2,121 @@ import React from 'react';
 import {
   View,
   Text,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const chats = [
-  { id: 1, name: 'Russel Tailor', message: 'Hello, How can i help you?', time: '1d ago', unread: true },
-  { id: 2, name: 'David Miller', message: 'Okay', time: '1d ago', unread: false },
-  { id: 3, name: 'Liana George', message: 'You can come tomorrow.', time: '5d ago', unread: false },
-  { id: 4, name: 'Suzein Smith', message: 'Nice to talk with you.', time: '1w ago', unread: false },
-  { id: 5, name: 'Amenda Johnson', message: 'So what you think?', time: '2w ago', unread: true },
-];
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { useChatStore } from '@/stores/chatStore';
+import { useAuthStore } from '@/stores/authStore';
+import { formatDistanceToNow } from 'date-fns';
+import { theme } from '@/constants/theme';
 
 export default function InboxScreen() {
+  const router = useRouter();
+  const { user } = useAuthStore();
+  const { conversations, loading, fetchConversations } = useChatStore();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user?.id) {
+        fetchConversations(user.id);
+      }
+    }, [user?.id, fetchConversations])
+  );
+
+  const handleConversationPress = (conversationId: string) => {
+    router.push(`/chat/${conversationId}`);
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.surface }}>
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      <View className="px-6 py-4">
-        <Text className="text-primary text-2xl font-bold">Chats</Text>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.surface }}>
+      {/* Header */}
+      <View className="px-6 pt-6 pb-4" style={{ backgroundColor: theme.colors.surface }}>
+        <Text className="text-3xl font-bold" style={{ color: theme.colors.secondary }}>Chats</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {chats.map((chat) => (
-          <TouchableOpacity
-            key={chat.id}
-            className="bg-white px-6 py-4 flex-row items-center border-b border-gray-100"
-          >
-            <View className="w-14 h-14 bg-gray-300 rounded-full mr-4" />
-            <View className="flex-1">
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="text-gray-900 text-base font-semibold">{chat.name}</Text>
-                <Text className="text-gray-500 text-xs">{chat.time}</Text>
+      {/* Conversations List */}
+      {conversations.length === 0 ? (
+        <View className="flex-1 items-center justify-center px-6">
+          <View className="w-28 h-28 rounded-full items-center justify-center mb-5" style={{ backgroundColor: theme.colors.primaryContainer }}>
+            <Ionicons name="chatbubble-outline" size={48} color={theme.colors.primary} />
+          </View>
+          <Text className="text-xl font-semibold" style={{ color: theme.colors.secondary }}>No conversations</Text>
+          <Text className="text-sm mt-3 text-center" style={{ color: theme.colors.outline }}>
+            Start a conversation with property owners or brokers
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={conversations}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => handleConversationPress(item.id)}
+              className="mx-4 mb-2 px-4 py-3.5 flex-row items-center"
+              style={{ backgroundColor: theme.colors.surface, borderRadius: theme.roundness.lg }}
+              activeOpacity={0.7}
+            >
+              {/* Avatar */}
+              <View style={{ borderRadius: 9999, borderWidth: 2, borderColor: theme.colors.primaryContainer }}>
+                <Image
+                  source={{
+                    uri: item.other_user?.avatar_url ||
+                      'https://ui-avatars.com/api/?name=' +
+                      (item.other_user?.name || 'User') +
+                      '&size=50&background=FF6B35&color=fff',
+                  }}
+                  className="w-12 h-12 rounded-full"
+                />
               </View>
-              <Text className="text-gray-600 text-sm">{chat.message}</Text>
-            </View>
-            {chat.unread && (
-              <View className="w-2 h-2 bg-primary rounded-full ml-2" />
-            )}
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+
+              {/* Conversation Info */}
+              <View className="flex-1 ml-4">
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-base font-bold" style={{ color: theme.colors.secondary }}>
+                    {item.other_user?.name || 'Unknown User'}
+                  </Text>
+                  <Text className="text-xs" style={{ color: theme.colors.outlineVariant }}>
+                    {item.last_message_at
+                      ? formatDistanceToNow(new Date(item.last_message_at), {
+                        addSuffix: true,
+                      })
+                      : ''}
+                  </Text>
+                </View>
+                <Text className="text-sm mt-1 line-clamp-1" style={{ color: theme.colors.outline }}>
+                  {item.last_message || 'No messages yet'}
+                </Text>
+              </View>
+
+              {/* Unread Indicator */}
+              {item.unread_count && item.unread_count > 0 && (
+                <View className="ml-3 px-2.5 py-1 items-center justify-center" style={{ backgroundColor: theme.colors.primary, borderRadius: theme.roundness.full }}>
+                  <Text className="text-white text-xs font-bold">
+                    {item.unread_count > 9 ? '9+' : item.unread_count}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </SafeAreaView>
   );
 }

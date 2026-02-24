@@ -1,0 +1,77 @@
+import { create } from 'zustand';
+import { Property } from '@/types';
+import { supabase } from '@/lib/supabase';
+
+interface RecentlyViewedState {
+  recentItems: Property[];
+  loading: boolean;
+  addToRecentlyViewed: (propertyId: string) => Promise<void>;
+  fetchRecentlyViewed: () => Promise<void>;
+  clearRecentlyViewed: () => Promise<void>;
+}
+
+export const useRecentlyViewedStore = create<RecentlyViewedState>((set) => ({
+  recentItems: [],
+  loading: false,
+
+  addToRecentlyViewed: async (propertyId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('recently_viewed')
+        .upsert(
+          { user_id: user.id, property_id: propertyId, viewed_at: new Date().toISOString() },
+          { onConflict: 'user_id,property_id' }
+        );
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error adding to recently viewed:', error);
+    }
+  },
+
+  fetchRecentlyViewed: async () => {
+    set({ loading: true });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('recently_viewed')
+        .select('*, property:properties(*)')
+        .eq('user_id', user.id)
+        .order('viewed_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      const items = (data ?? []).map((row: any) => row.property).filter(Boolean);
+      set({ recentItems: items });
+    } catch (error) {
+      console.error('Error fetching recently viewed:', error);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  clearRecentlyViewed: async () => {
+    set({ loading: true });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('recently_viewed')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      set({ recentItems: [] });
+    } catch (error) {
+      console.error('Error clearing recently viewed:', error);
+    } finally {
+      set({ loading: false });
+    }
+  },
+}));

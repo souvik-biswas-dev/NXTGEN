@@ -130,6 +130,56 @@ export const useFeaturedProperties = () => {
   return { properties, loading, refresh: fetchFeatured };
 };
 
+export const usePreferredCitiesProperties = (preferredCities?: string[], limit: number = 20) => {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (preferredCities && preferredCities.length > 0) {
+      fetchByPreferredCities();
+    } else {
+      setProperties([]);
+      setLoading(false);
+    }
+  }, [preferredCities]);
+
+  const fetchByPreferredCities = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch properties from preferred cities with case-insensitive match
+      const { data, error: fetchError } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          owner:users_profiles!properties_owner_id_fkey(*),
+          broker:users_profiles!properties_broker_id_fkey(*)
+        `)
+        .in('city', preferredCities || [])
+        .limit(limit)
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+      setProperties(data || []);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+      console.error('Error fetching properties by preferred cities:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refresh = () => {
+    if (preferredCities && preferredCities.length > 0) {
+      fetchByPreferredCities();
+    }
+  };
+
+  return { properties, loading, error, refresh };
+};
+
 export const useProperty = (id: string) => {
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);

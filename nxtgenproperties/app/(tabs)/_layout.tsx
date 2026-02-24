@@ -1,36 +1,36 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Platform } from 'react-native';
+import { theme } from '@/constants/theme';
 
 export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#FF6B35',
-        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.outline,
         tabBarStyle: {
           position: 'absolute',
           bottom: Platform.OS === 'ios' ? 24 : 16,
-          left: 20,
-          right: 20,
-          height: 68,
-          backgroundColor: 'rgba(255, 255, 255, 0.92)',
-          borderRadius: 28,
+          left: 16,
+          right: 16,
+          height: 70,
+          backgroundColor: theme.colors.surface,
+          borderRadius: theme.roundness.xl,
           borderTopWidth: 0,
           paddingBottom: 8,
           paddingTop: 8,
           paddingHorizontal: 4,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.12,
-          shadowRadius: 24,
-          elevation: 20,
-          borderWidth: 1,
-          borderColor: 'rgba(200, 200, 200, 0.3)',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.08,
+          shadowRadius: 20,
+          elevation: 12,
+          borderWidth: 0,
         },
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: '600',
           marginTop: 2,
         },
@@ -44,39 +44,75 @@ export default function TabsLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />
+            <View
+              style={
+                focused
+                  ? {
+                      backgroundColor: theme.colors.primaryContainer,
+                      borderRadius: theme.roundness.full,
+                      paddingHorizontal: 16,
+                      paddingVertical: 4,
+                    }
+                  : undefined
+              }
+            >
+              <Ionicons
+                name={focused ? 'home' : 'home-outline'}
+                size={22}
+                color={color}
+              />
+            </View>
           ),
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="search/index"
         options={{
           title: 'Search',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'search' : 'search-outline'} size={22} color={color} />
+            <View
+              style={
+                focused
+                  ? {
+                      backgroundColor: theme.colors.primaryContainer,
+                      borderRadius: theme.roundness.full,
+                      paddingHorizontal: 16,
+                      paddingVertical: 4,
+                    }
+                  : undefined
+              }
+            >
+              <Ionicons
+                name={focused ? 'search' : 'search-outline'}
+                size={22}
+                color={color}
+              />
+            </View>
           ),
         }}
       />
       <Tabs.Screen
-        name="post"
+        name="post/index"
         options={{
           title: 'Post',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{
-              width: 48,
-              height: 48,
-              borderRadius: 16,
-              backgroundColor: '#FF6B35',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 20,
-              shadowColor: '#FF6B35',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 8,
-            }}>
-              <Ionicons name="add" size={28} color="white" />
+          tabBarIcon: () => (
+            <View
+              style={{
+                width: 54,
+                height: 54,
+                borderRadius: theme.roundness.xl,
+                backgroundColor: theme.colors.primary,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 4,
+                shadowColor: theme.colors.primary,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.35,
+                shadowRadius: 10,
+                elevation: 10,
+              }}
+            >
+              <Ionicons name="add" size={30} color={theme.colors.onPrimary} />
             </View>
           ),
           tabBarLabel: () => null,
@@ -87,21 +123,57 @@ export default function TabsLayout() {
         options={{
           title: 'Saved',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'heart' : 'heart-outline'} size={22} color={color} />
+            <View
+              style={
+                focused
+                  ? {
+                      backgroundColor: theme.colors.primaryContainer,
+                      borderRadius: theme.roundness.full,
+                      paddingHorizontal: 16,
+                      paddingVertical: 4,
+                    }
+                  : undefined
+              }
+            >
+              <Ionicons
+                name={focused ? 'heart' : 'heart-outline'}
+                size={22}
+                color={color}
+              />
+            </View>
           ),
         }}
       />
+
       <Tabs.Screen
-        name="profile"
+        name="inbox/index"
         options={{
-          title: 'Profile',
+          title: 'Inbox',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'person' : 'person-outline'} size={22} color={color} />
+            <View
+              style={
+                focused
+                  ? {
+                      backgroundColor: theme.colors.primaryContainer,
+                      borderRadius: theme.roundness.full,
+                      paddingHorizontal: 16,
+                      paddingVertical: 4,
+                    }
+                  : undefined
+              }
+            >
+              <Ionicons
+                name={focused ? 'chatbubble' : 'chatbubble-outline'}
+                size={22}
+                color={color}
+              />
+            </View>
           ),
         }}
       />
       {/* Hide non-tab routes */}
-      <Tabs.Screen name="inbox" options={{ href: null }} />
+      <Tabs.Screen name="profile/index" options={{ href: null }} />
+      <Tabs.Screen name="search/[id]" options={{ href: null }} />
     </Tabs>
   );
 }

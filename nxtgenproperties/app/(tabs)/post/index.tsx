@@ -14,13 +14,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { allAmenities, popularCities, popularLocalities } from '@/data/dummyProperties';
+import { usePropertiesStore } from '@/stores/propertiesStore';
 import { BHKType, FurnishingType, PropertyType, PropertyCategory, FacingType, PossessionType } from '@/types';
 
 type Step = 'basic' | 'details' | 'location' | 'amenities' | 'photos' | 'pricing';
 
 export default function PostPropertyScreen() {
   const router = useRouter();
+  const { popularCities, popularLocalities, allAmenities } = usePropertiesStore();
   const [currentStep, setCurrentStep] = useState<Step>('basic');
   
   // Form state

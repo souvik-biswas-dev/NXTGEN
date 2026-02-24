@@ -11,7 +11,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (user) {
-      fetchFavorites(user.id);
+      fetchFavorites();
     }
   }, [user]);
 
@@ -23,7 +23,10 @@ export default function RootLayout() {
           headerShown: false,
           animation: 'slide_from_right',
         }}
-      />
+      >
+        <Stack.Screen name="membership/index" />
+        <Stack.Screen name="map/index" />
+      </Stack>
     </>
   );
 }

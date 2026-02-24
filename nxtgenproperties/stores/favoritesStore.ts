@@ -4,44 +4,67 @@ import { supabase } from '@/lib/supabase';
 interface FavoritesState {
   favorites: Set<string>;
   loading: boolean;
-  fetchFavorites: (userId: string) => Promise<void>;
-  toggleFavorite: (userId: string, propertyId: string) => Promise<void>;
+  error: string | null;
+  fetchFavorites: () => Promise<void>;
+  toggleFavorite: (propertyId: string) => Promise<void>;
   isFavorite: (propertyId: string) => boolean;
+  clearFavorites: () => void;
 }
 
 export const useFavoritesStore = create<FavoritesState>((set, get) => ({
   favorites: new Set<string>(),
   loading: false,
+  error: null,
 
-  fetchFavorites: async (userId: string) => {
-    set({ loading: true });
+  fetchFavorites: async () => {
+    set({ loading: true, error: null });
     try {
+      // Get current user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.warn('User not authenticated');
+        set({ loading: false, favorites: new Set() });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('favorites')
         .select('property_id')
-        .eq('user_id', userId);
+        .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       const favoriteIds = new Set(data?.map(f => f.property_id) || []);
       set({ favorites: favoriteIds, loading: false });
     } catch (error) {
-      console.error('Error fetching favorites:', error);
-      set({ loading: false });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch favorites';
+      console.error('Error fetching favorites:', errorMessage);
+      set({ loading: false, error: errorMessage });
     }
   },
 
-  toggleFavorite: async (userId: string, propertyId: string) => {
+  toggleFavorite: async (propertyId: string) => {
     const { favorites } = get();
     const isFav = favorites.has(propertyId);
 
     try {
+      // Get current user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        throw new Error('User not authenticated');
+      }
+
       if (isFav) {
         // Remove favorite
         const { error } = await supabase
           .from('favorites')
           .delete()
-          .eq('user_id', userId)
+          .eq('user_id', user.id)
           .eq('property_id', propertyId);
 
         if (error) throw error;
@@ -53,7 +76,7 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
         // Add favorite
         const { error } = await supabase
           .from('favorites')
-          .insert({ user_id: userId, property_id: propertyId });
+          .insert({ user_id: user.id, property_id: propertyId });
 
         if (error) throw error;
 
@@ -62,12 +85,18 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
         set({ favorites: newFavorites });
       }
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to toggle favorite';
+      console.error('Error toggling favorite:', errorMessage);
+      set({ error: errorMessage });
       throw error;
     }
   },
 
   isFavorite: (propertyId: string) => {
     return get().favorites.has(propertyId);
+  },
+
+  clearFavorites: () => {
+    set({ favorites: new Set(), error: null });
   },
 }));

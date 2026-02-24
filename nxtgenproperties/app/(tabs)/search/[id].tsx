@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,8 @@ import { BrokerBadge } from '@/components/BrokerBadge';
 import { usePropertiesStore } from '@/stores/propertiesStore';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useRecentlyViewedStore } from '@/stores/recentlyViewedStore';
+import { Property } from '@/types';
 
 const { width } = Dimensions.get('window');
 
@@ -28,12 +30,29 @@ export default function PropertyDetailScreen() {
   const { getPropertyById } = usePropertiesStore();
   const { user } = useAuthStore();
   const { isFavorite, toggleFavorite } = useFavoritesStore();
+  const { addToRecentlyViewed } = useRecentlyViewedStore();
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'amenities' | 'details'>('overview');
+  const [property, setProperty] = useState<Property | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const property = getPropertyById(id);
+  useEffect(() => {
+    const loadProperty = async () => {
+      setLoading(true);
+      const data = await getPropertyById(id);
+      setProperty(data || null);
+      setLoading(false);
+    };
+    if (id) loadProperty();
+  }, [id]);
 
-  if (!property) {
+  useEffect(() => {
+    if (property?.id) {
+      addToRecentlyViewed(property.id);
+    }
+  }, [property?.id]);
+
+  if (loading || !property) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator size="large" color="#FF6B35" />
@@ -68,7 +87,7 @@ export default function PropertyDetailScreen() {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Check out this property: ${property.title} - ${formatPrice(property.price)} in ${property.locality}, ${property.city}`,
+        message: `Check out this property on NxtGen Properties!\n\n${property.title}\n${formatPrice(property.price)}\n${property.locality}, ${property.city}\n\nhttps://nxtgenproperties.app/property/${property.id}`,
       });
     } catch (error) {
       console.error('Error sharing:', error);
@@ -78,7 +97,7 @@ export default function PropertyDetailScreen() {
   const handleFavorite = async () => {
     if (user) {
       try {
-        await toggleFavorite(user.id, property.id);
+        await toggleFavorite(property.id);
       } catch (error) {
         console.error('Error toggling favorite:', error);
       }
@@ -436,7 +455,7 @@ export default function PropertyDetailScreen() {
 
         {/* EMI Calculator Banner */}
         <TouchableOpacity 
-          onPress={() => router.push('/tools/emi-calculator')}
+          onPress={() => router.push('/tools/emi-calculator' as any)}
           className="mx-5 mb-4"
         >
           <LinearGradient

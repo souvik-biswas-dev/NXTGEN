@@ -14,6 +14,7 @@ export type PossessionType = 'ready' | 'under-construction';
 
 export interface User {
   id: string;
+  user_id: string;
   email: string;
   phone: string;
   role: UserRole;
@@ -22,6 +23,7 @@ export interface User {
   rating?: number;
   verified_broker?: boolean;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface Property {
@@ -108,4 +110,68 @@ export interface SearchFilters {
   ownerOnly?: boolean;
   facing?: FacingType[];
   amenities?: string[];
+}
+export interface SearchHistory {
+  id: string;
+  query: string;
+  filters?: SearchFilters;
+  city?: string;
+  timestamp: string;
+}
+
+export interface Conversation {
+  id: string;
+  property_id?: string;
+  participant_1: string;
+  participant_2: string;
+  last_message?: string;
+  last_message_at: string;
+  created_at: string;
+  other_user?: User;
+  property?: Property;
+  unread_count?: number;
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  read: boolean;
+  created_at: string;
+}
+
+export type SubscriptionPlan = 'free' | 'silver' | 'gold';
+
+export interface Subscription {
+  id: string;
+  user_id: string;
+  plan: SubscriptionPlan;
+  status: 'active' | 'expired' | 'cancelled';
+  starts_at: string;
+  ends_at: string;
+  payment_id?: string;
+  created_at: string;
+}
+
+export interface UserPreferences {
+  id: string;
+  user_id: string;
+  preferred_cities: string[];
+  preferred_types: PropertyType[];
+  preferred_categories: PropertyCategory[];
+  search_history: SearchHistory[];
+  last_search_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PropertyAlert {
+  id: string;
+  user_id: string;
+  filters: SearchFilters;
+  name: string;
+  active: boolean;
+  last_notified_at?: string;
+  created_at: string;
 }

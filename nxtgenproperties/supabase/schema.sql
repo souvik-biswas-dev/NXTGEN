@@ -82,6 +82,18 @@ CREATE TABLE IF NOT EXISTS public.locality_reviews (
     UNIQUE(locality, city)
 );
 
+CREATE TABLE IF NOT EXISTS public.user_preferences (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES public.users_profiles(user_id) ON DELETE CASCADE UNIQUE NOT NULL,
+    preferred_cities TEXT[] DEFAULT '{}',
+    preferred_types TEXT[] DEFAULT '{}',
+    preferred_categories TEXT[] DEFAULT '{}',
+    search_history JSONB DEFAULT '[]'::JSONB,
+    last_search_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_properties_city ON public.properties(city);
 CREATE INDEX IF NOT EXISTS idx_properties_locality ON public.properties(locality);
 CREATE INDEX IF NOT EXISTS idx_properties_type ON public.properties(type);
@@ -95,6 +107,7 @@ CREATE INDEX IF NOT EXISTS idx_inquiries_to_user ON public.inquiries(to_user_id)
 CREATE INDEX IF NOT EXISTS idx_inquiries_property ON public.inquiries(property_id);
 CREATE INDEX IF NOT EXISTS idx_favorites_user ON public.favorites(user_id);
 CREATE INDEX IF NOT EXISTS idx_favorites_property ON public.favorites(property_id);
+CREATE INDEX IF NOT EXISTS idx_user_preferences_user ON public.user_preferences(user_id);
 
 INSERT INTO storage.buckets (id, name, public) 
 VALUES ('property-images', 'property-images', true)
@@ -109,7 +122,28 @@ ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inquiries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.locality_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view all profiles" ON public.users_profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.users_profiles;
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.users_profiles;
+DROP POLICY IF EXISTS "Anyone can view published properties" ON public.properties;
+DROP POLICY IF EXISTS "Owners can insert own properties" ON public.properties;
+DROP POLICY IF EXISTS "Owners can update own properties" ON public.properties;
+DROP POLICY IF EXISTS "Owners can delete own properties" ON public.properties;
+DROP POLICY IF EXISTS "Users can view their inquiries" ON public.inquiries;
+DROP POLICY IF EXISTS "Users can send inquiries" ON public.inquiries;
+DROP POLICY IF EXISTS "Users can update their received inquiries" ON public.inquiries;
+DROP POLICY IF EXISTS "Users can view own favorites" ON public.favorites;
+DROP POLICY IF EXISTS "Users can add favorites" ON public.favorites;
+DROP POLICY IF EXISTS "Users can remove favorites" ON public.favorites;
+DROP POLICY IF EXISTS "Users can view own preferences" ON public.user_preferences;
+DROP POLICY IF EXISTS "Users can create own preferences" ON public.user_preferences;
+DROP POLICY IF EXISTS "Users can update own preferences" ON public.user_preferences;
+DROP POLICY IF EXISTS "Anyone can view locality reviews" ON public.locality_reviews;
+
+-- Create User Profiles Policies
 CREATE POLICY "Users can view all profiles" ON public.users_profiles
     FOR SELECT USING (true);
 
@@ -119,6 +153,7 @@ CREATE POLICY "Users can update own profile" ON public.users_profiles
 CREATE POLICY "Users can insert own profile" ON public.users_profiles
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+-- Create Properties Policies
 CREATE POLICY "Anyone can view published properties" ON public.properties
     FOR SELECT USING (true);
 
@@ -131,6 +166,7 @@ CREATE POLICY "Owners can update own properties" ON public.properties
 CREATE POLICY "Owners can delete own properties" ON public.properties
     FOR DELETE USING (auth.uid() = owner_id OR auth.uid() = broker_id);
 
+-- Create Inquiries Policies
 CREATE POLICY "Users can view their inquiries" ON public.inquiries
     FOR SELECT USING (auth.uid() = from_user_id OR auth.uid() = to_user_id);
 
@@ -140,6 +176,7 @@ CREATE POLICY "Users can send inquiries" ON public.inquiries
 CREATE POLICY "Users can update their received inquiries" ON public.inquiries
     FOR UPDATE USING (auth.uid() = to_user_id);
 
+-- Create Favorites Policies
 CREATE POLICY "Users can view own favorites" ON public.favorites
     FOR SELECT USING (auth.uid() = user_id);
 
@@ -149,11 +186,31 @@ CREATE POLICY "Users can add favorites" ON public.favorites
 CREATE POLICY "Users can remove favorites" ON public.favorites
     FOR DELETE USING (auth.uid() = user_id);
 
+-- User Preferences Policies
+CREATE POLICY "Users can view own preferences" ON public.user_preferences
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can create own preferences" ON public.user_preferences
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own preferences" ON public.user_preferences
+    FOR UPDATE USING (auth.uid() = user_id);
+
 -- Locality Reviews Policies
 CREATE POLICY "Anyone can view locality reviews" ON public.locality_reviews
     FOR SELECT USING (true);
 
+-- Drop all existing storage policies
+DROP POLICY IF EXISTS "Anyone can view property images" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload property images" ON storage.objects;
+DROP POLICY IF EXISTS "Users can update own property images" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete own property images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can view avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Users can upload own avatar" ON storage.objects;
+DROP POLICY IF EXISTS "Users can update own avatar" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete own avatar" ON storage.objects;
 
+-- Create storage policies for property images
 CREATE POLICY "Anyone can view property images" ON storage.objects
     FOR SELECT USING (bucket_id = 'property-images');
 
@@ -166,6 +223,7 @@ CREATE POLICY "Users can update own property images" ON storage.objects
 CREATE POLICY "Users can delete own property images" ON storage.objects
     FOR DELETE USING (bucket_id = 'property-images' AND auth.uid()::text = (storage.foldername(name))[1]);
 
+-- Create storage policies for avatars
 CREATE POLICY "Anyone can view avatars" ON storage.objects
     FOR SELECT USING (bucket_id = 'profile-avatars');
 
@@ -175,6 +233,9 @@ CREATE POLICY "Users can upload own avatar" ON storage.objects
 CREATE POLICY "Users can update own avatar" ON storage.objects
     FOR UPDATE USING (bucket_id = 'profile-avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
 
+CREATE POLICY "Users can delete own avatar" ON storage.objects
+    FOR DELETE USING (bucket_id = 'profile-avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -183,6 +244,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drop existing triggers
+DROP TRIGGER IF EXISTS update_users_profiles_updated_at ON public.users_profiles;
+DROP TRIGGER IF EXISTS update_properties_updated_at ON public.properties;
+DROP TRIGGER IF EXISTS update_locality_reviews_updated_at ON public.locality_reviews;
+DROP TRIGGER IF EXISTS update_user_preferences_updated_at ON public.user_preferences;
+
+-- Create triggers
 CREATE TRIGGER update_users_profiles_updated_at BEFORE UPDATE ON public.users_profiles
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -190,6 +258,9 @@ CREATE TRIGGER update_properties_updated_at BEFORE UPDATE ON public.properties
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_locality_reviews_updated_at BEFORE UPDATE ON public.locality_reviews
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_user_preferences_updated_at BEFORE UPDATE ON public.user_preferences
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 INSERT INTO auth.users (id, email) VALUES 
