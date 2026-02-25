@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/image.jpg",
       "resizeMode": "contain",
       "backgroundColor": "#FF6B35"
     },
@@ -19,14 +18,11 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/image.jpg",
         "backgroundColor": "#FF6B35"
       },
       "package": "com.nxtgenproperties.app"
     },
-    "web": {
-      "favicon": "./assets/image.jpg"
-    },
+    "web": {},
     "plugins": [
       "expo-router",
       [

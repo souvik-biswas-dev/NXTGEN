@@ -52,7 +52,16 @@ export default function MapViewScreen() {
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3">
+        <TouchableOpacity 
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)');
+            }
+          }} 
+          className="mr-3"
+        >
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
         </TouchableOpacity>
         <Ionicons name="map-outline" size={22} color="#FF6B35" />
@@ -122,7 +131,7 @@ export default function MapViewScreen() {
                     {group.properties.map((property, idx) => (
                       <TouchableOpacity
                         key={property.id}
-                        onPress={() => router.push(`/search/${property.id}`)}
+                        onPress={() => router.push(`/(tabs)/search/${property.id}`)}
                         className={`flex-row items-center px-4 py-3 ${
                           idx < group.properties.length - 1 ? 'border-b border-gray-50' : ''
                         }`}

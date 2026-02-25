@@ -48,7 +48,7 @@ export default function TabsLayout() {
               style={
                 focused
                   ? {
-                      backgroundColor: theme.colors.primaryContainer,
+                      backgroundColor: theme.colors.primary,
                       borderRadius: theme.roundness.full,
                       paddingHorizontal: 16,
                       paddingVertical: 4,
@@ -59,7 +59,7 @@ export default function TabsLayout() {
               <Ionicons
                 name={focused ? 'home' : 'home-outline'}
                 size={22}
-                color={color}
+                color={focused ? 'white' : color}
               />
             </View>
           ),
@@ -74,7 +74,7 @@ export default function TabsLayout() {
               style={
                 focused
                   ? {
-                      backgroundColor: theme.colors.primaryContainer,
+                      backgroundColor: theme.colors.primary,
                       borderRadius: theme.roundness.full,
                       paddingHorizontal: 16,
                       paddingVertical: 4,
@@ -85,7 +85,7 @@ export default function TabsLayout() {
               <Ionicons
                 name={focused ? 'search' : 'search-outline'}
                 size={22}
-                color={color}
+                color={focused ? 'white' : color}
               />
             </View>
           ),
@@ -171,8 +171,33 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="profile/index"
+        options={{
+          title: 'Account',
+          tabBarIcon: ({ color, focused }) => (
+            <View
+              style={
+                focused
+                  ? {
+                      backgroundColor: theme.colors.primaryContainer,
+                      borderRadius: theme.roundness.full,
+                      paddingHorizontal: 16,
+                      paddingVertical: 4,
+                    }
+                  : undefined
+              }
+            >
+              <Ionicons
+                name={focused ? 'person' : 'person-outline'}
+                size={22}
+                color={color}
+              />
+            </View>
+          ),
+        }}
+      />
       {/* Hide non-tab routes */}
-      <Tabs.Screen name="profile/index" options={{ href: null }} />
       <Tabs.Screen name="search/[id]" options={{ href: null }} />
     </Tabs>
   );

@@ -86,7 +86,16 @@ export default function SignupScreen() {
             showsVerticalScrollIndicator={false}
           >
             {/* Header */}
-            <TouchableOpacity onPress={() => router.back()} className="mb-8">
+            <TouchableOpacity 
+              onPress={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace('/(auth)');
+                }
+              }} 
+              className="mb-8"
+            >
               <Ionicons name="arrow-back" size={28} color="white" />
             </TouchableOpacity>
 

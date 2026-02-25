@@ -43,15 +43,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('users_profiles')
-        .upsert(
-          { user_id: user.user_id, ...updates },
-          { onConflict: 'user_id' }
-        )
-        .select()
-        .single();
-
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('user_id', user.user_id)
       if (error) throw error;
 
       set({ user: { ...user, ...updates } });

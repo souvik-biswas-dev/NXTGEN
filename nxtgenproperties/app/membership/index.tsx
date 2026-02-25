@@ -139,7 +139,13 @@ export default function MembershipScreen() {
       {/* Header */}
       <View className="flex-row items-center px-4 py-3">
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)');
+            }
+          }}
           className="w-10 h-10 items-center justify-center rounded-full bg-white"
         >
           <Ionicons name="arrow-back" size={22} color="#1F2937" />

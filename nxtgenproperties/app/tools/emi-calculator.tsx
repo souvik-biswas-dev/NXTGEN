@@ -65,7 +65,16 @@ export default function EMICalculatorScreen() {
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
       <View className="flex-row items-center px-5 py-4 bg-white border-b border-gray-100">
-        <TouchableOpacity onPress={() => router.back()} className="mr-4">
+        <TouchableOpacity 
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)');
+            }
+          }} 
+          className="mr-4"
+        >
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text className="text-gray-900 text-xl font-bold">EMI Calculator</Text>

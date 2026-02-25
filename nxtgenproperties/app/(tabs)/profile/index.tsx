@@ -305,7 +305,7 @@ export default function ProfileScreen() {
             />
             <MenuItem
               icon="ribbon-outline"
-              label="Membership"
+              label="View Plans"
               onPress={() => router.push('/membership' as any)}
             />
           </View>

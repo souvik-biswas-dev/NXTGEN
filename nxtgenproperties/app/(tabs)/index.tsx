@@ -100,21 +100,28 @@ export default function HomeScreen() {
   useFocusEffect(
     React.useCallback(() => {
       const loadData = async () => {
-        const promises: Promise<void>[] = [];
-        if (!platformDataLoaded) {
-          promises.push(fetchPlatformData());
+        try {
+          const promises: Promise<void>[] = [];
+          if (!platformDataLoaded) {
+            promises.push(fetchPlatformData());
+          }
+          // Get preferred cities within the callback to avoid dependency issues
+          const cities = getPreferredCities();
+          promises.push(fetchProperties(cities));
+          if (user?.id) {
+            promises.push(fetchFavorites());
+            promises.push(fetchRecentlyViewed());
+          }
+          await Promise.all(promises);
+        } catch (error) {
+          console.error('Error loading data:', error);
         }
-        promises.push(fetchProperties(getPreferredCities()));
-        if (user?.id) {
-          promises.push(fetchFavorites());
-          promises.push(fetchRecentlyViewed());
-        }
-        await Promise.all(promises);
       };
       loadData();
-    }, [user?.id, fetchFavorites, fetchProperties, fetchPlatformData, platformDataLoaded])
+    }, [user?.id, platformDataLoaded])
   );
 
+  // Get preferred cities after preferences have been loaded via the hook
   const preferredCities = getPreferredCities();
   const propertiesForFeed =
     preferredCities.length > 0
@@ -125,15 +132,18 @@ export default function HomeScreen() {
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
     try {
+      const cities = getPreferredCities();
       await Promise.all([
-        fetchProperties(getPreferredCities()),
+        fetchProperties(cities),
         fetchPlatformData(),
         user?.id ? fetchFavorites() : Promise.resolve(),
       ]);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
     } finally {
       setRefreshing(false);
     }
-  }, [user?.id, fetchFavorites, fetchProperties, fetchPlatformData]);
+  }, [user?.id]);
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -670,7 +680,7 @@ const FeaturedPropertyCard: React.FC<FeaturedPropertyCardProps> = ({ property })
 
   return (
     <TouchableOpacity
-      onPress={() => router.push(`/search/${property.id}`)}
+      onPress={() => router.push(`/(tabs)/search/${property.id}`)}
       style={styles.featuredCard}
       activeOpacity={0.8}
     >

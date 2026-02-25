@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as ImagePicker from 'expo-image-picker';
 import { usePropertiesStore } from '@/stores/propertiesStore';
 import { BHKType, FurnishingType, PropertyType, PropertyCategory, FacingType, PossessionType } from '@/types';
 
@@ -21,7 +22,6 @@ type Step = 'basic' | 'details' | 'location' | 'amenities' | 'photos' | 'pricing
 
 export default function PostPropertyScreen() {
   const router = useRouter();
-  const { popularCities, popularLocalities, allAmenities } = usePropertiesStore();
   const [currentStep, setCurrentStep] = useState<Step>('basic');
   
   // Form state
@@ -135,7 +135,7 @@ export default function PostPropertyScreen() {
       {/* Header */}
       <View className="bg-white px-5 py-4 border-b border-gray-100">
         <View className="flex-row items-center justify-between">
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => router.push('/(tabs)')}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
           <Text className="text-gray-900 text-lg font-bold">Post Property</Text>
@@ -458,10 +458,12 @@ const PropertyDetailsStep: React.FC<{ formData: any; updateFormData: (key: strin
   </View>
 );
 
-const LocationStep: React.FC<{ formData: any; updateFormData: (key: string, value: any) => void }> = ({ 
-  formData, 
-  updateFormData 
-}) => (
+const LocationStep: React.FC<{ formData: any; updateFormData: (key: string, value: any) => void }> = ({
+  formData,
+  updateFormData
+}) => {
+  const { popularCities, popularLocalities } = usePropertiesStore();
+  return (
   <View className="px-5 py-6">
     {/* City */}
     <View className="mb-6">
@@ -534,12 +536,15 @@ const LocationStep: React.FC<{ formData: any; updateFormData: (key: string, valu
       <Text className="text-gray-500 mt-2">Map location (coming soon)</Text>
     </View>
   </View>
-);
+  );
+};
 
-const AmenitiesStep: React.FC<{ formData: any; toggleAmenity: (amenity: string) => void }> = ({ 
-  formData, 
-  toggleAmenity 
-}) => (
+const AmenitiesStep: React.FC<{ formData: any; toggleAmenity: (amenity: string) => void }> = ({
+  formData,
+  toggleAmenity
+}) => {
+  const { allAmenities } = usePropertiesStore();
+  return (
   <View className="px-5 py-6">
     <Text className="text-gray-900 font-semibold mb-4">Select Amenities</Text>
     <Text className="text-gray-500 text-sm mb-6">
@@ -576,79 +581,145 @@ const AmenitiesStep: React.FC<{ formData: any; toggleAmenity: (amenity: string) 
       </Text>
     </View>
   </View>
-);
+  );
+};
 
 const PhotosStep: React.FC<{ formData: any; updateFormData: (key: string, value: any) => void }> = ({ 
   formData, 
   updateFormData 
-}) => (
-  <View className="px-5 py-6">
-    <Text className="text-gray-900 font-semibold mb-4">Add Photos</Text>
-    <Text className="text-gray-500 text-sm mb-6">
-      Add at least 5 photos for better visibility
-    </Text>
+}) => {
+  const [loading, setLoading] = useState(false);
 
-    {/* Upload Button */}
-    <TouchableOpacity className="bg-white border-2 border-dashed border-gray-300 rounded-2xl h-48 items-center justify-center mb-6">
-      <View className="items-center">
-        <View className="w-16 h-16 bg-orange-50 rounded-full items-center justify-center mb-3">
-          <Ionicons name="camera" size={28} color="#FF6B35" />
+  const pickImages = async () => {
+    try {
+      setLoading(true);
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultiple: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        const newPhotos = result.assets.map(asset => asset.uri);
+        if (formData.photos.length + newPhotos.length > 10) {
+          Alert.alert('Error', 'You can upload maximum 10 photos');
+          return;
+        }
+        updateFormData('photos', [...formData.photos, ...newPhotos]);
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to pick images');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    const updatedPhotos = formData.photos.filter((_: any, i: number) => i !== index);
+    updateFormData('photos', updatedPhotos);
+  };
+
+  return (
+    <View className="px-5 py-6">
+      <Text className="text-gray-900 font-semibold mb-4">Add Photos</Text>
+      <Text className="text-gray-500 text-sm mb-6">
+        Add at least 5 photos for better visibility
+      </Text>
+
+      {/* Upload Button */}
+      <TouchableOpacity 
+        onPress={pickImages}
+        disabled={loading}
+        className="bg-white border-2 border-dashed border-gray-300 rounded-2xl h-48 items-center justify-center mb-6"
+      >
+        <View className="items-center">
+          <View className="w-16 h-16 bg-orange-50 rounded-full items-center justify-center mb-3">
+            <Ionicons name={loading ? "hourglass" : "camera"} size={28} color="#FF6B35" />
+          </View>
+          <Text className="text-gray-900 font-semibold">{loading ? 'Loading...' : 'Upload Photos'}</Text>
+          <Text className="text-gray-500 text-sm mt-1">JPG, PNG up to 10MB each</Text>
+          <Text className="text-gray-400 text-xs mt-2">{formData.photos.length}/10 photos</Text>
         </View>
-        <Text className="text-gray-900 font-semibold">Upload Photos</Text>
-        <Text className="text-gray-500 text-sm mt-1">JPG, PNG up to 10MB each</Text>
+      </TouchableOpacity>
+
+      {/* Uploaded Photos Grid */}
+      {formData.photos.length > 0 && (
+        <View className="mb-6">
+          <Text className="text-gray-900 font-semibold mb-3">Uploaded Photos ({formData.photos.length})</Text>
+          <View className="flex-row flex-wrap">
+            {formData.photos.map((photo: string, index: number) => (
+              <View key={index} className="w-1/3 pr-3 pb-3">
+                <View className="relative rounded-xl overflow-hidden bg-gray-200">
+                  <Image
+                    source={{ uri: photo }}
+                    className="w-full h-24"
+                    resizeMode="cover"
+                  />
+                  <TouchableOpacity
+                    onPress={() => removePhoto(index)}
+                    className="absolute top-1 right-1 bg-red-500 rounded-full p-1"
+                  >
+                    <Ionicons name="close" size={16} color="white" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Photo Guidelines */}
+      <View className="bg-gray-50 rounded-xl p-4">
+        <Text className="text-gray-900 font-semibold mb-3">Photo Guidelines</Text>
+        <View className="space-y-2">
+          <View className="flex-row items-center">
+            <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+            <Text className="text-gray-600 ml-2">Use high-quality, well-lit photos</Text>
+          </View>
+          <View className="flex-row items-center">
+            <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+            <Text className="text-gray-600 ml-2">Include photos of all rooms</Text>
+          </View>
+          <View className="flex-row items-center">
+            <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+            <Text className="text-gray-600 ml-2">Add exterior and view photos</Text>
+          </View>
+          <View className="flex-row items-center">
+            <Ionicons name="close-circle" size={18} color="#EF4444" />
+            <Text className="text-gray-600 ml-2">Avoid blurry or dark photos</Text>
+          </View>
+        </View>
       </View>
-    </TouchableOpacity>
 
-    {/* Photo Guidelines */}
-    <View className="bg-gray-50 rounded-xl p-4">
-      <Text className="text-gray-900 font-semibold mb-3">Photo Guidelines</Text>
-      <View className="space-y-2">
-        <View className="flex-row items-center">
-          <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-          <Text className="text-gray-600 ml-2">Use high-quality, well-lit photos</Text>
-        </View>
-        <View className="flex-row items-center">
-          <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-          <Text className="text-gray-600 ml-2">Include photos of all rooms</Text>
-        </View>
-        <View className="flex-row items-center">
-          <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-          <Text className="text-gray-600 ml-2">Add exterior and view photos</Text>
-        </View>
-        <View className="flex-row items-center">
-          <Ionicons name="close-circle" size={18} color="#EF4444" />
-          <Text className="text-gray-600 ml-2">Avoid blurry or dark photos</Text>
-        </View>
+      {/* Sample Photos (Placeholder) */}
+      <View className="mt-6">
+        <Text className="text-gray-900 font-semibold mb-3">Demo Photos (for testing)</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {[
+            'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=400',
+            'https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg?auto=compress&cs=tinysrgb&w=400',
+            'https://images.pexels.com/photos/1648776/pexels-photo-1648776.jpeg?auto=compress&cs=tinysrgb&w=400',
+          ].map((photo, index) => (
+            <TouchableOpacity 
+              key={index}
+              onPress={() => updateFormData('photos', [...formData.photos, photo])}
+              className="relative mr-3"
+            >
+              <Image
+                source={{ uri: photo }}
+                className="w-24 h-24 rounded-xl"
+              />
+              <View className="absolute bottom-1 right-1 bg-white rounded-full p-1">
+                <Ionicons name="add-circle" size={20} color="#FF6B35" />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
     </View>
-
-    {/* Sample Photos (Placeholder) */}
-    <View className="mt-6">
-      <Text className="text-gray-900 font-semibold mb-3">Demo Photos (for testing)</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {[
-          'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=400',
-          'https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg?auto=compress&cs=tinysrgb&w=400',
-          'https://images.pexels.com/photos/1648776/pexels-photo-1648776.jpeg?auto=compress&cs=tinysrgb&w=400',
-        ].map((photo, index) => (
-          <TouchableOpacity 
-            key={index}
-            onPress={() => updateFormData('photos', [...formData.photos, photo])}
-            className="relative mr-3"
-          >
-            <Image
-              source={{ uri: photo }}
-              className="w-24 h-24 rounded-xl"
-            />
-            <View className="absolute bottom-1 right-1 bg-white rounded-full p-1">
-              <Ionicons name="add-circle" size={20} color="#FF6B35" />
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  </View>
-);
+  );
+};
 
 const PricingStep: React.FC<{ formData: any; updateFormData: (key: string, value: any) => void }> = ({ 
   formData, 

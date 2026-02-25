@@ -48,7 +48,16 @@ export default function InsightsScreen() {
         className="pt-14 pb-8 px-4"
       >
         <View className="flex-row items-center mb-4">
-          <TouchableOpacity onPress={() => router.back()} className="mr-4">
+          <TouchableOpacity 
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(tabs)');
+              }
+            }} 
+            className="mr-4"
+          >
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           <Text className="text-white text-xl font-bold">Market Insights</Text>

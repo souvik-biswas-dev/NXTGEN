@@ -24,6 +24,10 @@ export default function RootLayout() {
           animation: 'slide_from_right',
         }}
       >
+        {/* Main routing is handled by app/index.tsx */}
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="membership/index" />
         <Stack.Screen name="map/index" />
       </Stack>

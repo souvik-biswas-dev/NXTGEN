@@ -1,8 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { PropertyCard } from '@/components/PropertyCard';
 import { supabase } from '@/lib/supabase';
@@ -11,46 +10,48 @@ import { theme } from '@/constants/theme';
 export default function FavoritesScreen() {
   const { favorites, fetchFavorites } = useFavoritesStore();
   const [properties, setProperties] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadFavorites = useCallback(async () => {
-    try {
-      await fetchFavorites();
-      const currentFavorites = useFavoritesStore.getState().favorites;
+  // Re-load property details whenever the favorites Set reference changes.
+  // toggleFavorite always creates a new Set, so this fires on every add/remove.
+  useEffect(() => {
+    let cancelled = false;
 
-      if (currentFavorites.size === 0) {
+    const loadPropertyDetails = async () => {
+      if (favorites.size === 0) {
         setProperties([]);
+        setLoading(false);
         return;
       }
 
-      const favoriteIds = Array.from(currentFavorites);
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .in('id', favoriteIds);
-
-      if (error) throw error;
-      setProperties(data || []);
-    } catch (error) {
-      console.error('Error fetching favorites:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchFavorites]);
-
-  useFocusEffect(
-    React.useCallback(() => {
       setLoading(true);
-      loadFavorites();
-    }, [loadFavorites])
-  );
+      try {
+        const favoriteIds = Array.from(favorites);
+        const { data, error } = await supabase
+          .from('properties')
+          .select('*')
+          .in('id', favoriteIds);
 
+        if (error) throw error;
+        if (!cancelled) setProperties(data || []);
+      } catch (error) {
+        console.error('Error fetching favorite properties:', error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    loadPropertyDetails();
+    return () => { cancelled = true; };
+  }, [favorites]);
+
+  // Pull-to-refresh: re-fetch from Supabase → updates store Set → triggers effect above
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadFavorites();
+    await fetchFavorites();
     setRefreshing(false);
-  }, [loadFavorites]);
+  }, [fetchFavorites]);
 
   const favoriteCount = favorites.size;
 

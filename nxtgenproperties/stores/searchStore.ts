@@ -14,14 +14,14 @@ const initialFilters: SearchFilters = {
   maxPrice: undefined,
   type: undefined,
   category: undefined,
-  bhk: undefined,
-  furnishing: undefined,
+  bhk: [],
+  furnishing: [],
   minArea: undefined,
   maxArea: undefined,
   possession: undefined,
   ownerOnly: false,
-  facing: undefined,
-  amenities: undefined,
+  facing: [],
+  amenities: [],
 };
 
 export const useSearchStore = create<SearchState>((set, get) => ({

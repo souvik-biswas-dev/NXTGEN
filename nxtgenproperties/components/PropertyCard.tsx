@@ -39,7 +39,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, variant = 
 
   return (
     <TouchableOpacity
-      onPress={() => router.push(`/search/${property.id}`)}
+      onPress={() => router.push(`/(tabs)/search/${property.id}`)}
       activeOpacity={0.8}
       style={[styles.card, isFeatured ? styles.cardFeatured : styles.cardDefault]}
     >

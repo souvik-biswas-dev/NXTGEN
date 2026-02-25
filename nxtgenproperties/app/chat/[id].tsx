@@ -255,7 +255,16 @@ export default function ChatRoomScreen() {
       >
         {/* Header with user info */}
         <View className="px-4 py-3 bg-white border-b border-gray-100 flex-row items-center">
-          <TouchableOpacity onPress={() => router.back()} className="mr-3">
+          <TouchableOpacity 
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(tabs)');
+              }
+            }} 
+            className="mr-3"
+          >
             <Ionicons name="chevron-back" size={24} color="#374151" />
           </TouchableOpacity>
 
@@ -281,7 +290,7 @@ export default function ChatRoomScreen() {
           <TouchableOpacity
             className="mx-4 mt-3 mb-1 p-3 bg-orange-50 border border-orange-100 rounded-xl flex-row items-center"
             activeOpacity={0.7}
-            onPress={() => router.push(`/search/${property.id}` as any)}
+            onPress={() => router.push(`/(tabs)/search/${property.id}` as any)}
           >
             {property.photos?.[0] && (
               <Image

@@ -103,7 +103,16 @@ export default function VerifyScreen() {
         >
           {/* Header */}
           <View className="pt-16 px-6">
-            <TouchableOpacity onPress={() => router.back()} className="mb-8">
+            <TouchableOpacity 
+              onPress={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace('/(auth)');
+                }
+              }} 
+              className="mb-8"
+            >
               <Ionicons name="arrow-back" size={28} color="white" />
             </TouchableOpacity>
 

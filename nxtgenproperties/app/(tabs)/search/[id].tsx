@@ -114,7 +114,13 @@ export default function PropertyDetailScreen() {
           {/* Header Buttons */}
           <View className="absolute top-12 left-0 right-0 flex-row items-center justify-between px-5">
             <TouchableOpacity
-              onPress={() => router.back()}
+              onPress={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace('/(tabs)');
+                }
+              }}
               className="bg-white/95 rounded-full p-2.5 shadow-lg"
             >
               <Ionicons name="arrow-back" size={22} color="#333" />

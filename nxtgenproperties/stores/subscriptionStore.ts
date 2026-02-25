@@ -52,7 +52,11 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
     set({ loading: true });
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      if (!user) {
+        // User not authenticated, just clear subscription and return
+        set({ subscription: null, loading: false });
+        return;
+      }
 
       const { data, error } = await supabase
         .from('subscriptions')
