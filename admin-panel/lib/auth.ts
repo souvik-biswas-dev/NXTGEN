@@ -1,9 +1,11 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.ADMIN_JWT_SECRET || 'fallback_secret_change_in_production'
-);
+if (!process.env.ADMIN_JWT_SECRET) {
+  throw new Error('ADMIN_JWT_SECRET is not configured. See ADMIN_ACCESS.md');
+}
+
+const JWT_SECRET = new TextEncoder().encode(process.env.ADMIN_JWT_SECRET);
 
 const COOKIE_NAME = 'admin_session';
 const SESSION_DURATION = 60 * 60 * 8; // 8 hours in seconds

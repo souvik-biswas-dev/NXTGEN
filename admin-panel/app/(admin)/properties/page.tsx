@@ -11,7 +11,11 @@ async function getProperties(search?: string, city?: string, type?: string, veri
   const supabase = createAdminClient();
   let query = supabase
     .from('properties')
-    .select('*, owner:owner_id(name, email), broker:broker_id(name, email)')
+    .select(`
+      *,
+      owner:users_profiles!properties_owner_id_fkey(name, email),
+      broker:users_profiles!properties_broker_id_fkey(name, email)
+    `)
     .order('created_at', { ascending: false })
     .limit(200);
 

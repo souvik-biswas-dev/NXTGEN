@@ -39,8 +39,6 @@ export default function LoginPage() {
 
     try {
       const supabase = getSupabaseClient();
-      const token = searchParams.get('token');
-
       const { error } = await supabase.auth.updateUser({ password: resetPassword });
 
       if (error) throw error;

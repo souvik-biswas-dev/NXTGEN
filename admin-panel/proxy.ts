@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify } from 'jose';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.ADMIN_JWT_SECRET || 'fallback_secret_change_in_production'
-);
+if (!process.env.ADMIN_JWT_SECRET) {
+  throw new Error('ADMIN_JWT_SECRET is not configured. See ADMIN_ACCESS.md');
+}
+
+const JWT_SECRET = new TextEncoder().encode(process.env.ADMIN_JWT_SECRET);
 
 const PUBLIC_PATHS = ['/login'];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public paths
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
-  // Allow Next.js internals and static files
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/auth') ||
@@ -31,9 +30,9 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
+    const { jwtVerify } = await import('jose');
     const { payload } = await jwtVerify(token, JWT_SECRET);
 
-    // Ensure the user has admin role
     if (payload.role !== 'admin') {
       return NextResponse.redirect(new URL('/login?error=unauthorized', request.url));
     }
@@ -47,3 +46,4 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
+

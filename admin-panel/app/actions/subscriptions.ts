@@ -1,9 +1,15 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/server';
+import { getSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 export async function cancelSubscription(subscriptionId: string) {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    return { error: 'Unauthorized' };
+  }
+
   const supabase = createAdminClient();
   const { error } = await supabase
     .from('subscriptions')
@@ -16,6 +22,11 @@ export async function cancelSubscription(subscriptionId: string) {
 }
 
 export async function extendSubscription(subscriptionId: string, days: number) {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    return { error: 'Unauthorized' };
+  }
+
   const supabase = createAdminClient();
 
   // Get current ends_at
@@ -45,6 +56,11 @@ export async function updateLocalityReview(
   rating: number,
   avgPrice?: number
 ) {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    return { error: 'Unauthorized' };
+  }
+
   const supabase = createAdminClient();
   const { error } = await supabase
     .from('locality_reviews')
@@ -57,6 +73,11 @@ export async function updateLocalityReview(
 }
 
 export async function deleteLocalityReview(id: string) {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    return { error: 'Unauthorized' };
+  }
+
   const supabase = createAdminClient();
   const { error } = await supabase.from('locality_reviews').delete().eq('id', id);
   if (error) return { error: error.message };
@@ -65,6 +86,11 @@ export async function deleteLocalityReview(id: string) {
 }
 
 export async function updatePlatformData(key: string, data: unknown) {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    return { error: 'Unauthorized' };
+  }
+
   const supabase = createAdminClient();
   const { error } = await supabase
     .from('platform_data')

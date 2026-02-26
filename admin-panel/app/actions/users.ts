@@ -1,10 +1,16 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/server';
+import { getSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 export async function updateUserRole(userId: string, role: string) {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    return { error: 'Unauthorized' };
+  }
+
   const validRoles = ['buyer', 'owner', 'broker', 'admin'];
   if (!validRoles.includes(role)) return { error: 'Invalid role' };
 
@@ -20,6 +26,11 @@ export async function updateUserRole(userId: string, role: string) {
 }
 
 export async function toggleBrokerVerification(userId: string, verified: boolean) {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    return { error: 'Unauthorized' };
+  }
+
   const supabase = createAdminClient();
   const { error } = await supabase
     .from('users_profiles')
@@ -32,6 +43,11 @@ export async function toggleBrokerVerification(userId: string, verified: boolean
 }
 
 export async function deleteUser(userId: string) {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    return { error: 'Unauthorized' };
+  }
+
   const supabase = createAdminClient();
   // Delete from Supabase Auth (cascades to users_profiles due to FK)
   const { error } = await supabase.auth.admin.deleteUser(userId);
@@ -50,6 +66,11 @@ export async function createAdminUser(email: string, password: string, name: str
 
   const parsed = schema.safeParse({ email, password, name, phone });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Validation error' };
+
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    return { error: 'Unauthorized' };
+  }
 
   const supabase = createAdminClient();
 

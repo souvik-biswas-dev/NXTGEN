@@ -1,9 +1,15 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/server';
+import { getSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 export async function togglePropertyVerified(propertyId: string, verified: boolean) {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    return { error: 'Unauthorized' };
+  }
+
   const supabase = createAdminClient();
   const { error } = await supabase
     .from('properties')
@@ -16,6 +22,11 @@ export async function togglePropertyVerified(propertyId: string, verified: boole
 }
 
 export async function togglePropertyFeatured(propertyId: string, featured: boolean) {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    return { error: 'Unauthorized' };
+  }
+
   const supabase = createAdminClient();
   const { error } = await supabase
     .from('properties')
@@ -28,6 +39,11 @@ export async function togglePropertyFeatured(propertyId: string, featured: boole
 }
 
 export async function deleteProperty(propertyId: string) {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    return { error: 'Unauthorized' };
+  }
+
   const supabase = createAdminClient();
   const { error } = await supabase.from('properties').delete().eq('id', propertyId);
   if (error) return { error: error.message };
@@ -36,6 +52,11 @@ export async function deleteProperty(propertyId: string) {
 }
 
 export async function bulkVerifyProperties(propertyIds: string[]) {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    return { error: 'Unauthorized' };
+  }
+
   const supabase = createAdminClient();
   const { error } = await supabase
     .from('properties')
@@ -48,6 +69,11 @@ export async function bulkVerifyProperties(propertyIds: string[]) {
 }
 
 export async function bulkDeleteProperties(propertyIds: string[]) {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    return { error: 'Unauthorized' };
+  }
+
   const supabase = createAdminClient();
   const { error } = await supabase.from('properties').delete().in('id', propertyIds);
   if (error) return { error: error.message };
