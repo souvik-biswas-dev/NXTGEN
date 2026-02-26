@@ -21,6 +21,9 @@ export default function LoginScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [emailLoading, setEmailLoading] = useState(false);
 
   const handlePhoneAuth = async () => {
     if (!phoneNumber) {
@@ -47,6 +50,29 @@ export default function LoginScreen() {
       Alert.alert('Error', error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEmailLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter email and password');
+      return;
+    }
+
+    setEmailLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Email login failed. Please try again.');
+    } finally {
+      setEmailLoading(false);
     }
   };
 
@@ -134,6 +160,46 @@ export default function LoginScreen() {
               We'll send otp for verification
             </Text>
 
+            {/* Email/password login */}
+            <View className="mb-6">
+              <Text className="text-white/80 text-center mb-3">
+                Or log in with email
+              </Text>
+              <View className="bg-white/90 rounded-2xl px-4 py-4 mb-3">
+                <TextInput
+                  placeholder="Email"
+                  placeholderTextColor="#9CA3AF"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  className="text-gray-900 text-base"
+                />
+              </View>
+              <View className="bg-white/90 rounded-2xl px-4 py-4 mb-3">
+                <TextInput
+                  placeholder="Password"
+                  placeholderTextColor="#9CA3AF"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  className="text-gray-900 text-base"
+                />
+              </View>
+              <TouchableOpacity
+                onPress={handleEmailLogin}
+                disabled={emailLoading}
+                className="bg-primary rounded-2xl py-4 items-center"
+                activeOpacity={0.8}
+              >
+                {emailLoading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text className="text-white text-lg font-semibold">Log in with Email</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
             {/* Social Login */}
             <TouchableOpacity
               className="bg-blue-600 rounded-2xl py-4 flex-row items-center justify-center mb-4"
@@ -162,6 +228,19 @@ export default function LoginScreen() {
                 </>
               )}
             </TouchableOpacity>
+
+            {/* Register link */}
+            <View className="mt-8 items-center">
+              <Text className="text-white/80">
+                Don&apos;t have an account?{' '}
+                <Text
+                  className="text-primary font-semibold"
+                  onPress={() => router.push('/(auth)/signup')}
+                >
+                  Register
+                </Text>
+              </Text>
+            </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
