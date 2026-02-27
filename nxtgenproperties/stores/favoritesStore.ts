@@ -19,11 +19,11 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
   fetchFavorites: async () => {
     set({ loading: true, error: null });
     try {
-      // Get current user
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !user) {
-        console.warn('User not authenticated');
+      // Use cached session — avoids a network round-trip to Supabase Auth
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
         set({ loading: false, favorites: new Set() });
         return;
       }
@@ -52,10 +52,10 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
     const isFav = favorites.has(propertyId);
 
     try {
-      // Get current user
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !user) {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
         throw new Error('User not authenticated');
       }
 

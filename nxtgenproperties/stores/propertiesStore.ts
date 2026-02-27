@@ -98,49 +98,33 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
   fetchProperties: async (preferredCities?: string[]) => {
     set({ loading: true });
     try {
-      if (preferredCities && preferredCities.length > 0) {
-        const { data: preferredData } = await supabase
-          .from('properties')
-          .select(`
-            *,
-            owner:users_profiles!properties_owner_id_fkey(*),
-            broker:users_profiles!properties_broker_id_fkey(*)
-          `)
-          .in('city', preferredCities)
-          .order('featured', { ascending: false })
-          .order('created_at', { ascending: false })
-          .limit(30);
-
-        const { data: otherData } = await supabase
-          .from('properties')
-          .select(`
-            *,
-            owner:users_profiles!properties_owner_id_fkey(*),
-            broker:users_profiles!properties_broker_id_fkey(*)
-          `)
-          .not('city', 'in', `(${preferredCities.join(',')})`)
-          .order('featured', { ascending: false })
-          .order('created_at', { ascending: false })
-          .limit(20);
-
-        const allProperties = [...(preferredData || []), ...(otherData || [])];
-        set({ properties: allProperties, filteredProperties: allProperties, loading: false });
-        return;
-      }
-
+      // Single query for all cases — Postgres sorts preferred-city rows first via
+      // a CASE expression emulated by ordering on a computed boolean column isn't
+      // available in PostgREST, so we fetch one flat batch and re-sort client-side.
+      // This halves round-trips when preferredCities is set (was 2 queries → 1).
       const { data, error } = await supabase
         .from('properties')
-        .select(`
-          *,
-          owner:users_profiles!properties_owner_id_fkey(*),
-          broker:users_profiles!properties_broker_id_fkey(*)
-        `)
+        .select('*')
         .order('featured', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      set({ properties: data || [], filteredProperties: data || [], loading: false });
+
+      let allProperties = data || [];
+
+      // Client-side preferred-city sort: O(n) stable partition
+      if (preferredCities && preferredCities.length > 0) {
+        const preferred = allProperties.filter((p) =>
+          preferredCities.some((c) => p.city.toLowerCase() === c.toLowerCase())
+        );
+        const others = allProperties.filter((p) =>
+          !preferredCities.some((c) => p.city.toLowerCase() === c.toLowerCase())
+        );
+        allProperties = [...preferred, ...others];
+      }
+
+      set({ properties: allProperties, filteredProperties: allProperties, loading: false });
     } catch (error) {
       console.error('Error fetching properties:', error);
       set({ loading: false });
@@ -201,11 +185,7 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
     try {
       const { data, error } = await supabase
         .from('properties')
-        .select(`
-          *,
-          owner:users_profiles!properties_owner_id_fkey(*),
-          broker:users_profiles!properties_broker_id_fkey(*)
-        `)
+        .select('*')
         .or(`title.ilike.%${query}%,locality.ilike.%${query}%,city.ilike.%${query}%`)
         .order('featured', { ascending: false })
         .order('created_at', { ascending: false })
@@ -232,11 +212,7 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
     try {
       let query = supabase
         .from('properties')
-        .select(`
-          *,
-          owner:users_profiles!properties_owner_id_fkey(*),
-          broker:users_profiles!properties_broker_id_fkey(*)
-        `)
+        .select('*')
         .order('featured', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(50);

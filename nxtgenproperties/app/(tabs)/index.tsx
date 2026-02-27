@@ -145,6 +145,7 @@ export default function HomeScreen() {
     }
   }, [user?.id]);
 
+  
   const handleSearch = () => {
     if (searchQuery.trim()) {
       addRecentSearch(searchQuery);
@@ -544,8 +545,9 @@ export default function HomeScreen() {
                 <Image
                   source={{ uri: project.image }}
                   className="w-full h-32"
-                  style={{ borderTopLeftRadius: theme.roundness.lg, borderTopRightRadius: theme.roundness.lg }}
+                  style={{ borderTopLeftRadius: theme.roundness.lg, borderTopRightRadius: theme.roundness.lg, backgroundColor: theme.colors.surfaceVariant }}
                   resizeMode="cover"
+                  fadeDuration={0}
                 />
                 <View style={{ padding: 12 }}>
                   <Text style={{ color: theme.colors.secondary, fontWeight: '600', fontSize: 14 }} numberOfLines={1}>
@@ -689,6 +691,8 @@ const FeaturedPropertyCard: React.FC<FeaturedPropertyCardProps> = ({ property })
           source={{ uri: property.photos[0] }}
           className="w-full h-40"
           resizeMode="cover"
+          fadeDuration={0}
+          style={{ backgroundColor: theme.colors.surfaceVariant }}
         />
         {property.featured && (
           <View style={styles.featuredBadge}>

@@ -136,7 +136,8 @@ export default function ProfileScreen() {
                     uri: user?.avatar_url || 'https://ui-avatars.com/api/?name=' + (user?.name || 'User') + '&size=200&background=FF6B35&color=fff'
                   }}
                   className="w-28 h-28 rounded-full shadow-md"
-                  style={{ borderWidth: 4, borderColor: theme.colors.primaryContainer }}
+                  style={{ borderWidth: 4, borderColor: theme.colors.primaryContainer, backgroundColor: theme.colors.primaryContainer }}
+                  fadeDuration={0}
                 />
                 <TouchableOpacity 
                   onPress={handleEditProfile}

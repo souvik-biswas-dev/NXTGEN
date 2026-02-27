@@ -49,18 +49,31 @@ export const useUserPreferences = () => {
   };
 
   const createUserPreferences = async (): Promise<UserPreferences | null> => {
-    try {
-      // Verify Supabase auth session exists before insert (RLS requires auth.uid())
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.warn('No active Supabase session, skipping user preferences creation');
-        return null;
-      }
+    if (!user?.id) return null;
 
+    // The Supabase session JWT may not be committed to the client yet right
+    // after onAuthStateChange fires (OTP flow timing). Poll briefly until
+    // getUser() confirms an active session before hitting RLS-protected tables.
+    let sessionUserId: string | null = null;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser?.id) {
+        sessionUserId = authUser.id;
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 300));
+    }
+
+    if (!sessionUserId) {
+      // Session genuinely not available — skip silently
+      return null;
+    }
+
+    try {
       const { data, error } = await supabase
         .from('user_preferences')
         .upsert({
-          user_id: session.user.id,
+          user_id: sessionUserId,
           preferred_cities: [],
           preferred_types: [],
           preferred_categories: [],

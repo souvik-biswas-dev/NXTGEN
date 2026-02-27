@@ -1,19 +1,16 @@
-import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { LogBox } from 'react-native';
 import '../global.css';
 import { useAuth } from '@/hooks/useAuth';
-import { useFavoritesStore } from '@/stores/favoritesStore';
+
+// Suppress deprecation warning from react-navigation internals — our code
+// already uses react-native-safe-area-context everywhere.
+LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
 
 export default function RootLayout() {
-  const { user } = useAuth();
-  const { fetchFavorites } = useFavoritesStore();
-
-  useEffect(() => {
-    if (user) {
-      fetchFavorites();
-    }
-  }, [user]);
+  // Keep useAuth to initialise the auth listener and populate authStore
+  useAuth();
 
   return (
     <>

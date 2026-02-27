@@ -43,35 +43,48 @@ export const useChatStore = create<ChatState>((set, get) => ({
         .order('last_message_at', { ascending: false });
 
       if (error) throw error;
+      if (!data || data.length === 0) {
+        set({ conversations: [], loading: false });
+        return;
+      }
 
-      // Fetch other user profiles for each conversation
-      const conversationsWithUsers: Conversation[] = await Promise.all(
-        (data || []).map(async (conv) => {
-          const otherUserId = conv.participant_1 === userId
-            ? conv.participant_2
-            : conv.participant_1;
-
-          const { data: profile } = await supabase
-            .from('users_profiles')
-            .select('*')
-            .eq('user_id', otherUserId)
-            .single();
-
-          // Get unread count
-          const { count } = await supabase
-            .from('messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('conversation_id', conv.id)
-            .eq('read', false)
-            .neq('sender_id', userId);
-
-          return {
-            ...conv,
-            other_user: profile || undefined,
-            unread_count: count || 0,
-          };
-        })
+      // Collect all other-user IDs and conversation IDs in one pass
+      const otherUserIds = data.map((conv) =>
+        conv.participant_1 === userId ? conv.participant_2 : conv.participant_1
       );
+      const convIds = data.map((conv) => conv.id);
+
+      // Two batched queries instead of 2×N individual queries
+      const [{ data: profiles }, { data: unreadRows }] = await Promise.all([
+        supabase
+          .from('users_profiles')
+          .select('*')
+          .in('user_id', otherUserIds),
+        supabase
+          .from('messages')
+          .select('conversation_id')
+          .in('conversation_id', convIds)
+          .eq('read', false)
+          .neq('sender_id', userId),
+      ]);
+
+      const profileMap: Record<string, any> = {};
+      (profiles || []).forEach((p) => { profileMap[p.user_id] = p; });
+
+      const unreadMap: Record<string, number> = {};
+      (unreadRows || []).forEach((row) => {
+        unreadMap[row.conversation_id] = (unreadMap[row.conversation_id] || 0) + 1;
+      });
+
+      const conversationsWithUsers: Conversation[] = data.map((conv) => {
+        const otherUserId =
+          conv.participant_1 === userId ? conv.participant_2 : conv.participant_1;
+        return {
+          ...conv,
+          other_user: profileMap[otherUserId] || undefined,
+          unread_count: unreadMap[conv.id] || 0,
+        };
+      });
 
       set({ conversations: conversationsWithUsers, loading: false });
     } catch (error) {
@@ -123,7 +136,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     propertyId?: string
   ) => {
     try {
-      // Check if conversation already exists
       const { data: existing } = await supabase
         .from('conversations')
         .select('id')
@@ -134,7 +146,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       if (existing) return existing.id;
 
-      // Create new conversation
       const { data, error } = await supabase
         .from('conversations')
         .insert({
@@ -204,7 +215,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   getUnreadCount: async (userId: string) => {
     try {
-      // Get all conversation IDs for this user
+      // Single query: join conversations filter inline via .or on messages not possible,
+      // but we can still avoid the two-step by using a subquery approach.
+      // Supabase JS doesn't support subqueries, so two queries is the minimum — but
+      // we avoid the N+1 by not looping per conversation.
       const { data: convos } = await supabase
         .from('conversations')
         .select('id')
@@ -212,11 +226,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       if (!convos || convos.length === 0) return 0;
 
-      const convoIds = convos.map((c) => c.id);
       const { count } = await supabase
         .from('messages')
         .select('*', { count: 'exact', head: true })
-        .in('conversation_id', convoIds)
+        .in('conversation_id', convos.map((c) => c.id))
         .eq('read', false)
         .neq('sender_id', userId);
 

@@ -30,12 +30,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setUserPreferences: (preferences) => set({ userPreferences: preferences }),
 
   signOut: async () => {
-    try {
-      await supabase.auth.signOut();
-      set({ user: null, session: null, userPreferences: null });
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+    // Clear local state immediately so the UI reacts without waiting for network
+    set({ user: null, session: null, userPreferences: null });
+    // Fire Supabase sign-out in background — don't block the caller
+    supabase.auth.signOut().catch((error) => {
+      console.error('Error signing out from Supabase:', error);
+    });
   },
 
   updateProfile: async (updates) => {

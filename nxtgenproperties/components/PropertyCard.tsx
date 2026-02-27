@@ -49,6 +49,8 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, variant = 
           source={{ uri: property.photos[0] || 'https://via.placeholder.com/400x300' }}
           className={`w-full ${isFeatured ? 'h-56' : 'h-40'}`}
           resizeMode="cover"
+          fadeDuration={0}
+          style={{ backgroundColor: theme.colors.surfaceVariant }}
         />
 
         {/* Frosted price overlay */}

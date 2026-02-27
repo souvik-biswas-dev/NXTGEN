@@ -16,7 +16,8 @@ export const useRecentlyViewedStore = create<RecentlyViewedState>((set) => ({
 
   addToRecentlyViewed: async (propertyId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) return;
 
       const { error } = await supabase
@@ -35,8 +36,12 @@ export const useRecentlyViewedStore = create<RecentlyViewedState>((set) => ({
   fetchRecentlyViewed: async () => {
     set({ loading: true });
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) {
+        set({ loading: false });
+        return;
+      }
 
       const { data, error } = await supabase
         .from('recently_viewed')
@@ -58,8 +63,12 @@ export const useRecentlyViewedStore = create<RecentlyViewedState>((set) => ({
   clearRecentlyViewed: async () => {
     set({ loading: true });
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) {
+        set({ loading: false });
+        return;
+      }
 
       const { error } = await supabase
         .from('recently_viewed')

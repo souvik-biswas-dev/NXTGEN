@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -9,31 +9,108 @@ import {
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { marketTrends, popularCities, dummyProperties } from '../../data/dummyProperties';
+import { supabase } from '@/lib/supabase';
 
 const { width } = Dimensions.get('window');
 
 type TimeRange = '1M' | '3M' | '6M' | '1Y';
 type PropertyType = 'residential' | 'commercial';
 
+interface MarketTrend {
+  city: string;
+  trend: 'up' | 'down';
+  change: string;
+  avgPrice: string;
+  period: string;
+}
+
+interface PlatformCity {
+  id: string;
+  name: string;
+  properties: number;
+}
+
+interface TopLocality {
+  name: string;
+  price: string;
+  change: string;
+  trend: 'up' | 'down';
+}
+
 export default function InsightsScreen() {
   const router = useRouter();
   const [selectedCity, setSelectedCity] = useState('Mumbai');
   const [timeRange, setTimeRange] = useState<TimeRange>('6M');
   const [propertyType, setPropertyType] = useState<PropertyType>('residential');
+  const [marketTrends, setMarketTrends] = useState<MarketTrend[]>([]);
+  const [popularCities, setPopularCities] = useState<PlatformCity[]>([]);
+  const [topLocalities, setTopLocalities] = useState<TopLocality[]>([]);
+  const [avgApartmentPrice, setAvgApartmentPrice] = useState<number>(0);
+  const [avgVillaPrice, setAvgVillaPrice] = useState<number>(0);
 
-  const cityTrend = marketTrends.find(t => t.city === selectedCity) || marketTrends[0];
-  
-  // Calculate average prices by type
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [{ data: platformData }, { data: aptAvg }, { data: villaAvg }] = await Promise.all([
+          supabase
+            .from('platform_data')
+            .select('key, data')
+            .in('key', ['market_trends', 'popular_cities', 'top_localities']),
+          supabase
+            .from('properties')
+            .select('avg_price:avg(price)')
+            .in('bhk', ['2BHK', '3BHK'])
+            .maybeSingle(),
+          supabase
+            .from('properties')
+            .select('avg_price:avg(price)')
+            .eq('bhk', '5+BHK')
+            .maybeSingle(),
+        ]);
+
+        const platformMap: Record<string, any> = {};
+        platformData?.forEach((row: any) => {
+          platformMap[row.key] = row.data;
+        });
+
+        if (platformMap.market_trends) {
+          setMarketTrends(platformMap.market_trends as MarketTrend[]);
+        }
+        if (platformMap.popular_cities) {
+          setPopularCities(platformMap.popular_cities as PlatformCity[]);
+        }
+        if (platformMap.top_localities) {
+          setTopLocalities(platformMap.top_localities as TopLocality[]);
+        }
+
+        const apt = (aptAvg as any)?.avg_price as number | null;
+        const villa = (villaAvg as any)?.avg_price as number | null;
+        if (apt) {
+          setAvgApartmentPrice(Math.round(apt / 100000));
+        }
+        if (villa) {
+          setAvgVillaPrice(Math.round(villa / 100000));
+        }
+      } catch (e) {
+        console.error('Error loading insights data:', e);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const cityTrend =
+    marketTrends.find((t) => t.city === selectedCity) || marketTrends[0] || {
+      city: selectedCity,
+      trend: 'up' as const,
+      change: '+0.0%',
+      avgPrice: '0',
+      period: 'YoY',
+    };
+
   const avgPrices = {
-    apartment: Math.round(dummyProperties
-      .filter(p => p.bhk === '3BHK' || p.bhk === '2BHK')
-      .reduce((acc, p) => acc + p.price, 0) / 
-      Math.max(dummyProperties.filter(p => p.bhk === '3BHK' || p.bhk === '2BHK').length, 1) / 100000),
-    villa: Math.round(dummyProperties
-      .filter(p => p.bhk === '5+BHK')
-      .reduce((acc, p) => acc + p.price, 0) / 
-      Math.max(dummyProperties.filter(p => p.bhk === '5+BHK').length, 1) / 100000) || 180,
+    apartment: avgApartmentPrice || 0,
+    villa: avgVillaPrice || 0,
   };
 
   const timeRanges: TimeRange[] = ['1M', '3M', '6M', '1Y'];
@@ -72,7 +149,7 @@ export default function InsightsScreen() {
         <View className="bg-white rounded-2xl p-4 shadow-lg">
           <Text className="text-gray-500 text-sm mb-3">Select City</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {popularCities.slice(0, 6).map((city) => (
+          {popularCities.slice(0, 6).map((city) => (
               <TouchableOpacity
                 key={city.name}
                 onPress={() => setSelectedCity(city.name)}
@@ -246,17 +323,11 @@ export default function InsightsScreen() {
         <Text className="text-lg font-bold text-gray-900 mb-4">Top Performing Localities</Text>
         
         <View className="bg-white rounded-2xl p-4 shadow-sm">
-          {[
-            { name: 'Bandra West', price: '32,500', change: '+15.2%', trend: 'up' },
-            { name: 'Powai', price: '24,000', change: '+12.8%', trend: 'up' },
-            { name: 'Andheri East', price: '18,500', change: '+9.5%', trend: 'up' },
-            { name: 'Worli', price: '45,000', change: '+8.2%', trend: 'up' },
-            { name: 'Thane West', price: '12,500', change: '+11.3%', trend: 'up' },
-          ].map((locality, index) => (
+          {topLocalities.slice(0, 5).map((locality, index) => (
             <View 
               key={locality.name}
               className={`flex-row items-center justify-between py-3 ${
-                index < 4 ? 'border-b border-gray-100' : ''
+                index < topLocalities.slice(0, 5).length - 1 ? 'border-b border-gray-100' : ''
               }`}
             >
               <View className="flex-row items-center">

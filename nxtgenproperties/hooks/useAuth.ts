@@ -22,6 +22,9 @@ export const useAuth = () => {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
+        // Set loading true so UI shows spinner instead of "Guest User"
+        // while the profile DB fetch is in flight.
+        setLoading(true);
         fetchUserProfile(session.user.id);
       } else {
         setUser(null);
