@@ -47,9 +47,10 @@ interface PropertiesState {
   priceRanges: Record<string, PriceRange[]>;
   allAmenities: string[];
   platformDataLoaded: boolean;
+  propertiesLoaded: boolean;
 
   // Actions
-  fetchProperties: (preferredCities?: string[]) => Promise<void>;
+  fetchProperties: (preferredCities?: string[], force?: boolean) => Promise<void>;
   fetchPlatformData: () => Promise<void>;
   setSearchQuery: (query: string) => void;
   searchProperties: (query: string) => Promise<void>;
@@ -94,8 +95,10 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
   },
   allAmenities: [],
   platformDataLoaded: false,
+  propertiesLoaded: false,
 
-  fetchProperties: async (preferredCities?: string[]) => {
+  fetchProperties: async (preferredCities?: string[], force = false) => {
+    if (!force && get().propertiesLoaded) return;
     set({ loading: true });
     try {
       // Single query for all cases — Postgres sorts preferred-city rows first via
@@ -124,7 +127,7 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
         allProperties = [...preferred, ...others];
       }
 
-      set({ properties: allProperties, filteredProperties: allProperties, loading: false });
+      set({ properties: allProperties, filteredProperties: allProperties, loading: false, propertiesLoaded: true });
     } catch (error) {
       console.error('Error fetching properties:', error);
       set({ loading: false });

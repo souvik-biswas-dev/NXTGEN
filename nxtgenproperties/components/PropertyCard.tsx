@@ -160,7 +160,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, variant = 
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.cardBackground,
     borderRadius: theme.roundness.lg,
     overflow: 'hidden',
     marginBottom: 12,

@@ -9,7 +9,9 @@ interface ChatState {
   loading: boolean;
   messagesLoading: boolean;
   error: string | null;
-  activeChannel: RealtimeChannel | null;
+  // Separate channels: one for the open chat room, one for the inbox list.
+  messageChannel: RealtimeChannel | null;
+  conversationChannel: RealtimeChannel | null;
 
   fetchConversations: (userId: string) => Promise<void>;
   fetchMessages: (conversationId: string) => Promise<void>;
@@ -19,8 +21,14 @@ interface ChatState {
     otherUserId: string,
     propertyId?: string
   ) => Promise<string | null>;
-  subscribeToMessages: (conversationId: string) => void;
-  unsubscribe: () => void;
+
+  /** Subscribe to INSERT + UPDATE on messages for the open chat room. */
+  subscribeToMessages: (conversationId: string, currentUserId: string) => void;
+  /** Subscribe to conversation-level changes so the inbox list stays live. */
+  subscribeToConversations: (userId: string) => void;
+  unsubscribeMessages: () => void;
+  unsubscribeConversations: () => void;
+
   markMessagesAsRead: (conversationId: string, userId: string) => Promise<void>;
   getUnreadCount: (userId: string) => Promise<number>;
 }
@@ -31,7 +39,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   loading: false,
   messagesLoading: false,
   error: null,
-  activeChannel: null,
+  messageChannel: null,
+  conversationChannel: null,
 
   fetchConversations: async (userId: string) => {
     set({ loading: true, error: null });
@@ -48,18 +57,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
         return;
       }
 
-      // Collect all other-user IDs and conversation IDs in one pass
       const otherUserIds = data.map((conv) =>
         conv.participant_1 === userId ? conv.participant_2 : conv.participant_1
       );
       const convIds = data.map((conv) => conv.id);
 
-      // Two batched queries instead of 2×N individual queries
       const [{ data: profiles }, { data: unreadRows }] = await Promise.all([
-        supabase
-          .from('users_profiles')
-          .select('*')
-          .in('user_id', otherUserIds),
+        supabase.from('users_profiles').select('*').in('user_id', otherUserIds),
         supabase
           .from('messages')
           .select('conversation_id')
@@ -115,18 +119,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   sendMessage: async (conversationId: string, senderId: string, content: string) => {
     try {
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          conversation_id: conversationId,
-          sender_id: senderId,
-          content: content.trim(),
-        });
-
+      const { error } = await supabase.from('messages').insert({
+        conversation_id: conversationId,
+        sender_id: senderId,
+        content: content.trim(),
+      });
       if (error) throw error;
     } catch (error) {
       console.error('Error sending message:', error);
       set({ error: error instanceof Error ? error.message : 'Failed to send message' });
+      throw error;
     }
   },
 
@@ -164,14 +166,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  subscribeToMessages: (conversationId: string) => {
-    const { activeChannel } = get();
-    if (activeChannel) {
-      supabase.removeChannel(activeChannel);
-    }
+  subscribeToMessages: (conversationId: string, currentUserId: string) => {
+    const { messageChannel } = get();
+    if (messageChannel) supabase.removeChannel(messageChannel);
 
     const channel = supabase
-      .channel(`messages:${conversationId}`)
+      .channel(`chat:messages:${conversationId}`)
       .on(
         'postgres_changes',
         {
@@ -185,18 +185,110 @@ export const useChatStore = create<ChatState>((set, get) => ({
           set((state) => ({
             currentMessages: [...state.currentMessages, newMessage],
           }));
+          // Auto-mark incoming messages as read while the chat room is open
+          if (newMessage.sender_id !== currentUserId) {
+            get().markMessagesAsRead(conversationId, currentUserId);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const updated = payload.new as Message;
+          set((state) => ({
+            currentMessages: state.currentMessages.map((m) =>
+              m.id === updated.id ? { ...m, read: updated.read } : m
+            ),
+          }));
         }
       )
       .subscribe();
 
-    set({ activeChannel: channel });
+    set({ messageChannel: channel });
   },
 
-  unsubscribe: () => {
-    const { activeChannel } = get();
-    if (activeChannel) {
-      supabase.removeChannel(activeChannel);
-      set({ activeChannel: null });
+  subscribeToConversations: (userId: string) => {
+    const { conversationChannel } = get();
+    if (conversationChannel) supabase.removeChannel(conversationChannel);
+
+    const channel = supabase
+      .channel(`chat:inbox:${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          const msg = payload.new as Message;
+          set((state) => {
+            const convIndex = state.conversations.findIndex(
+              (c) => c.id === msg.conversation_id
+            );
+            if (convIndex === -1) {
+              // New conversation not yet in list — full refresh to get profile data
+              get().fetchConversations(userId);
+              return state;
+            }
+            const updated = [...state.conversations];
+            const conv = { ...updated[convIndex] };
+            conv.last_message = msg.content;
+            conv.last_message_at = msg.created_at;
+            if (msg.sender_id !== userId) {
+              conv.unread_count = (conv.unread_count || 0) + 1;
+            }
+            // Bubble updated conversation to the top
+            updated.splice(convIndex, 1);
+            updated.unshift(conv);
+            return { conversations: updated };
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          const msg = payload.new as Message;
+          // When a message is marked read, decrement the unread badge
+          if (msg.read) {
+            set((state) => ({
+              conversations: state.conversations.map((c) => {
+                if (c.id !== msg.conversation_id) return c;
+                return { ...c, unread_count: Math.max(0, (c.unread_count || 0) - 1) };
+              }),
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    set({ conversationChannel: channel });
+  },
+
+  unsubscribeMessages: () => {
+    const { messageChannel } = get();
+    if (messageChannel) {
+      supabase.removeChannel(messageChannel);
+      set({ messageChannel: null });
+    }
+  },
+
+  unsubscribeConversations: () => {
+    const { conversationChannel } = get();
+    if (conversationChannel) {
+      supabase.removeChannel(conversationChannel);
+      set({ conversationChannel: null });
     }
   },
 
@@ -215,10 +307,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   getUnreadCount: async (userId: string) => {
     try {
-      // Single query: join conversations filter inline via .or on messages not possible,
-      // but we can still avoid the two-step by using a subquery approach.
-      // Supabase JS doesn't support subqueries, so two queries is the minimum — but
-      // we avoid the N+1 by not looping per conversation.
       const { data: convos } = await supabase
         .from('conversations')
         .select('id')

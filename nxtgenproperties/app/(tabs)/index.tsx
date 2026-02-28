@@ -9,7 +9,6 @@ import {
   Dimensions,
   Animated,
   Modal,
-  Pressable,
   RefreshControl,
   StyleSheet,
 } from 'react-native';
@@ -22,6 +21,7 @@ import { usePropertiesStore } from '@/stores/propertiesStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useRecentlyViewedStore } from '@/stores/recentlyViewedStore';
+import { useSearchStore } from '@/stores/searchStore';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { PropertyType } from '@/types';
 import { theme } from '@/constants/theme';
@@ -81,6 +81,7 @@ export default function HomeScreen() {
   const { getPreferredCities } = useUserPreferences();
   const { fetchFavorites } = useFavoritesStore();
   const { recentItems, fetchRecentlyViewed } = useRecentlyViewedStore();
+  const searchStore = useSearchStore();
 
   const {
     getFeaturedProperties,
@@ -92,6 +93,7 @@ export default function HomeScreen() {
     newLaunches,
     marketTrends,
     platformDataLoaded,
+    propertiesLoaded,
     loading,
     setSearchQuery: updateStoreSearch,
     addRecentSearch,
@@ -105,10 +107,10 @@ export default function HomeScreen() {
           if (!platformDataLoaded) {
             promises.push(fetchPlatformData());
           }
-          // Get preferred cities within the callback to avoid dependency issues
           const cities = getPreferredCities();
+          // Only fetch properties if not already loaded (avoids reload on tab switch)
           promises.push(fetchProperties(cities));
-          if (user?.id) {
+          if (user?.id && !propertiesLoaded) {
             promises.push(fetchFavorites());
             promises.push(fetchRecentlyViewed());
           }
@@ -118,7 +120,7 @@ export default function HomeScreen() {
         }
       };
       loadData();
-    }, [user?.id, platformDataLoaded])
+    }, [user?.id, platformDataLoaded, propertiesLoaded])
   );
 
   // Get preferred cities after preferences have been loaded via the hook
@@ -134,9 +136,10 @@ export default function HomeScreen() {
     try {
       const cities = getPreferredCities();
       await Promise.all([
-        fetchProperties(cities),
+        fetchProperties(cities, true),
         fetchPlatformData(),
         user?.id ? fetchFavorites() : Promise.resolve(),
+        user?.id ? fetchRecentlyViewed() : Promise.resolve(),
       ]);
     } catch (error) {
       console.error('Error refreshing data:', error);
@@ -154,10 +157,14 @@ export default function HomeScreen() {
     }
   };
 
-  const navigateToSearch = (query?: string) => {
+  const navigateToSearch = (query?: string, type?: PropertyType, category?: 'residential' | 'commercial') => {
     if (query) {
       updateStoreSearch(query);
       addRecentSearch(query);
+    }
+    if (type || category) {
+      searchStore.setFilters({ type, category });
+      usePropertiesStore.getState().filterProperties({ type, category });
     }
     router.push('/(tabs)/search');
   };
@@ -182,107 +189,122 @@ export default function HomeScreen() {
     { icon: 'calculator-outline' as const, label: 'EMI Calculator', onPress: () => { setMenuVisible(false); router.push('/tools/emi-calculator' as any); } },
     { icon: 'wallet-outline' as const, label: 'Budget Calculator', onPress: () => { setMenuVisible(false); router.push('/tools/budget-calculator' as any); } },
     { icon: 'trending-up-outline' as const, label: 'Market Insights', onPress: () => { setMenuVisible(false); router.push('/insights' as any); } },
-    { icon: 'settings-outline' as const, label: 'Settings', onPress: () => { setMenuVisible(false); } },
-    { icon: 'help-circle-outline' as const, label: 'Help & Support', onPress: () => { setMenuVisible(false); } },
-    { icon: 'information-circle-outline' as const, label: 'About', onPress: () => { setMenuVisible(false); } },
+    { icon: 'settings-outline' as const, label: 'Settings', onPress: () => { setMenuVisible(false); router.push('/settings' as any); } },
+    { icon: 'help-circle-outline' as const, label: 'Help & Support', onPress: () => { setMenuVisible(false); router.push('/help' as any); } },
+    { icon: 'information-circle-outline' as const, label: 'About', onPress: () => { setMenuVisible(false); router.push('/about' as any); } },
   ];
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.surface }} edges={['top']}>
-      {/* ========== MD3 Side Drawer ========== */}
-      <Modal visible={menuVisible} transparent animationType="fade" onRequestClose={() => setMenuVisible(false)}>
-        <Pressable className="flex-1 flex-row" onPress={() => setMenuVisible(false)}>
-          <Pressable
-            className="w-4/5 h-full"
-            style={{ backgroundColor: theme.colors.surface }}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <SafeAreaView className="flex-1">
-              {/* Drawer Header */}
-              <View style={styles.drawerHeader}>
-                <View
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: theme.roundness.full,
-                    backgroundColor: theme.colors.primaryContainer,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginRight: 14,
-                  }}
-                >
-                  <Ionicons name="person" size={26} color={theme.colors.primary} />
-                </View>
-                <View className="flex-1">
-                  <Text style={{ color: theme.colors.secondary, fontSize: 17, fontWeight: '700' }}>
-                    {user?.name || 'Guest User'}
-                  </Text>
-                  <Text style={{ color: theme.colors.outline, fontSize: 13, marginTop: 2 }}>
-                    {user?.email || 'Login to access all features'}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={{ height: 1, backgroundColor: theme.colors.outlineVariant, marginHorizontal: 16 }} />
-
-              {/* Drawer Items */}
-              <ScrollView className="flex-1 px-3 pt-2">
-                {drawerMenuItems.map((item, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    onPress={item.onPress}
-                    style={styles.drawerItem}
-                    activeOpacity={0.6}
-                  >
-                    <View
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: theme.roundness.full,
-                        backgroundColor: theme.colors.surfaceVariant,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Ionicons name={item.icon} size={20} color={theme.colors.secondary} />
-                    </View>
-                    <Text style={{ color: theme.colors.secondary, fontSize: 15, fontWeight: '500', marginLeft: 14 }}>
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-
-                {user && (
-                  <TouchableOpacity
-                    onPress={async () => {
-                      setMenuVisible(false);
-                      await signOut();
-                      router.replace('/(auth)');
-                    }}
-                    style={[styles.drawerItem, { marginTop: 12 }]}
-                  >
-                    <View
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: theme.roundness.full,
-                        backgroundColor: '#FEE2E2',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Ionicons name="log-out-outline" size={20} color={theme.colors.error} />
-                    </View>
-                    <Text style={{ color: theme.colors.error, fontSize: 15, fontWeight: '500', marginLeft: 14 }}>
-                      Logout
-                    </Text>
-                  </TouchableOpacity>
+      {/* ========== Full-Screen Side Drawer ========== */}
+      <Modal visible={menuVisible} transparent={false} animationType="slide" onRequestClose={() => setMenuVisible(false)}>
+        <View style={{ flex: 1, backgroundColor: theme.colors.surface }}>
+          <SafeAreaView style={{ flex: 1 }}>
+            {/* Drawer Header */}
+            <View style={styles.drawerHeader}>
+              <View
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: theme.roundness.full,
+                  backgroundColor: theme.colors.primaryContainer,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: 14,
+                  overflow: 'hidden',
+                }}
+              >
+                {user?.avatar_url ? (
+                  <Image source={{ uri: user.avatar_url }} style={{ width: 56, height: 56 }} />
+                ) : (
+                  <Ionicons name="person" size={28} color={theme.colors.primary} />
                 )}
-              </ScrollView>
-            </SafeAreaView>
-          </Pressable>
-          <View className="flex-1 bg-black/40" />
-        </Pressable>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: theme.colors.secondary, fontSize: 18, fontWeight: '700' }}>
+                  {user?.name || 'Guest User'}
+                </Text>
+                <Text style={{ color: theme.colors.outline, fontSize: 13, marginTop: 2 }}>
+                  {user?.email || 'Login to access all features'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setMenuVisible(false)}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: theme.roundness.full,
+                  backgroundColor: theme.colors.surfaceVariant,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close" size={22} color={theme.colors.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ height: 1, backgroundColor: theme.colors.outlineVariant, marginHorizontal: 16 }} />
+
+            {/* Drawer Items */}
+            <ScrollView style={{ flex: 1, paddingHorizontal: 12, paddingTop: 8 }} showsVerticalScrollIndicator={false}>
+              {drawerMenuItems.map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={item.onPress}
+                  style={styles.drawerItem}
+                  activeOpacity={0.6}
+                >
+                  <View
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: theme.roundness.full,
+                      backgroundColor: theme.colors.surfaceVariant,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Ionicons name={item.icon} size={22} color={theme.colors.secondary} />
+                  </View>
+                  <Text style={{ color: theme.colors.secondary, fontSize: 16, fontWeight: '500', marginLeft: 16, flex: 1 }}>
+                    {item.label}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={18} color={theme.colors.outlineVariant} />
+                </TouchableOpacity>
+              ))}
+
+              {user && (
+                <TouchableOpacity
+                  onPress={async () => {
+                    setMenuVisible(false);
+                    await signOut();
+                    router.replace('/(auth)');
+                  }}
+                  style={[styles.drawerItem, { marginTop: 16 }]}
+                >
+                  <View
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: theme.roundness.full,
+                      backgroundColor: '#FEE2E2',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Ionicons name="log-out-outline" size={22} color={theme.colors.error} />
+                  </View>
+                  <Text style={{ color: theme.colors.error, fontSize: 16, fontWeight: '500', marginLeft: 16, flex: 1 }}>
+                    Logout
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              <View style={{ height: 100 }} />
+            </ScrollView>
+          </SafeAreaView>
+        </View>
       </Modal>
 
       {/* ========== Main Scroll ========== */}
@@ -356,7 +378,9 @@ export default function HomeScreen() {
                   onPress={() => {
                     if (action.type) {
                       setActiveType(action.type);
-                      navigateToSearch();
+                      navigateToSearch(undefined, action.type);
+                    } else if (action.key === 'commercial') {
+                      navigateToSearch(undefined, undefined, 'commercial');
                     } else if (action.key === 'projects') {
                       router.push('/projects' as any);
                     } else if (action.key === 'insights') {
@@ -390,57 +414,28 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
-        {/* ========== Popular Tools - MD3 Cards ========== */}
-        <View style={[styles.section, { backgroundColor: theme.colors.primaryContainer + '30' }]}>
-          <View className="flex-row justify-between items-center mb-4">
-            <View className="flex-row items-center">
-              <View style={styles.sectionIconBadge}>
-                <Ionicons name="bulb" size={18} color={theme.colors.onPrimary} />
-              </View>
-              <View>
-                <Text style={{ color: theme.colors.secondary, fontSize: 16, fontWeight: '700' }}>Popular tools</Text>
-                <Text style={{ color: theme.colors.outline, fontSize: 12, marginTop: 1 }}>Go from browsing to buying</Text>
-              </View>
-            </View>
-            <TouchableOpacity>
-              <Text style={{ color: theme.colors.primary, fontSize: 13, fontWeight: '600' }}>View All</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View className="flex-row">
-            {/* Budget Calculator Card */}
-            <TouchableOpacity
-              onPress={() => navigateToCalculator('budget')}
-              style={[styles.toolCard, { marginRight: 12 }]}
-              activeOpacity={0.7}
-            >
-              <View style={styles.toolIcon}>
-                <Ionicons name="calculator" size={22} color={theme.colors.primary} />
-              </View>
-              <Text style={styles.toolTitle}>Budget Calculator</Text>
-              <Text style={styles.toolDesc}>Check your affordability range for buying home</Text>
-              <View className="flex-row items-center mt-2">
-                <Text style={{ color: theme.colors.primary, fontSize: 12, fontWeight: '600' }}>Explore</Text>
-                <Ionicons name="arrow-forward" size={14} color={theme.colors.primary} style={{ marginLeft: 4 }} />
-              </View>
-            </TouchableOpacity>
-
-            {/* EMI Calculator Card */}
-            <TouchableOpacity
-              onPress={() => navigateToCalculator('emi')}
-              style={styles.toolCard}
-              activeOpacity={0.7}
-            >
-              <View style={styles.toolIcon}>
-                <Ionicons name="wallet" size={22} color={theme.colors.primary} />
-              </View>
-              <Text style={styles.toolTitle}>EMI Calculator</Text>
-              <Text style={styles.toolDesc}>Calculate your home loan EMI</Text>
-              <View className="flex-row items-center mt-2">
-                <Text style={{ color: theme.colors.primary, fontSize: 12, fontWeight: '600' }}>Explore</Text>
-                <Ionicons name="arrow-forward" size={14} color={theme.colors.primary} style={{ marginLeft: 4 }} />
-              </View>
-            </TouchableOpacity>
+        {/* ========== Popular Tools - compact pill row ========== */}
+        <View style={{ paddingHorizontal: 20, paddingVertical: 16, backgroundColor: theme.colors.surface }}>
+          <Text style={[styles.sectionTitle, { marginBottom: 12 }]}>Popular Tools</Text>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {[
+              { icon: 'calculator' as const, label: 'Budget\nCalculator', onPress: () => navigateToCalculator('budget'), color: '#F59E0B' },
+              { icon: 'wallet' as const, label: 'EMI\nCalculator', onPress: () => navigateToCalculator('emi'), color: '#10B981' },
+              { icon: 'search' as const, label: 'Property\nSearch', onPress: () => router.push('/(tabs)/search'), color: theme.colors.primary },
+              { icon: 'trending-up' as const, label: 'Market\nInsights', onPress: () => router.push('/insights' as any), color: '#8B5CF6' },
+            ].map((tool, i) => (
+              <TouchableOpacity
+                key={i}
+                onPress={tool.onPress}
+                activeOpacity={0.7}
+                style={styles.toolPill}
+              >
+                <View style={[styles.toolPillIcon, { backgroundColor: tool.color + '18' }]}>
+                  <Ionicons name={tool.icon} size={20} color={tool.color} />
+                </View>
+                <Text style={[styles.toolPillLabel, { color: theme.colors.secondary }]}>{tool.label}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
@@ -587,13 +582,22 @@ export default function HomeScreen() {
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {marketTrends.map((trend, index) => (
-              <View key={index} style={styles.trendCard}>
+              <TouchableOpacity
+                key={index}
+                style={styles.trendCard}
+                onPress={() => navigateToSearch(trend.city)}
+                activeOpacity={0.7}
+              >
                 <Text style={{ color: theme.colors.outline, fontSize: 13 }}>{trend.city}</Text>
                 <Text style={{ color: theme.colors.success, fontSize: 22, fontWeight: '700', marginTop: 4 }}>
                   {trend.trend}
                 </Text>
                 <Text style={{ color: theme.colors.outlineVariant, fontSize: 11, marginTop: 4 }}>{trend.period}</Text>
-              </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+                  <Text style={{ color: theme.colors.primary, fontSize: 11, fontWeight: '600' }}>Explore</Text>
+                  <Ionicons name="arrow-forward" size={11} color={theme.colors.primary} style={{ marginLeft: 2 }} />
+                </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
@@ -619,7 +623,11 @@ export default function HomeScreen() {
         )}
 
         {/* ========== Post Property Banner ========== */}
-        <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
+        <TouchableOpacity
+          onPress={() => router.push('/(tabs)/post')}
+          activeOpacity={0.85}
+          style={{ paddingHorizontal: 20, marginBottom: 24 }}
+        >
           <LinearGradient
             colors={[theme.colors.primary, '#EA580C']}
             start={{ x: 0, y: 0 }}
@@ -634,14 +642,10 @@ export default function HomeScreen() {
                 <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, marginBottom: 12 }}>
                   Reach out to 10 Lakh+ buyers
                 </Text>
-                <TouchableOpacity
-                  onPress={() => router.push('/(tabs)/post')}
-                  style={styles.postNowBtn}
-                  activeOpacity={0.8}
-                >
+                <View style={styles.postNowBtn}>
                   <Text style={{ color: theme.colors.primary, fontWeight: '700', fontSize: 14 }}>Post Now</Text>
                   <Ionicons name="arrow-forward" size={16} color={theme.colors.primary} style={{ marginLeft: 4 }} />
-                </TouchableOpacity>
+                </View>
               </View>
               <View
                 style={{
@@ -657,10 +661,10 @@ export default function HomeScreen() {
               </View>
             </View>
           </LinearGradient>
-        </View>
+        </TouchableOpacity>
 
         {/* Bottom padding for floating tab bar */}
-        <View style={{ height: 100 }} />
+        <View style={{ height: theme.tabBarHeight + 16 }} />
       </Animated.ScrollView>
     </SafeAreaView>
   );
@@ -807,15 +811,6 @@ const styles = StyleSheet.create({
     color: theme.colors.outline,
     marginTop: 3,
   },
-  sectionIconBadge: {
-    backgroundColor: theme.colors.primary,
-    width: 32,
-    height: 32,
-    borderRadius: theme.roundness.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -840,37 +835,6 @@ const styles = StyleSheet.create({
   filterChipTextActive: {
     color: theme.colors.primary,
   },
-  toolCard: {
-    flex: 1,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.roundness.lg,
-    padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  toolIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.roundness.md,
-    backgroundColor: theme.colors.primaryContainer,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  toolTitle: {
-    color: theme.colors.secondary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  toolDesc: {
-    color: theme.colors.outline,
-    fontSize: 12,
-    marginTop: 3,
-    lineHeight: 16,
-  },
   seeAllBtn: {
     backgroundColor: theme.colors.primary,
     borderRadius: theme.roundness.lg,
@@ -891,14 +855,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   featuredCard: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.cardBackground,
     borderRadius: theme.roundness.lg,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
   },
   featuredBadge: {
     position: 'absolute',
@@ -923,16 +882,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   launchCard: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: theme.roundness.lg,
     overflow: 'hidden',
     marginRight: 16,
     width: width * 0.65,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
   },
   trendCard: {
     backgroundColor: theme.colors.surfaceVariant,
@@ -970,5 +924,27 @@ const styles = StyleSheet.create({
     borderRadius: theme.roundness.lg,
     overflow: 'hidden',
     marginBottom: 12,
+  },
+  toolPill: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: theme.colors.surfaceVariant,
+    borderRadius: theme.roundness.lg,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+  },
+  toolPillIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: theme.roundness.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  toolPillLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 15,
   },
 });

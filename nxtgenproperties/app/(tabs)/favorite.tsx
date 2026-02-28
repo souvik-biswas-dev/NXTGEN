@@ -79,7 +79,7 @@ export default function FavoritesScreen() {
 
       {/* Content */}
       {favoriteCount === 0 ? (
-        <View className="flex-1 items-center justify-center px-6">
+        <View className="flex-1 items-center justify-center px-6" style={{ paddingBottom: theme.tabBarHeight }}>
           <View className="w-28 h-28 rounded-full items-center justify-center mb-5" style={{ backgroundColor: theme.colors.primaryContainer }}>
             <Ionicons name="heart-outline" size={48} color={theme.colors.primary} />
           </View>
@@ -95,7 +95,7 @@ export default function FavoritesScreen() {
           data={properties}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <PropertyCard property={item} />}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 100 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: theme.tabBarHeight + 16 }}
           showsVerticalScrollIndicator={false}
           numColumns={2}
           columnWrapperStyle={{ justifyContent: 'space-between' }}

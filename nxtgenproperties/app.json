@@ -30,7 +30,8 @@
         {
           "photosPermission": "The app needs access to your photos to upload property images."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

@@ -57,7 +57,7 @@ export default function ChatRoomScreen() {
     sendMessage,
     fetchMessages,
     subscribeToMessages,
-    unsubscribe,
+    unsubscribeMessages,
     markMessagesAsRead,
   } = useChatStore();
 
@@ -129,15 +129,12 @@ export default function ChatRoomScreen() {
 
   // Fetch messages + realtime subscription
   useEffect(() => {
-    if (conversationId) {
-      fetchMessages(conversationId);
-      subscribeToMessages(conversationId);
-      if (user?.id) {
-        markMessagesAsRead(conversationId, user.id);
-      }
-    }
+    if (!conversationId || !user?.id) return;
+    fetchMessages(conversationId);
+    subscribeToMessages(conversationId, user.id);
+    markMessagesAsRead(conversationId, user.id);
     return () => {
-      unsubscribe();
+      unsubscribeMessages();
     };
   }, [conversationId, user?.id]);
 

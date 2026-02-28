@@ -16,8 +16,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '@/stores/authStore';
 import { useFavoritesStore } from '@/stores/favoritesStore';
+import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { VerificationRequestCard } from '@/components/BrokerBadge';
 import { theme } from '@/constants/theme';
@@ -37,7 +39,49 @@ export default function ProfileScreen() {
     phone: user?.phone || '',
   });
   const [saving, setSaving] = React.useState(false);
+  const [avatarUploading, setAvatarUploading] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
+
+  const handleChangeAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Please allow photo library access to change your profile picture.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (result.canceled || !result.assets[0]) return;
+
+    setAvatarUploading(true);
+    try {
+      const asset = result.assets[0];
+      const ext = asset.uri.split('.').pop() ?? 'jpg';
+      const fileName = `avatars/${user!.user_id}.${ext}`;
+
+      const response = await fetch(asset.uri);
+      const blob = await response.blob();
+      const arrayBuffer = await new Response(blob).arrayBuffer();
+
+      const { error: uploadError } = await supabase.storage
+        .from('property-images')
+        .upload(fileName, arrayBuffer, { contentType: `image/${ext}`, upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('property-images')
+        .getPublicUrl(fileName);
+
+      await updateProfile({ avatar_url: urlData.publicUrl });
+    } catch (err: any) {
+      Alert.alert('Upload Failed', err.message || 'Could not upload photo. Please try again.');
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -120,7 +164,10 @@ export default function ProfileScreen() {
           />
           
           {/* Settings Icon */}
-          <TouchableOpacity className="absolute top-4 right-4 bg-white/20 rounded-full p-2">
+          <TouchableOpacity
+            onPress={() => router.push('/settings' as any)}
+            className="absolute top-4 right-4 bg-white/20 rounded-full p-2"
+          >
             <Ionicons name="settings-outline" size={24} color="white" />
           </TouchableOpacity>
         </View>
@@ -139,11 +186,14 @@ export default function ProfileScreen() {
                   style={{ borderWidth: 4, borderColor: theme.colors.primaryContainer, backgroundColor: theme.colors.primaryContainer }}
                   fadeDuration={0}
                 />
-                <TouchableOpacity 
-                  onPress={handleEditProfile}
+                <TouchableOpacity
+                  onPress={handleChangeAvatar}
+                  disabled={avatarUploading}
                   className="absolute bottom-0 right-0 bg-primary rounded-full p-2.5 border-4 border-white"
                 >
-                  <Ionicons name="camera" size={18} color="white" />
+                  {avatarUploading
+                    ? <ActivityIndicator size="small" color="white" />
+                    : <Ionicons name="camera" size={18} color="white" />}
                 </TouchableOpacity>
               </View>
 
@@ -361,7 +411,7 @@ export default function ProfileScreen() {
             <MenuItem
               icon="help-circle-outline"
               label="Help & Support"
-              onPress={() => Linking.openURL('mailto:support@nxtgenproperties.com?subject=Help%20Request')}
+              onPress={() => router.push('/help' as any)}
               showBorder
             />
             <MenuItem
@@ -393,7 +443,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Extra padding for floating tab bar */}
-        <View className="h-24" />
+        <View style={{ height: theme.tabBarHeight + 16 }} />
       </ScrollView>
 
       {/* Edit Profile Modal */}
@@ -427,8 +477,14 @@ export default function ProfileScreen() {
                   className="w-24 h-24 rounded-full"
                   style={{ borderWidth: 4, borderColor: theme.colors.primaryContainer }}
                 />
-                <TouchableOpacity className="absolute bottom-0 right-0 bg-primary rounded-full p-2 border-2 border-white">
-                  <Ionicons name="camera" size={16} color="white" />
+                <TouchableOpacity
+                  onPress={handleChangeAvatar}
+                  disabled={avatarUploading}
+                  className="absolute bottom-0 right-0 bg-primary rounded-full p-2 border-2 border-white"
+                >
+                  {avatarUploading
+                    ? <ActivityIndicator size="small" color="white" />
+                    : <Ionicons name="camera" size={16} color="white" />}
                 </TouchableOpacity>
               </View>
               <Text className="text-gray-400 text-xs mt-2">Tap camera to change photo</Text>
@@ -453,7 +509,7 @@ export default function ProfileScreen() {
               <View className="px-4 py-3" style={{ backgroundColor: theme.colors.surfaceVariant, borderRadius: theme.roundness.lg }}>
                 <Text className="text-base" style={{ color: theme.colors.outline }}>{user?.email || 'Not set'}</Text>
               </View>
-              <Text className="text-xs mt-1" style={{ color: theme.colors.outlineVariant }}>Email cannot be changed</Text>
+              <Text className="text-xs mt-1" style={{ color: theme.colors.outlineVariant }}>Change email in Settings → Account</Text>
             </View>
 
             {/* Phone */}

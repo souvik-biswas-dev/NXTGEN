@@ -9,6 +9,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,13 +17,18 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { usePropertiesStore } from '@/stores/propertiesStore';
+import { useAuthStore } from '@/stores/authStore';
+import { supabase } from '@/lib/supabase';
 import { BHKType, FurnishingType, PropertyType, PropertyCategory, FacingType, PossessionType } from '@/types';
+import { theme } from '@/constants/theme';
 
 type Step = 'basic' | 'details' | 'location' | 'amenities' | 'photos' | 'pricing';
 
 export default function PostPropertyScreen() {
   const router = useRouter();
+  const { user } = useAuthStore();
   const [currentStep, setCurrentStep] = useState<Step>('basic');
+  const [submitting, setSubmitting] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -103,12 +109,96 @@ export default function PostPropertyScreen() {
     }
   };
 
-  const handleSubmit = () => {
-    Alert.alert(
-      'Property Posted!',
-      'Your property has been submitted for review. It will be live within 24 hours.',
-      [{ text: 'OK', onPress: () => router.push('/(tabs)') }]
-    );
+  const handleSubmit = async () => {
+    if (!user) {
+      Alert.alert('Sign In Required', 'Please sign in to post a property.');
+      return;
+    }
+    if (!formData.title.trim()) {
+      Alert.alert('Missing Info', 'Please add a property title.');
+      setCurrentStep('basic');
+      return;
+    }
+    if (!formData.city || !formData.locality) {
+      Alert.alert('Missing Info', 'Please select a city and locality.');
+      setCurrentStep('location');
+      return;
+    }
+    if (!formData.price) {
+      Alert.alert('Missing Info', 'Please enter a price.');
+      setCurrentStep('pricing');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      // 1. Upload photos to Supabase Storage
+      const uploadedUrls: string[] = [];
+      for (const localUri of formData.photos) {
+        if (localUri.startsWith('http')) {
+          // Already a remote URL (demo photos)
+          uploadedUrls.push(localUri);
+          continue;
+        }
+        const ext = localUri.split('.').pop() ?? 'jpg';
+        const fileName = `properties/${user.user_id}/${Date.now()}_${uploadedUrls.length}.${ext}`;
+        const response = await fetch(localUri);
+        const blob = await response.blob();
+        const arrayBuffer = await new Response(blob).arrayBuffer();
+        const { error: uploadError } = await supabase.storage
+          .from('property-images')
+          .upload(fileName, arrayBuffer, { contentType: `image/${ext}`, upsert: true });
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage
+          .from('property-images')
+          .getPublicUrl(fileName);
+        uploadedUrls.push(urlData.publicUrl);
+      }
+
+      // 2. Insert property record into DB
+      const { error: insertError } = await supabase.from('properties').insert({
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        price: Number(formData.price.replace(/,/g, '')),
+        maintenance: formData.maintenance ? Number(formData.maintenance.replace(/,/g, '')) : null,
+        deposit: formData.deposit ? Number(formData.deposit.replace(/,/g, '')) : null,
+        type: formData.type,
+        category: formData.category,
+        bhk: formData.bhk || null,
+        furnishing: formData.furnishing || null,
+        area_sqft: formData.area_sqft ? Number(formData.area_sqft) : null,
+        carpet_area: formData.carpet_area ? Number(formData.carpet_area) : null,
+        floor: formData.floor || null,
+        total_floors: formData.total_floors || null,
+        facing: formData.facing || null,
+        possession: formData.possession,
+        age_years: formData.age_years ? Number(formData.age_years) : null,
+        bedrooms: formData.bedrooms ? Number(formData.bedrooms) : 0,
+        bathrooms: formData.bathrooms ? Number(formData.bathrooms) : 0,
+        kitchens: formData.kitchens ? Number(formData.kitchens) : 0,
+        parkings: formData.parkings ? Number(formData.parkings) : 0,
+        city: formData.city,
+        locality: formData.locality,
+        address: formData.address || null,
+        amenities: formData.amenities,
+        photos: uploadedUrls,
+        owner_id: user.user_id,
+        verified: false,
+        featured: false,
+        price_negotiable: formData.priceNegotiable,
+      });
+      if (insertError) throw insertError;
+
+      Alert.alert(
+        'Property Posted!',
+        'Your property has been submitted for review. It will be live within 24 hours.',
+        [{ text: 'OK', onPress: () => router.push('/(tabs)') }]
+      );
+    } catch (err: any) {
+      Alert.alert('Submission Failed', err.message || 'Could not post your property. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const renderStepContent = () => {
@@ -199,8 +289,10 @@ export default function PostPropertyScreen() {
           {renderStepContent()}
         </ScrollView>
 
-        {/* Bottom Buttons */}
-        <View className="bg-white px-5 py-4 border-t border-gray-100 flex-row">
+        {/* Bottom Buttons — raised above the floating tab bar */}
+        <View className="bg-white px-5 border-t border-gray-100 flex-row"
+          style={{ paddingTop: 12, paddingBottom: theme.tabBarHeight }}
+        >
           {currentStepIndex > 0 && (
             <TouchableOpacity
               onPress={goToPrevStep}
@@ -212,11 +304,16 @@ export default function PostPropertyScreen() {
           
           <TouchableOpacity
             onPress={currentStepIndex === steps.length - 1 ? handleSubmit : goToNextStep}
-            className="flex-1 bg-primary rounded-xl py-4"
+            disabled={submitting}
+            className="flex-1 bg-primary rounded-xl py-4 flex-row items-center justify-center"
           >
-            <Text className="text-white text-center font-semibold">
-              {currentStepIndex === steps.length - 1 ? 'Post Property' : 'Next'}
-            </Text>
+            {submitting ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Text className="text-white text-center font-semibold">
+                {currentStepIndex === steps.length - 1 ? 'Post Property' : 'Next'}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -584,13 +681,19 @@ const AmenitiesStep: React.FC<{ formData: any; toggleAmenity: (amenity: string) 
   );
 };
 
-const PhotosStep: React.FC<{ formData: any; updateFormData: (key: string, value: any) => void }> = ({ 
-  formData, 
-  updateFormData 
+const PhotosStep: React.FC<{ formData: any; updateFormData: (key: string, value: any) => void }> = ({
+  formData,
+  updateFormData
 }) => {
+  const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
 
   const pickImages = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Please allow photo library access to upload photos.');
+      return;
+    }
     try {
       setLoading(true);
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -601,12 +704,29 @@ const PhotosStep: React.FC<{ formData: any; updateFormData: (key: string, value:
       });
 
       if (!result.canceled) {
-        const newPhotos = result.assets.map(asset => asset.uri);
-        if (formData.photos.length + newPhotos.length > 10) {
-          Alert.alert('Error', 'You can upload maximum 10 photos');
+        if (formData.photos.length + result.assets.length > 10) {
+          Alert.alert('Limit Reached', 'You can upload a maximum of 10 photos.');
           return;
         }
-        updateFormData('photos', [...formData.photos, ...newPhotos]);
+        // Upload each photo to Supabase Storage immediately
+        const uploadedUrls: string[] = [];
+        for (const asset of result.assets) {
+          const ext = asset.uri.split('.').pop() ?? 'jpg';
+          const fileName = `properties/${user?.user_id ?? 'guest'}/${Date.now()}_${uploadedUrls.length}.${ext}`;
+          const response = await fetch(asset.uri);
+          const blob = await response.blob();
+          const arrayBuffer = await new Response(blob).arrayBuffer();
+          const { error: uploadError } = await supabase.storage
+            .from('property-images')
+            .upload(fileName, arrayBuffer, { contentType: `image/${ext}`, upsert: true });
+          if (uploadError) {
+            Alert.alert('Upload Error', `Failed to upload photo: ${uploadError.message}`);
+            continue;
+          }
+          const { data: urlData } = supabase.storage.from('property-images').getPublicUrl(fileName);
+          uploadedUrls.push(urlData.publicUrl);
+        }
+        updateFormData('photos', [...formData.photos, ...uploadedUrls]);
       }
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to pick images');
@@ -692,31 +812,6 @@ const PhotosStep: React.FC<{ formData: any; updateFormData: (key: string, value:
         </View>
       </View>
 
-      {/* Sample Photos (Placeholder) */}
-      <View className="mt-6">
-        <Text className="text-gray-900 font-semibold mb-3">Demo Photos (for testing)</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {[
-            'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=400',
-            'https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg?auto=compress&cs=tinysrgb&w=400',
-            'https://images.pexels.com/photos/1648776/pexels-photo-1648776.jpeg?auto=compress&cs=tinysrgb&w=400',
-          ].map((photo, index) => (
-            <TouchableOpacity 
-              key={index}
-              onPress={() => updateFormData('photos', [...formData.photos, photo])}
-              className="relative mr-3"
-            >
-              <Image
-                source={{ uri: photo }}
-                className="w-24 h-24 rounded-xl"
-              />
-              <View className="absolute bottom-1 right-1 bg-white rounded-full p-1">
-                <Ionicons name="add-circle" size={20} color="#FF6B35" />
-              </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
     </View>
   );
 };

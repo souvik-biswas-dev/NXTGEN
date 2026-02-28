@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,12 +11,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from 'expo-router';
 import { PropertyCard } from '@/components/PropertyCard';
 import { usePropertiesStore } from '@/stores/propertiesStore';
 import { useSearchStore } from '@/stores/searchStore';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { BHKType, FurnishingType, PropertyType, PropertyCategory } from '@/types';
 import { theme } from '@/constants/theme';
+
+const TAB_BOTTOM = theme.tabBarHeight + 16;
 
 const { height } = Dimensions.get('window');
 
@@ -48,6 +51,27 @@ export default function SearchScreen() {
     possession: searchStore.possession,
     ownerOnly: searchStore.ownerOnly || false,
   });
+
+  // Sync localFilters from store on every focus (e.g. when navigating from home with pre-set filters)
+  useFocusEffect(
+    React.useCallback(() => {
+      const s = useSearchStore.getState();
+      const synced = {
+        type: s.type as PropertyType | undefined,
+        category: s.category as PropertyCategory | undefined,
+        city: s.city,
+        minPrice: s.minPrice,
+        maxPrice: s.maxPrice,
+        bhk: s.bhk || [] as BHKType[],
+        furnishing: s.furnishing || [] as FurnishingType[],
+        possession: s.possession,
+        ownerOnly: s.ownerOnly || false,
+      };
+      setLocalFilters(synced);
+      // Apply filters immediately so the results list updates
+      usePropertiesStore.getState().filterProperties(synced);
+    }, [])
+  );
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -260,7 +284,7 @@ export default function SearchScreen() {
           </View>
 
           {/* Featured Properties */}
-          <View className="mt-6 mb-6">
+          <View className="mt-6" style={{ marginBottom: TAB_BOTTOM }}>
             <Text className="text-gray-900 text-lg font-bold mb-4">Recommended for you</Text>
             <View className="flex-row flex-wrap justify-between">
               {filteredProperties.slice(0, 4).map((property) => (
@@ -275,7 +299,7 @@ export default function SearchScreen() {
           keyExtractor={(item) => item.id}
           numColumns={2}
           columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: 20 }}
-          contentContainerStyle={{ paddingTop: 16, paddingBottom: 100 }}
+          contentContainerStyle={{ paddingTop: 16, paddingBottom: TAB_BOTTOM }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => <PropertyCard property={item} />}
           ListEmptyComponent={

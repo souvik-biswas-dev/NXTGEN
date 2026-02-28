@@ -18,14 +18,17 @@ import { theme } from '@/constants/theme';
 export default function InboxScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { conversations, loading, fetchConversations } = useChatStore();
+  const { conversations, loading, fetchConversations, subscribeToConversations, unsubscribeConversations } = useChatStore();
 
   useFocusEffect(
     React.useCallback(() => {
-      if (user?.id) {
-        fetchConversations(user.id);
-      }
-    }, [user?.id, fetchConversations])
+      if (!user?.id) return;
+      fetchConversations(user.id);
+      subscribeToConversations(user.id);
+      return () => {
+        unsubscribeConversations();
+      };
+    }, [user?.id])
   );
 
   const handleConversationPress = (conversationId: string) => {
@@ -51,7 +54,7 @@ export default function InboxScreen() {
 
       {/* Conversations List */}
       {conversations.length === 0 ? (
-        <View className="flex-1 items-center justify-center px-6">
+        <View className="flex-1 items-center justify-center px-6" style={{ paddingBottom: theme.tabBarHeight }}>
           <View className="w-28 h-28 rounded-full items-center justify-center mb-5" style={{ backgroundColor: theme.colors.primaryContainer }}>
             <Ionicons name="chatbubble-outline" size={48} color={theme.colors.primary} />
           </View>
@@ -113,7 +116,7 @@ export default function InboxScreen() {
               )}
             </TouchableOpacity>
           )}
-          contentContainerStyle={{ paddingBottom: 100 }}
+          contentContainerStyle={{ paddingBottom: theme.tabBarHeight + 16 }}
           showsVerticalScrollIndicator={false}
         />
       )}
