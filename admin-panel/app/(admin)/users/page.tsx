@@ -60,7 +60,7 @@ export default async function UsersPage({
               name="search"
               defaultValue={params.search}
               placeholder="Search by name or email..."
-              className="flex-1 min-w-[200px] rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent"
+              className="flex-1 min-w-50 rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent"
             />
             <select
               name="role"
@@ -100,15 +100,19 @@ export default async function UsersPage({
                 {users.map((user: any) => (
                   <tr key={user.user_id} className="hover:bg-gray-800/50 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-[#FF6B35]/20 flex items-center justify-center text-[#FF6B35] text-sm font-bold flex-shrink-0">
-                          {user.name?.charAt(0)?.toUpperCase() || '?'}
+                      <a href={`/users/${user.user_id}`} className="flex items-center gap-3 group">
+                        <div className="w-9 h-9 rounded-full bg-[#FF6B35]/20 flex items-center justify-center text-[#FF6B35] text-sm font-bold shrink-0 overflow-hidden">
+                          {user.avatar_url ? (
+                            <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+                          ) : (
+                            user.name?.charAt(0)?.toUpperCase() || '?'
+                          )}
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-white">{user.name}</p>
+                          <p className="text-sm font-medium text-white group-hover:text-[#FF6B35] transition-colors">{user.name}</p>
                           <p className="text-xs text-gray-500">{user.email}</p>
                         </div>
-                      </div>
+                      </a>
                     </td>
                     <td className="px-6 py-4">
                       <Badge

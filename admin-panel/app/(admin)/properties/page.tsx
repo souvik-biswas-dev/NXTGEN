@@ -62,19 +62,19 @@ export default async function PropertiesPage({
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Card className="p-4 flex items-center gap-3">
-            <Home className="w-8 h-8 text-blue-400 flex-shrink-0" />
+            <Home className="w-8 h-8 text-blue-400 shrink-0" />
             <div><p className="text-xl font-bold text-white">{properties.length}</p><p className="text-xs text-gray-500">Total</p></div>
           </Card>
           <Card className="p-4 flex items-center gap-3">
-            <CheckCircle className="w-8 h-8 text-green-400 flex-shrink-0" />
+            <CheckCircle className="w-8 h-8 text-green-400 shrink-0" />
             <div><p className="text-xl font-bold text-white">{stats.verified}</p><p className="text-xs text-gray-500">Verified</p></div>
           </Card>
           <Card className="p-4 flex items-center gap-3">
-            <Star className="w-8 h-8 text-yellow-400 flex-shrink-0" />
+            <Star className="w-8 h-8 text-yellow-400 shrink-0" />
             <div><p className="text-xl font-bold text-white">{stats.featured}</p><p className="text-xs text-gray-500">Featured</p></div>
           </Card>
           <Card className="p-4 flex items-center gap-3">
-            <Building2 className="w-8 h-8 text-purple-400 flex-shrink-0" />
+            <Building2 className="w-8 h-8 text-purple-400 shrink-0" />
             <div><p className="text-xl font-bold text-white">{stats.buy} / {stats.rent}</p><p className="text-xs text-gray-500">Buy / Rent</p></div>
           </Card>
         </div>
@@ -86,7 +86,7 @@ export default async function PropertiesPage({
               name="search"
               defaultValue={params.search}
               placeholder="Search by title or locality..."
-              className="flex-1 min-w-[200px] rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent"
+              className="flex-1 min-w-50 rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent"
             />
             <select name="type" defaultValue={params.type || 'all'} className="rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]">
               <option value="all">All Types</option>
@@ -123,8 +123,10 @@ export default async function PropertiesPage({
                 {properties.map((p: any) => (
                   <tr key={p.id} className="hover:bg-gray-800/50 transition-colors">
                     <td className="px-6 py-4">
-                      <p className="text-sm font-medium text-white max-w-[200px] truncate">{p.title}</p>
-                      <p className="text-xs text-gray-500">{p.locality}, {p.city}</p>
+                      <a href={`/properties/${p.id}`} className="group">
+                        <p className="text-sm font-medium text-white max-w-50 truncate group-hover:text-[#FF6B35] transition-colors">{p.title}</p>
+                        <p className="text-xs text-gray-500">{p.locality}, {p.city}</p>
+                      </a>
                     </td>
                     <td className="px-6 py-4">
                       <Badge variant={p.type === 'buy' ? 'info' : 'warning'}>
