@@ -11,6 +11,33 @@ import {
   MessageSquare, CreditCard, Star, User,
 } from 'lucide-react';
 
+interface UserProperty {
+  id: string;
+  title: string;
+  city: string;
+  price: number;
+  type: string;
+  bhk: string;
+  verified: boolean;
+  featured: boolean;
+  created_at: string;
+}
+
+interface UserInquiry {
+  id: string;
+  message: string;
+  created_at: string;
+  property: { title: string }[];
+}
+
+interface UserReview {
+  id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  property: { title: string }[];
+}
+
 async function getUserDetail(id: string) {
   const supabase = createAdminClient();
 
@@ -157,7 +184,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                 <p className="text-gray-600 text-sm text-center py-6">No properties listed</p>
               ) : (
                 <div className="space-y-2">
-                  {properties.map((p: any) => (
+                  {properties.map((p: UserProperty) => (
                     <a
                       key={p.id}
                       href={`/properties/${p.id}`}
@@ -216,10 +243,10 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                 <p className="text-gray-600 text-sm text-center py-6">No inquiries sent</p>
               ) : (
                 <div className="space-y-3">
-                  {inquiries.map((inq: any) => (
+                  {inquiries.map((inq: UserInquiry) => (
                     <div key={inq.id} className="py-2 border-b border-gray-800 last:border-0">
                       <p className="text-xs text-[#FF6B35] font-medium mb-0.5 truncate">
-                        {inq.property?.title || 'Unknown property'}
+                        {inq.property?.[0]?.title || 'Unknown property'}
                       </p>
                       <p className="text-sm text-gray-300 line-clamp-2">{inq.message}</p>
                       <p className="text-xs text-gray-600 mt-1">{formatDateTime(inq.created_at)}</p>
@@ -240,11 +267,11 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                 <p className="text-gray-600 text-sm text-center py-6">No reviews given</p>
               ) : (
                 <div className="space-y-3">
-                  {reviews.map((rev: any) => (
+                  {reviews.map((rev: UserReview) => (
                     <div key={rev.id} className="py-2 border-b border-gray-800 last:border-0">
                       <div className="flex items-center justify-between mb-0.5">
                         <p className="text-xs text-[#FF6B35] font-medium truncate max-w-[200px]">
-                          {rev.property?.title || 'Unknown property'}
+                          {rev.property?.[0]?.title || 'Unknown property'}
                         </p>
                         <div className="flex items-center gap-0.5 flex-shrink-0 ml-2">
                           {Array.from({ length: 5 }).map((_, i) => (

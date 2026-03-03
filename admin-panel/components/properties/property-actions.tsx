@@ -16,14 +16,16 @@ export function PropertyActions({ propertyId, isVerified, isFeatured }: Props) {
 
   const handleVerify = () => {
     startTransition(async () => {
-      await togglePropertyVerified(propertyId, !isVerified);
+      const result = await togglePropertyVerified(propertyId, !isVerified);
+      if (result?.error) alert(result.error);
       setOpen(false);
     });
   };
 
   const handleFeature = () => {
     startTransition(async () => {
-      await togglePropertyFeatured(propertyId, !isFeatured);
+      const result = await togglePropertyFeatured(propertyId, !isFeatured);
+      if (result?.error) alert(result.error);
       setOpen(false);
     });
   };
@@ -31,7 +33,8 @@ export function PropertyActions({ propertyId, isVerified, isFeatured }: Props) {
   const handleDelete = () => {
     if (!confirm('Delete this property? This cannot be undone.')) return;
     startTransition(async () => {
-      await deleteProperty(propertyId);
+      const result = await deleteProperty(propertyId);
+      if (result?.error) alert(result.error);
     });
   };
 

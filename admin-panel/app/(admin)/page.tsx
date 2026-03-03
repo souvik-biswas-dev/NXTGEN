@@ -7,6 +7,29 @@ import { Users, Building2, CreditCard, MessageSquare, TrendingUp, Star, ArrowUpR
 import { formatCurrency, formatDateTime } from '@/lib/utils';
 import { DashboardCharts } from '@/components/dashboard/charts';
 
+interface RecentProperty {
+  id: string;
+  title: string;
+  city: string;
+  price: number;
+  type: string;
+  created_at: string;
+  verified: boolean;
+}
+
+interface RecentUser {
+  user_id: string;
+  name: string;
+  email: string;
+  role: string;
+  created_at: string;
+}
+
+interface Subscription {
+  plan: string;
+  status: string;
+}
+
 async function getDashboardStats() {
   const supabase = createAdminClient();
 
@@ -100,7 +123,7 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {stats.recentProperties.map((p: any) => (
+                {stats.recentProperties.map((p: RecentProperty) => (
                   <div key={p.id} className="flex items-center justify-between py-2 border-b border-gray-800 last:border-0">
                     <div>
                       <p className="text-sm text-white font-medium truncate max-w-50">{p.title}</p>
@@ -133,7 +156,7 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {stats.recentUsers.map((u: any) => (
+                {stats.recentUsers.map((u: RecentUser) => (
                   <div key={u.user_id} className="flex items-center gap-3 py-2 border-b border-gray-800 last:border-0">
                     <div className="w-8 h-8 rounded-full bg-[#FF6B35]/20 flex items-center justify-center text-[#FF6B35] text-xs font-bold shrink-0">
                       {u.name?.charAt(0)?.toUpperCase() || '?'}

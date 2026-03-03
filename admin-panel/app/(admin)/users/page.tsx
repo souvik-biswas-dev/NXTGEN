@@ -7,6 +7,17 @@ import { UserActions } from '@/components/users/user-actions';
 import { formatDate } from '@/lib/utils';
 import { Users } from 'lucide-react';
 
+interface UserProfile {
+  user_id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  avatar_url: string | null;
+  verified_broker: boolean;
+  created_at: string;
+}
+
 async function getUsers(search?: string, role?: string) {
   const supabase = createAdminClient();
   let query = supabase
@@ -97,7 +108,7 @@ export default async function UsersPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800">
-                {users.map((user: any) => (
+                {users.map((user: UserProfile) => (
                   <tr key={user.user_id} className="hover:bg-gray-800/50 transition-colors">
                     <td className="px-6 py-4">
                       <a href={`/users/${user.user_id}`} className="flex items-center gap-3 group">

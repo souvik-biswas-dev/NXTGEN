@@ -6,6 +6,17 @@ import { ReviewActions } from '@/components/reviews/review-actions';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Star } from 'lucide-react';
 
+interface ReviewRow {
+  id: string;
+  locality: string;
+  city: string;
+  rating: number;
+  avg_price: number | null;
+  comment_count: number;
+  created_at: string;
+  updated_at: string | null;
+}
+
 async function getReviews() {
   const supabase = createAdminClient();
   const { data } = await supabase
@@ -29,7 +40,7 @@ export default async function ReviewsPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <Card className="p-4"><p className="text-2xl font-bold text-white">{reviews.length}</p><p className="text-xs text-gray-500 mt-1">Total Reviews</p></Card>
           <Card className="p-4"><p className="text-2xl font-bold text-white">{avgRating}</p><p className="text-xs text-gray-500 mt-1">Avg. Rating</p></Card>
-          <Card className="p-4"><p className="text-2xl font-bold text-white">{new Set(reviews.map((r: any) => r.city)).size}</p><p className="text-xs text-gray-500 mt-1">Cities</p></Card>
+          <Card className="p-4"><p className="text-2xl font-bold text-white">{new Set(reviews.map((r: ReviewRow) => r.city)).size}</p><p className="text-xs text-gray-500 mt-1">Cities</p></Card>
         </div>
 
         <Card className="p-0 overflow-hidden">
@@ -47,7 +58,7 @@ export default async function ReviewsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800">
-                {reviews.map((r: any) => (
+                {reviews.map((r: ReviewRow) => (
                   <tr key={r.id} className="hover:bg-gray-800/50 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium text-white">{r.locality}</td>
                     <td className="px-6 py-4 text-sm text-gray-400">{r.city}</td>
@@ -63,7 +74,7 @@ export default async function ReviewsPage() {
                     <td className="px-6 py-4 text-sm text-gray-400">{r.comment_count}</td>
                     <td className="px-6 py-4 text-sm text-gray-400">{formatDate(r.updated_at || r.created_at)}</td>
                     <td className="px-6 py-4 text-right">
-                      <ReviewActions reviewId={r.id} currentRating={r.rating} avgPrice={r.avg_price} />
+                      <ReviewActions reviewId={r.id} currentRating={r.rating} avgPrice={r.avg_price ?? undefined} />
                     </td>
                   </tr>
                 ))}

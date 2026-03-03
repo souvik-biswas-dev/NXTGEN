@@ -6,6 +6,16 @@ import { Badge } from '@/components/ui/badge';
 import { formatDateTime } from '@/lib/utils';
 import { MessageSquare } from 'lucide-react';
 
+interface InquiryRow {
+  id: string;
+  message: string;
+  read: boolean;
+  created_at: string;
+  from_user: { name: string; email: string } | null;
+  to_user: { name: string; email: string } | null;
+  property: { title: string; city: string } | null;
+}
+
 async function getInquiries() {
   const supabase = createAdminClient();
   const { data } = await supabase
@@ -23,7 +33,7 @@ async function getInquiries() {
 
 export default async function InquiriesPage() {
   const inquiries = await getInquiries();
-  const unread = inquiries.filter((i: any) => !i.read).length;
+  const unread = inquiries.filter((i: InquiryRow) => !i.read).length;
 
   return (
     <div>
@@ -52,7 +62,7 @@ export default async function InquiriesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800">
-                {inquiries.map((i: any) => (
+                {inquiries.map((i: InquiryRow) => (
                   <tr key={i.id} className="hover:bg-gray-800/50 transition-colors">
                     <td className="px-6 py-4">
                       <p className="text-sm text-white">{i.from_user?.name || '—'}</p>

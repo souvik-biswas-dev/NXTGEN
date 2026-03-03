@@ -16,14 +16,16 @@ export function SubscriptionActions({ subscriptionId, status }: Props) {
   const handleCancel = () => {
     if (!confirm('Cancel this subscription?')) return;
     startTransition(async () => {
-      await cancelSubscription(subscriptionId);
+      const result = await cancelSubscription(subscriptionId);
+      if (result?.error) alert(result.error);
       setOpen(false);
     });
   };
 
   const handleExtend = (days: number) => {
     startTransition(async () => {
-      await extendSubscription(subscriptionId, days);
+      const result = await extendSubscription(subscriptionId, days);
+      if (result?.error) alert(result.error);
       setOpen(false);
     });
   };

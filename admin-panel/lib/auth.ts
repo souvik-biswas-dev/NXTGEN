@@ -41,7 +41,20 @@ export async function getSession(): Promise<AdminSession | null> {
     if (!token) return null;
 
     const { payload } = await jwtVerify(token, JWT_SECRET);
-    return payload as unknown as AdminSession;
+    if (
+      typeof payload.userId !== 'string' ||
+      typeof payload.email !== 'string' ||
+      typeof payload.name !== 'string' ||
+      typeof payload.role !== 'string'
+    ) {
+      return null;
+    }
+    return {
+      userId: payload.userId,
+      email: payload.email,
+      name: payload.name,
+      role: payload.role,
+    };
   } catch {
     return null;
   }

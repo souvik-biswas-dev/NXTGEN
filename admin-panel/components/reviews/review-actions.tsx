@@ -19,7 +19,11 @@ export function ReviewActions({ reviewId, currentRating, avgPrice }: Props) {
 
   const handleSave = () => {
     startTransition(async () => {
-      await updateLocalityReview(reviewId, parseFloat(rating), price ? parseInt(price) : undefined);
+      const result = await updateLocalityReview(reviewId, parseFloat(rating), price ? parseInt(price) : undefined);
+      if (result?.error) {
+        alert(result.error);
+        return;
+      }
       setEditing(false);
       setOpen(false);
     });
@@ -28,7 +32,8 @@ export function ReviewActions({ reviewId, currentRating, avgPrice }: Props) {
   const handleDelete = () => {
     if (!confirm('Delete this review?')) return;
     startTransition(async () => {
-      await deleteLocalityReview(reviewId);
+      const result = await deleteLocalityReview(reviewId);
+      if (result?.error) alert(result.error);
     });
   };
 

@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from 'react';
 import { updateUserRole, toggleBrokerVerification, deleteUser } from '@/app/actions/users';
-import { Button } from '@/components/ui/button';
 import { MoreHorizontal, ShieldCheck, ShieldOff, Trash2, UserCog } from 'lucide-react';
 
 interface Props {
@@ -17,14 +16,16 @@ export function UserActions({ userId, currentRole, isVerifiedBroker }: Props) {
 
   const handleRoleChange = (role: string) => {
     startTransition(async () => {
-      await updateUserRole(userId, role);
+      const result = await updateUserRole(userId, role);
+      if (result?.error) alert(result.error);
       setOpen(false);
     });
   };
 
   const handleToggleVerification = () => {
     startTransition(async () => {
-      await toggleBrokerVerification(userId, !isVerifiedBroker);
+      const result = await toggleBrokerVerification(userId, !isVerifiedBroker);
+      if (result?.error) alert(result.error);
       setOpen(false);
     });
   };
@@ -32,7 +33,8 @@ export function UserActions({ userId, currentRole, isVerifiedBroker }: Props) {
   const handleDelete = () => {
     if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
     startTransition(async () => {
-      await deleteUser(userId);
+      const result = await deleteUser(userId);
+      if (result?.error) alert(result.error);
     });
   };
 

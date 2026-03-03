@@ -7,6 +7,16 @@ import { SubscriptionActions } from '@/components/subscriptions/subscription-act
 import { formatDate, formatDateTime } from '@/lib/utils';
 import { CreditCard } from 'lucide-react';
 
+interface SubscriptionRow {
+  id: string;
+  plan: string;
+  status: string;
+  starts_at: string;
+  ends_at: string;
+  created_at: string;
+  user: { name: string; email: string; phone: string | null } | null;
+}
+
 async function getSubscriptions(plan?: string, status?: string) {
   const supabase = createAdminClient();
   let query = supabase
@@ -97,7 +107,7 @@ export default async function SubscriptionsPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800">
-                {subs.map((s: any) => (
+                {subs.map((s: SubscriptionRow) => (
                   <tr key={s.id} className="hover:bg-gray-800/50 transition-colors">
                     <td className="px-6 py-4">
                       <p className="text-sm font-medium text-white">{s.user?.name || '—'}</p>

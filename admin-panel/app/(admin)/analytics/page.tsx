@@ -10,17 +10,20 @@ async function getAnalyticsData() {
     { data: usersByRole },
     { data: subsByPlan },
     { data: subsByMonth },
-    { data: allProperties },
+    { count: propertyCount },
   ] = await Promise.all([
     supabase.from('users_profiles').select('role'),
     supabase.from('subscriptions').select('plan, status, created_at'),
     supabase.from('subscriptions').select('plan, created_at').order('created_at', { ascending: true }),
-    supabase.from('properties').select('city').limit(1000),
+    supabase.from('properties').select('*', { count: 'exact', head: true }),
   ]);
+
+  // Properties by city - use a targeted query instead of fetching all rows
+  const { data: allProperties } = await supabase.from('properties').select('city');
 
   // Properties by city
   const cityMap: Record<string, number> = {};
-  (allProperties || []).forEach((p: any) => {
+  (allProperties || []).forEach((p: { city: string }) => {
     cityMap[p.city] = (cityMap[p.city] || 0) + 1;
   });
   const propertiesByCityData = Object.entries(cityMap)
@@ -30,14 +33,14 @@ async function getAnalyticsData() {
 
   // Users by role
   const roleMap: Record<string, number> = {};
-  (usersByRole || []).forEach((u: any) => {
+  (usersByRole || []).forEach((u: { role: string }) => {
     roleMap[u.role] = (roleMap[u.role] || 0) + 1;
   });
   const usersByRoleData = Object.entries(roleMap).map(([role, count]) => ({ role, count }));
 
   // Subscriptions by plan (active)
   const planMap: Record<string, number> = {};
-  (subsByPlan || []).forEach((s: any) => {
+  (subsByPlan || []).forEach((s: { plan: string; status: string }) => {
     if (s.status === 'active') planMap[s.plan] = (planMap[s.plan] || 0) + 1;
   });
   const subsData = Object.entries(planMap).map(([plan, count]) => ({ plan, count }));
@@ -50,7 +53,7 @@ async function getAnalyticsData() {
     const key = d.toLocaleString('en-IN', { month: 'short', year: '2-digit' });
     monthlyMap[key] = 0;
   }
-  (subsByMonth || []).forEach((s: any) => {
+  (subsByMonth || []).forEach((s: { plan: string; created_at: string }) => {
     const d = new Date(s.created_at);
     const key = d.toLocaleString('en-IN', { month: 'short', year: '2-digit' });
     if (key in monthlyMap) monthlyMap[key]++;

@@ -5,6 +5,12 @@ import { Card } from '@/components/ui/card';
 import { PlatformDataEditor } from '@/components/platform/platform-data-editor';
 import { Database } from 'lucide-react';
 
+interface PlatformDataRow {
+  key: string;
+  data: unknown;
+  updated_at: string;
+}
+
 async function getPlatformData() {
   const supabase = createAdminClient();
   const { data } = await supabase.from('platform_data').select('*').order('key');
@@ -34,7 +40,7 @@ export default async function PlatformDataPage() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {platformData.map((item: any) => (
+            {platformData.map((item: PlatformDataRow) => (
               <PlatformDataEditor key={item.key} dataKey={item.key} initialData={item.data} updatedAt={item.updated_at} />
             ))}
           </div>

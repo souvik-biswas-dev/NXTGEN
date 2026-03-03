@@ -7,15 +7,15 @@ import { z } from 'zod';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
 export type LoginState = { error: string } | undefined;
 
 export async function loginAction(_prevState: LoginState, formData: FormData): Promise<LoginState> {
   const raw = {
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
+    email: formData.get('email')?.toString() ?? '',
+    password: formData.get('password')?.toString() ?? '',
   };
 
   const parsed = loginSchema.safeParse(raw);

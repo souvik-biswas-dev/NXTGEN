@@ -7,6 +7,21 @@ import { PropertyActions } from '@/components/properties/property-actions';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Building2, CheckCircle, Star, Home } from 'lucide-react';
 
+interface PropertyRow {
+  id: string;
+  title: string;
+  locality: string;
+  city: string;
+  price: number;
+  type: string;
+  bhk: string;
+  verified: boolean;
+  featured: boolean;
+  created_at: string;
+  owner: { name: string; email: string } | null;
+  broker: { name: string; email: string } | null;
+}
+
 async function getProperties(search?: string, city?: string, type?: string, verified?: string) {
   const supabase = createAdminClient();
   let query = supabase
@@ -120,7 +135,7 @@ export default async function PropertiesPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800">
-                {properties.map((p: any) => (
+                {properties.map((p: PropertyRow) => (
                   <tr key={p.id} className="hover:bg-gray-800/50 transition-colors">
                     <td className="px-6 py-4">
                       <a href={`/properties/${p.id}`} className="group">

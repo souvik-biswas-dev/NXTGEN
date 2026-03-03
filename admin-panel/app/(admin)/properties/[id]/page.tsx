@@ -12,6 +12,21 @@ import {
   User, Phone, Mail, MessageSquare, Star, IndianRupee, CheckCircle,
 } from 'lucide-react';
 
+interface PropertyInquiry {
+  id: string;
+  message: string;
+  created_at: string;
+  user: { name: string; email: string; avatar_url: string | null }[];
+}
+
+interface PropertyReview {
+  id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  user: { name: string; avatar_url: string | null }[];
+}
+
 async function getPropertyDetail(id: string) {
   const supabase = createAdminClient();
 
@@ -57,7 +72,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
 
   const avgRating =
     reviews.length > 0
-      ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length
+      ? reviews.reduce((sum: number, r: PropertyReview) => sum + r.rating, 0) / reviews.length
       : null;
 
   return (
@@ -244,14 +259,14 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                   <p className="text-gray-600 text-sm text-center py-4">No inquiries yet</p>
                 ) : (
                   <div className="space-y-3">
-                    {inquiries.map((inq: any) => (
+                    {inquiries.map((inq: PropertyInquiry) => (
                       <div key={inq.id} className="flex gap-3 py-2 border-b border-gray-800 last:border-0">
                         <div className="w-8 h-8 rounded-full bg-purple-400/10 flex items-center justify-center text-purple-400 text-xs font-bold shrink-0">
-                          {inq.user?.name?.charAt(0)?.toUpperCase() || '?'}
+                          {inq.user?.[0]?.name?.charAt(0)?.toUpperCase() || '?'}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-white">{inq.user?.name || 'Unknown'}</p>
-                          <p className="text-xs text-gray-500 mb-1">{inq.user?.email}</p>
+                          <p className="text-sm font-medium text-white">{inq.user?.[0]?.name || 'Unknown'}</p>
+                          <p className="text-xs text-gray-500 mb-1">{inq.user?.[0]?.email}</p>
                           <p className="text-sm text-gray-400 line-clamp-2">{inq.message}</p>
                           <p className="text-xs text-gray-600 mt-1">{formatDateTime(inq.created_at)}</p>
                         </div>
@@ -278,10 +293,10 @@ export default async function PropertyDetailPage({ params }: { params: Promise<{
                   <p className="text-gray-600 text-sm text-center py-4">No reviews yet</p>
                 ) : (
                   <div className="space-y-3">
-                    {reviews.map((rev: any) => (
+                    {reviews.map((rev: PropertyReview) => (
                       <div key={rev.id} className="py-2 border-b border-gray-800 last:border-0">
                         <div className="flex items-center justify-between mb-1">
-                          <p className="text-sm font-medium text-white">{rev.user?.name || 'Anonymous'}</p>
+                          <p className="text-sm font-medium text-white">{rev.user?.[0]?.name || 'Anonymous'}</p>
                           <div className="flex items-center gap-0.5">
                             {Array.from({ length: 5 }).map((_, i) => (
                               <Star
