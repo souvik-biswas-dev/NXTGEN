@@ -73,11 +73,11 @@ export default async function InquiriesPage() {
                       <p className="text-xs text-gray-500">{i.to_user?.email || ''}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-gray-300 max-w-[150px] truncate">{i.property?.title || '—'}</p>
+                      <p className="text-sm text-gray-300 max-w-35 truncate">{i.property?.title || '—'}</p>
                       <p className="text-xs text-gray-600">{i.property?.city || ''}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-gray-400 max-w-[200px] truncate">{i.message}</p>
+                      <p className="text-sm text-gray-400 max-w-50 truncate">{i.message}</p>
                     </td>
                     <td className="px-6 py-4">
                       <Badge variant={i.read ? 'secondary' : 'info'}>{i.read ? 'Read' : 'Unread'}</Badge>

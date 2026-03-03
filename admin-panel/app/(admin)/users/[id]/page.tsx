@@ -83,7 +83,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
         <Card className="p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
             {/* Avatar */}
-            <div className="relative flex-shrink-0">
+            <div className="relative shrink-0">
               {profile.avatar_url ? (
                 <img
                   src={profile.avatar_url}
@@ -125,7 +125,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
             </div>
 
             {/* Actions */}
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <UserActions
                 userId={profile.user_id}
                 currentRole={profile.role}
@@ -138,28 +138,28 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
         {/* Stats Row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Card className="p-4 flex items-center gap-3">
-            <Building2 className="w-8 h-8 text-green-400 flex-shrink-0" />
+            <Building2 className="w-8 h-8 text-green-400 shrink-0" />
             <div>
               <p className="text-xl font-bold text-white">{properties.length}</p>
               <p className="text-xs text-gray-500">Properties</p>
             </div>
           </Card>
           <Card className="p-4 flex items-center gap-3">
-            <MessageSquare className="w-8 h-8 text-purple-400 flex-shrink-0" />
+            <MessageSquare className="w-8 h-8 text-purple-400 shrink-0" />
             <div>
               <p className="text-xl font-bold text-white">{inquiries.length}</p>
               <p className="text-xs text-gray-500">Inquiries</p>
             </div>
           </Card>
           <Card className="p-4 flex items-center gap-3">
-            <Star className="w-8 h-8 text-yellow-400 flex-shrink-0" />
+            <Star className="w-8 h-8 text-yellow-400 shrink-0" />
             <div>
               <p className="text-xl font-bold text-white">{reviews.length}</p>
               <p className="text-xs text-gray-500">Reviews</p>
             </div>
           </Card>
           <Card className="p-4 flex items-center gap-3">
-            <CreditCard className="w-8 h-8 text-[#FF6B35] flex-shrink-0" />
+            <CreditCard className="w-8 h-8 text-[#FF6B35] shrink-0" />
             <div>
               <p className="text-xl font-bold text-white capitalize">{subscription?.plan || 'Free'}</p>
               <p className="text-xs text-gray-500">
@@ -196,7 +196,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                         </p>
                         <p className="text-xs text-gray-500">{p.city} · {formatDate(p.created_at)}</p>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                      <div className="flex items-center gap-2 shrink-0 ml-3">
                         <span className="text-sm font-medium text-white">{formatCurrency(p.price)}</span>
                         {p.verified ? <Badge variant="success">Verified</Badge> : <Badge variant="warning">Pending</Badge>}
                       </div>
@@ -270,10 +270,10 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                   {reviews.map((rev: UserReview) => (
                     <div key={rev.id} className="py-2 border-b border-gray-800 last:border-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <p className="text-xs text-[#FF6B35] font-medium truncate max-w-[200px]">
+                        <p className="text-xs text-[#FF6B35] font-medium truncate max-w-50">
                           {rev.property?.[0]?.title || 'Unknown property'}
                         </p>
-                        <div className="flex items-center gap-0.5 flex-shrink-0 ml-2">
+                        <div className="flex items-center gap-0.5 shrink-0 ml-2">
                           {Array.from({ length: 5 }).map((_, i) => (
                             <Star
                               key={i}

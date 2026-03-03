@@ -26,7 +26,7 @@ export default async function PlatformDataPage() {
 
       <div className="p-6 space-y-6">
         <div className="flex items-center gap-3 bg-blue-900/20 border border-blue-800 rounded-xl px-4 py-3">
-          <Database className="w-5 h-5 text-blue-400 flex-shrink-0" />
+          <Database className="w-5 h-5 text-blue-400 shrink-0" />
           <p className="text-sm text-blue-300">
             Changes here affect the mobile app immediately. Be careful with JSON structure.
           </p>
