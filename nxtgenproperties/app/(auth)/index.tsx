@@ -33,9 +33,7 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      // Supabase requires international format without + prefix
       const fullPhone = `91${phoneNumber}`;
-      console.log('Sending OTP to:', fullPhone);
       const { error } = await supabase.auth.signInWithOtp({
         phone: fullPhone,
       });
@@ -46,8 +44,8 @@ export default function LoginScreen() {
         pathname: '/(auth)/verify',
         params: { phone: fullPhone },
       });
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -69,8 +67,8 @@ export default function LoginScreen() {
       if (error) throw error;
 
       router.replace('/(tabs)');
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Email login failed. Please try again.');
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message :'Email login failed. Please try again.');
     } finally {
       setEmailLoading(false);
     }
@@ -90,8 +88,8 @@ export default function LoginScreen() {
       if (data?.url) {
         await Linking.openURL(data.url);
       }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Google login failed. Please try again.');
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message :'Google login failed. Please try again.');
     } finally {
       setGoogleLoading(false);
     }

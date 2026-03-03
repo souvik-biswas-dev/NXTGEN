@@ -75,8 +75,8 @@ export const useProperties = (filters?: SearchFilters, limit: number = 20) => {
 
       setHasMore((data?.length || 0) === limit);
       setError(null);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       console.error('Error fetching properties:', err);
     } finally {
       setLoading(false);
@@ -163,8 +163,8 @@ export const usePreferredCitiesProperties = (preferredCities?: string[], limit: 
       if (fetchError) throw fetchError;
       setProperties(data || []);
       setError(null);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       console.error('Error fetching properties by preferred cities:', err);
     } finally {
       setLoading(false);
@@ -205,8 +205,8 @@ export const useProperty = (id: string) => {
       if (fetchError) throw fetchError;
       setProperty(data);
       setError(null);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       console.error('Error fetching property:', err);
     } finally {
       setLoading(false);

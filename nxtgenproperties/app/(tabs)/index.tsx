@@ -23,17 +23,17 @@ import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useRecentlyViewedStore } from '@/stores/recentlyViewedStore';
 import { useSearchStore } from '@/stores/searchStore';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
-import { PropertyType } from '@/types';
+import { Property, PropertyType } from '@/types';
 import { theme } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
 
 // --- Skeleton Placeholder Components ---
-const SkeletonBlock = ({ w, h, rounded = 8, style }: { w: number | string; h: number; rounded?: number; style?: any }) => (
+const SkeletonBlock = ({ w, h, rounded = 8, style }: { w: number | `${number}%`; h: number; rounded?: number; style?: object }) => (
   <View
     style={[
       {
-        width: w as any,
+        width: w,
         height: h,
         borderRadius: rounded,
         backgroundColor: theme.colors.outlineVariant,
@@ -45,7 +45,7 @@ const SkeletonBlock = ({ w, h, rounded = 8, style }: { w: number | string; h: nu
 );
 
 const SkeletonPropertyCard = () => (
-  <View style={[styles.skeletonCard, { width: '48%' as any }]}>
+  <View style={[styles.skeletonCard, { width: '48%' }]}>
     <SkeletonBlock w="100%" h={120} rounded={theme.roundness.lg} />
     <View style={{ padding: 10 }}>
       <SkeletonBlock w="80%" h={14} style={{ marginBottom: 8 }} />
@@ -672,7 +672,7 @@ export default function HomeScreen() {
 
 // ========== Featured Property Card (inline) ==========
 interface FeaturedPropertyCardProps {
-  property: any;
+  property: Property;
 }
 
 const FeaturedPropertyCard: React.FC<FeaturedPropertyCardProps> = ({ property }) => {

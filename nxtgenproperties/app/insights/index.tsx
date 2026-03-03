@@ -68,23 +68,25 @@ export default function InsightsScreen() {
             .maybeSingle(),
         ]);
 
-        const platformMap: Record<string, any> = {};
-        platformData?.forEach((row: any) => {
+        const platformMap: Record<string, unknown> = {};
+        platformData?.forEach((row: { key: string; data: unknown }) => {
           platformMap[row.key] = row.data;
         });
 
-        if (platformMap.market_trends) {
+        if (Array.isArray(platformMap.market_trends)) {
           setMarketTrends(platformMap.market_trends as MarketTrend[]);
         }
-        if (platformMap.popular_cities) {
+        if (Array.isArray(platformMap.popular_cities)) {
           setPopularCities(platformMap.popular_cities as PlatformCity[]);
         }
-        if (platformMap.top_localities) {
+        if (Array.isArray(platformMap.top_localities)) {
           setTopLocalities(platformMap.top_localities as TopLocality[]);
         }
 
-        const apt = (aptAvg as any)?.avg_price as number | null;
-        const villa = (villaAvg as any)?.avg_price as number | null;
+        const aptData = aptAvg as { avg_price: number | null } | null;
+        const villaData = villaAvg as { avg_price: number | null } | null;
+        const apt = aptData?.avg_price ?? null;
+        const villa = villaData?.avg_price ?? null;
         if (apt) {
           setAvgApartmentPrice(Math.round(apt / 100000));
         }

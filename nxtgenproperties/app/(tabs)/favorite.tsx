@@ -6,10 +6,11 @@ import { useFavoritesStore } from '@/stores/favoritesStore';
 import { PropertyCard } from '@/components/PropertyCard';
 import { supabase } from '@/lib/supabase';
 import { theme } from '@/constants/theme';
+import { Property } from '@/types';
 
 export default function FavoritesScreen() {
   const { favorites, fetchFavorites } = useFavoritesStore();
-  const [properties, setProperties] = useState<any[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 

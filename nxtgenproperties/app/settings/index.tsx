@@ -49,8 +49,8 @@ export default function SettingsScreen() {
         'Verification Sent',
         'A confirmation link has been sent to ' + trimmed + '. Your email will update once you click the link.'
       );
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to update email.');
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to update email.');
     } finally {
       setEmailSaving(false);
     }

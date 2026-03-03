@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, Pressable, StyleSheet, GestureResponderEvent } from 'react-native';
 import { Property } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -12,12 +12,12 @@ interface PropertyCardProps {
   variant?: 'default' | 'featured';
 }
 
-export const PropertyCard: React.FC<PropertyCardProps> = ({ property, variant = 'default' }) => {
+export const PropertyCard: React.FC<PropertyCardProps> = React.memo(({ property, variant = 'default' }) => {
   const router = useRouter();
   const { isFavorite, toggleFavorite } = useFavoritesStore();
   const isLiked = isFavorite(property.id);
 
-  const handleFavorite = async (e: any) => {
+  const handleFavorite = async (e: GestureResponderEvent) => {
     e.stopPropagation();
     try {
       await toggleFavorite(property.id);
@@ -156,7 +156,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, variant = 
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   card: {

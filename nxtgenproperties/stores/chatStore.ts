@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
-import { Conversation, Message } from '@/types';
+import { Conversation, Message, User } from '@/types';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface ChatState {
@@ -72,7 +72,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           .neq('sender_id', userId),
       ]);
 
-      const profileMap: Record<string, any> = {};
+      const profileMap: Record<string, User> = {};
       (profiles || []).forEach((p) => { profileMap[p.user_id] = p; });
 
       const unreadMap: Record<string, number> = {};
@@ -101,7 +101,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   fetchMessages: async (conversationId: string) => {
-    set({ messagesLoading: true });
+    set({ messagesLoading: true, error: null });
     try {
       const { data, error } = await supabase
         .from('messages')
@@ -112,13 +112,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (error) throw error;
       set({ currentMessages: data || [], messagesLoading: false });
     } catch (error) {
-      console.error('Error fetching messages:', error);
-      set({ messagesLoading: false });
+      set({
+        messagesLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch messages',
+      });
     }
   },
 
   sendMessage: async (conversationId: string, senderId: string, content: string) => {
     try {
+      set({ error: null });
       const { error } = await supabase.from('messages').insert({
         conversation_id: conversationId,
         sender_id: senderId,
@@ -126,8 +129,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       });
       if (error) throw error;
     } catch (error) {
-      console.error('Error sending message:', error);
-      set({ error: error instanceof Error ? error.message : 'Failed to send message' });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
+      set({ error: errorMessage });
       throw error;
     }
   },

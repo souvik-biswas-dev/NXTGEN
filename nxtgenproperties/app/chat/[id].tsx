@@ -153,10 +153,10 @@ export default function ChatRoomScreen() {
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (currentMessages.length > 0) {
-      // Small delay to let the FlatList render
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
+      return () => clearTimeout(timer);
     }
   }, [currentMessages.length]);
 
@@ -304,9 +304,7 @@ export default function ChatRoomScreen() {
               </Text>
             </View>
             <Text className="text-[#FF6B35] text-sm font-bold ml-2">
-              {property.type === 'rent' ? '\u20B9' : '\u20B9'}
-              {formatPrice(property.price)}
-              {property.type === 'rent' ? '/mo' : ''}
+              {'\u20B9'}{formatPrice(property.price)}{property.type === 'rent' ? '/mo' : ''}
             </Text>
           </TouchableOpacity>
         )}

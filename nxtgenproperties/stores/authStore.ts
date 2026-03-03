@@ -1,14 +1,15 @@
 import { create } from 'zustand';
 import { User, UserPreferences } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { Session } from '@supabase/supabase-js';
 
 interface AuthState {
   user: User | null;
-  session: any;
+  session: Session | null;
   loading: boolean;
   userPreferences: UserPreferences | null;
   setUser: (user: User | null) => void;
-  setSession: (session: any) => void;
+  setSession: (session: Session | null) => void;
   setLoading: (loading: boolean) => void;
   setUserPreferences: (preferences: UserPreferences | null) => void;
   signOut: () => Promise<void>;

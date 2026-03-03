@@ -72,15 +72,22 @@ export default function PropertyDetailScreen() {
     return `₹${price.toLocaleString('en-IN')}`;
   };
 
-  const handleCall = () => {
-    if (contact?.phone) {
-      Linking.openURL(`tel:${contact.phone}`);
+  const handleCall = async () => {
+    if (!contact?.phone) return;
+    const url = `tel:${contact.phone}`;
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
     }
   };
 
-  const handleWhatsApp = () => {
-    if (contact?.phone) {
-      Linking.openURL(`whatsapp://send?phone=${contact.phone}&text=Hi, I'm interested in ${property.title}`);
+  const handleWhatsApp = async () => {
+    if (!contact?.phone) return;
+    const message = encodeURIComponent(`Hi, I'm interested in ${property.title}`);
+    const url = `https://wa.me/${contact.phone.replace(/[^0-9]/g, '')}?text=${message}`;
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
     }
   };
 

@@ -58,8 +58,8 @@ export default function SignupScreen() {
       Alert.alert('Success', 'Account created successfully!', [
         { text: 'OK', onPress: () => router.replace('/(tabs)') },
       ]);
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,7 @@ export default function SignupScreen() {
 
   return (
     <ImageBackground
-      source={{ uri: 'https://images.pexels.com/photos/34533806/pexels-photo-34533806.jpeg ' }}
+      source={{ uri: 'https://images.pexels.com/photos/34533806/pexels-photo-34533806.jpeg' }}
       className="flex-1"
       resizeMode="cover"
     >

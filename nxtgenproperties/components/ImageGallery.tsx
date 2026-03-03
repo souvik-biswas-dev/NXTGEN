@@ -8,7 +8,7 @@ interface ImageGalleryProps {
 
 const { width, height } = Dimensions.get('window');
 
-export const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
+export const ImageGallery: React.FC<ImageGalleryProps> = React.memo(({ images }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -80,10 +80,10 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
                 />
               </View>
             )}
-            keyExtractor={(_, index) => index.toString()}
+            keyExtractor={(item, index) => `${item}-${index}`}
           />
         </View>
       </Modal>
     </View>
   );
-};
+});

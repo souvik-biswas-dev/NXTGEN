@@ -71,8 +71,8 @@ export default function VerifyScreen() {
 
       if (error) throw error;
       router.replace('/(tabs)');
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -85,8 +85,8 @@ export default function VerifyScreen() {
       });
       if (error) throw error;
       Alert.alert('Success', 'OTP sent successfully');
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Something went wrong');
     }
   };
 

@@ -76,8 +76,8 @@ export default function ProfileScreen() {
         .getPublicUrl(fileName);
 
       await updateProfile({ avatar_url: urlData.publicUrl });
-    } catch (err: any) {
-      Alert.alert('Upload Failed', err.message || 'Could not upload photo. Please try again.');
+    } catch (err) {
+      Alert.alert('Upload Failed', err instanceof Error ? err.message : 'Could not upload photo. Please try again.');
     } finally {
       setAvatarUploading(false);
     }
@@ -128,8 +128,8 @@ export default function ProfileScreen() {
       });
       setEditModalVisible(false);
       Alert.alert('Success', 'Profile updated successfully');
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update profile');
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update profile');
     } finally {
       setSaving(false);
     }

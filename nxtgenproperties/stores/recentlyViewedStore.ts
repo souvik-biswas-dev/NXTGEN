@@ -51,7 +51,7 @@ export const useRecentlyViewedStore = create<RecentlyViewedState>((set) => ({
         .limit(20);
 
       if (error) throw error;
-      const items = (data ?? []).map((row: any) => row.property).filter(Boolean);
+      const items = (data ?? []).map((row: { property: Property }) => row.property).filter(Boolean);
       set({ recentItems: items });
     } catch (error) {
       console.error('Error fetching recently viewed:', error);

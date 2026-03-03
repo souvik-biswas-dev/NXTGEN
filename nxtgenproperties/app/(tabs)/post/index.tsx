@@ -24,6 +24,35 @@ import { theme } from '@/constants/theme';
 
 type Step = 'basic' | 'details' | 'location' | 'amenities' | 'photos' | 'pricing';
 
+interface PropertyFormData {
+  type: PropertyType;
+  category: PropertyCategory;
+  title: string;
+  description: string;
+  bhk: BHKType | '';
+  furnishing: FurnishingType | '';
+  area_sqft: string;
+  carpet_area: string;
+  floor: string;
+  total_floors: string;
+  facing: FacingType | '';
+  possession: PossessionType;
+  age_years: string;
+  bedrooms: string;
+  bathrooms: string;
+  kitchens: string;
+  parkings: string;
+  city: string;
+  locality: string;
+  address: string;
+  amenities: string[];
+  photos: string[];
+  price: string;
+  maintenance: string;
+  deposit: string;
+  priceNegotiable: boolean;
+}
+
 export default function PostPropertyScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
@@ -194,8 +223,8 @@ export default function PostPropertyScreen() {
         'Your property has been submitted for review. It will be live within 24 hours.',
         [{ text: 'OK', onPress: () => router.push('/(tabs)') }]
       );
-    } catch (err: any) {
-      Alert.alert('Submission Failed', err.message || 'Could not post your property. Please try again.');
+    } catch (err) {
+      Alert.alert('Submission Failed', err instanceof Error ? err.message : 'Could not post your property. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -322,7 +351,7 @@ export default function PostPropertyScreen() {
 }
 
 // Step Components
-const BasicInfoStep: React.FC<{ formData: any; updateFormData: (key: string, value: any) => void }> = ({ 
+const BasicInfoStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: string, value: PropertyFormData[keyof PropertyFormData]) => void }> = ({ 
   formData, 
   updateFormData 
 }) => (
@@ -400,7 +429,7 @@ const BasicInfoStep: React.FC<{ formData: any; updateFormData: (key: string, val
   </View>
 );
 
-const PropertyDetailsStep: React.FC<{ formData: any; updateFormData: (key: string, value: any) => void }> = ({ 
+const PropertyDetailsStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: string, value: PropertyFormData[keyof PropertyFormData]) => void }> = ({ 
   formData, 
   updateFormData 
 }) => (
@@ -555,7 +584,7 @@ const PropertyDetailsStep: React.FC<{ formData: any; updateFormData: (key: strin
   </View>
 );
 
-const LocationStep: React.FC<{ formData: any; updateFormData: (key: string, value: any) => void }> = ({
+const LocationStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: string, value: PropertyFormData[keyof PropertyFormData]) => void }> = ({
   formData,
   updateFormData
 }) => {
@@ -636,7 +665,7 @@ const LocationStep: React.FC<{ formData: any; updateFormData: (key: string, valu
   );
 };
 
-const AmenitiesStep: React.FC<{ formData: any; toggleAmenity: (amenity: string) => void }> = ({
+const AmenitiesStep: React.FC<{ formData: PropertyFormData; toggleAmenity: (amenity: string) => void }> = ({
   formData,
   toggleAmenity
 }) => {
@@ -681,7 +710,7 @@ const AmenitiesStep: React.FC<{ formData: any; toggleAmenity: (amenity: string) 
   );
 };
 
-const PhotosStep: React.FC<{ formData: any; updateFormData: (key: string, value: any) => void }> = ({
+const PhotosStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: string, value: PropertyFormData[keyof PropertyFormData]) => void }> = ({
   formData,
   updateFormData
 }) => {
@@ -698,7 +727,7 @@ const PhotosStep: React.FC<{ formData: any; updateFormData: (key: string, value:
       setLoading(true);
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsMultiple: true,
+        allowsMultipleSelection: true,
         aspect: [4, 3],
         quality: 0.8,
       });
@@ -728,15 +757,15 @@ const PhotosStep: React.FC<{ formData: any; updateFormData: (key: string, value:
         }
         updateFormData('photos', [...formData.photos, ...uploadedUrls]);
       }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to pick images');
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to pick images');
     } finally {
       setLoading(false);
     }
   };
 
   const removePhoto = (index: number) => {
-    const updatedPhotos = formData.photos.filter((_: any, i: number) => i !== index);
+    const updatedPhotos = formData.photos.filter((_, i) => i !== index);
     updateFormData('photos', updatedPhotos);
   };
 
@@ -816,7 +845,7 @@ const PhotosStep: React.FC<{ formData: any; updateFormData: (key: string, value:
   );
 };
 
-const PricingStep: React.FC<{ formData: any; updateFormData: (key: string, value: any) => void }> = ({ 
+const PricingStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: string, value: PropertyFormData[keyof PropertyFormData]) => void }> = ({ 
   formData, 
   updateFormData 
 }) => (

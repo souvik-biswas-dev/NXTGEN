@@ -109,13 +109,25 @@ export const BrokerCard: React.FC<BrokerCardProps> = ({
   responseTime = 'Usually responds within 1 hour',
   onContact,
 }) => {
-  const handleCall = () => {
-    Linking.openURL(`tel:${phone}`);
+  const handleCall = async () => {
+    const url = `tel:${phone}`;
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      Alert.alert('Error', 'Phone calls are not supported on this device');
+    }
   };
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
     const message = encodeURIComponent('Hi, I am interested in your property listed on NxtGen Properties');
-    Linking.openURL(`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${message}`);
+    const url = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${message}`;
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      Alert.alert('WhatsApp Not Found', 'WhatsApp is not installed on this device');
+    }
   };
 
   return (
@@ -210,13 +222,25 @@ export const BrokerProfileModal: React.FC<BrokerProfileModalProps> = ({
   onClose,
   broker,
 }) => {
-  const handleCall = () => {
-    Linking.openURL(`tel:${broker.phone}`);
+  const handleCall = async () => {
+    const url = `tel:${broker.phone}`;
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      Alert.alert('Error', 'Phone calls are not supported on this device');
+    }
   };
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
     const message = encodeURIComponent('Hi, I am interested in your property listed on NxtGen Properties');
-    Linking.openURL(`https://wa.me/${broker.phone.replace(/[^0-9]/g, '')}?text=${message}`);
+    const url = `https://wa.me/${broker.phone.replace(/[^0-9]/g, '')}?text=${message}`;
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      Alert.alert('WhatsApp Not Found', 'WhatsApp is not installed on this device');
+    }
   };
 
   const handleReport = () => {

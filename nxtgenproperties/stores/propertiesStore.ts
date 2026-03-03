@@ -142,18 +142,18 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
 
       if (error) throw error;
 
-      const platformMap: Record<string, any> = {};
+      const platformMap: Record<string, unknown> = {};
       data?.forEach((item) => {
         platformMap[item.key] = item.data;
       });
 
       set({
-        popularCities: platformMap.popular_cities || [],
-        popularLocalities: platformMap.popular_localities || {},
-        newLaunches: platformMap.new_launches || [],
-        marketTrends: platformMap.market_trends || [],
-        priceRanges: platformMap.price_ranges || get().priceRanges,
-        allAmenities: platformMap.amenities || [],
+        popularCities: (platformMap.popular_cities as PlatformCity[]) ?? [],
+        popularLocalities: (platformMap.popular_localities as Record<string, string[]>) ?? {},
+        newLaunches: (platformMap.new_launches as NewLaunch[]) ?? [],
+        marketTrends: (platformMap.market_trends as MarketTrend[]) ?? [],
+        priceRanges: (platformMap.price_ranges as Record<string, PriceRange[]>) ?? get().priceRanges,
+        allAmenities: (platformMap.amenities as string[]) ?? [],
         platformDataLoaded: true,
       });
     } catch (error) {
