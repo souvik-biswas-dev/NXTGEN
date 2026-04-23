@@ -35,6 +35,8 @@ export default function RootLayout() {
         <Stack.Screen name="settings/index" options={{ headerShown: false }} />
         <Stack.Screen name="help/index" options={{ headerShown: false }} />
         <Stack.Screen name="about/index" options={{ headerShown: false }} />
+        <Stack.Screen name="broker-verification/index" options={{ headerShown: false }} />
+        <Stack.Screen name="membership/checkout" options={{ headerShown: false }} />
       </Stack>
     </>
   );

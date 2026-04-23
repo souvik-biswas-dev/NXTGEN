@@ -21,6 +21,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
 import { BHKType, FurnishingType, PropertyType, PropertyCategory, FacingType, PossessionType } from '@/types';
 import { theme } from '@/constants/theme';
+import { propertyPostSchema, firstError } from '@/lib/validation';
+import { uploadImage } from '@/lib/uploads';
 
 type Step = 'basic' | 'details' | 'location' | 'amenities' | 'photos' | 'pricing';
 
@@ -143,78 +145,72 @@ export default function PostPropertyScreen() {
       Alert.alert('Sign In Required', 'Please sign in to post a property.');
       return;
     }
-    if (!formData.title.trim()) {
-      Alert.alert('Missing Info', 'Please add a property title.');
-      setCurrentStep('basic');
-      return;
-    }
-    if (!formData.city || !formData.locality) {
-      Alert.alert('Missing Info', 'Please select a city and locality.');
-      setCurrentStep('location');
-      return;
-    }
-    if (!formData.price) {
-      Alert.alert('Missing Info', 'Please enter a price.');
-      setCurrentStep('pricing');
-      return;
-    }
 
     setSubmitting(true);
     try {
-      // 1. Upload photos to Supabase Storage
+      // 1. Upload photos to Supabase Storage (already-http URLs pass through).
       const uploadedUrls: string[] = [];
       for (const localUri of formData.photos) {
         if (localUri.startsWith('http')) {
-          // Already a remote URL (demo photos)
           uploadedUrls.push(localUri);
           continue;
         }
-        const ext = localUri.split('.').pop() ?? 'jpg';
-        const fileName = `properties/${user.user_id}/${Date.now()}_${uploadedUrls.length}.${ext}`;
-        const response = await fetch(localUri);
-        const blob = await response.blob();
-        const arrayBuffer = await new Response(blob).arrayBuffer();
-        const { error: uploadError } = await supabase.storage
-          .from('property-images')
-          .upload(fileName, arrayBuffer, { contentType: `image/${ext}`, upsert: true });
-        if (uploadError) throw uploadError;
-        const { data: urlData } = supabase.storage
-          .from('property-images')
-          .getPublicUrl(fileName);
-        uploadedUrls.push(urlData.publicUrl);
+        const url = await uploadImage({
+          localUri,
+          bucket: 'property-images',
+          userId: user.user_id,
+          prefix: 'properties',
+        });
+        uploadedUrls.push(url);
       }
 
-      // 2. Insert property record into DB
-      const { error: insertError } = await supabase.from('properties').insert({
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        price: Number(formData.price.replace(/,/g, '')),
-        maintenance: formData.maintenance ? Number(formData.maintenance.replace(/,/g, '')) : null,
-        deposit: formData.deposit ? Number(formData.deposit.replace(/,/g, '')) : null,
+      // 2. Normalise + validate with Zod.
+      const toInt = (s: string) => {
+        const n = Number(s.replace(/,/g, ''));
+        return Number.isFinite(n) ? Math.trunc(n) : NaN;
+      };
+
+      const candidate = {
+        title: formData.title,
+        description: formData.description,
+        price: toInt(formData.price),
+        maintenance: formData.maintenance ? toInt(formData.maintenance) : undefined,
+        deposit: formData.deposit ? toInt(formData.deposit) : undefined,
         type: formData.type,
         category: formData.category,
-        bhk: formData.bhk || null,
-        furnishing: formData.furnishing || null,
-        area_sqft: formData.area_sqft ? Number(formData.area_sqft) : null,
-        carpet_area: formData.carpet_area ? Number(formData.carpet_area) : null,
-        floor: formData.floor || null,
-        total_floors: formData.total_floors || null,
-        facing: formData.facing || null,
+        bhk: formData.bhk || undefined,
+        furnishing: formData.furnishing || undefined,
+        area_sqft: toInt(formData.area_sqft),
+        carpet_area: formData.carpet_area ? toInt(formData.carpet_area) : undefined,
+        floor: formData.floor,
+        total_floors: formData.total_floors,
+        facing: formData.facing || undefined,
         possession: formData.possession,
-        age_years: formData.age_years ? Number(formData.age_years) : null,
-        bedrooms: formData.bedrooms ? Number(formData.bedrooms) : 0,
-        bathrooms: formData.bathrooms ? Number(formData.bathrooms) : 0,
-        kitchens: formData.kitchens ? Number(formData.kitchens) : 0,
-        parkings: formData.parkings ? Number(formData.parkings) : 0,
-        city: formData.city,
-        locality: formData.locality,
-        address: formData.address || null,
+        age_years: formData.age_years ? toInt(formData.age_years) : undefined,
         amenities: formData.amenities,
         photos: uploadedUrls,
+        locality: formData.locality,
+        city: formData.city,
+        address: formData.address || undefined,
+        bedrooms: formData.bedrooms ? toInt(formData.bedrooms) : 0,
+        bathrooms: formData.bathrooms ? toInt(formData.bathrooms) : 0,
+        kitchens: formData.kitchens ? toInt(formData.kitchens) : 0,
+        parkings: formData.parkings ? toInt(formData.parkings) : 0,
+      };
+
+      const parsed = propertyPostSchema.safeParse(candidate);
+      if (!parsed.success) {
+        Alert.alert('Check your listing', firstError(parsed.error));
+        setSubmitting(false);
+        return;
+      }
+
+      // 3. Insert.
+      const { error: insertError } = await supabase.from('properties').insert({
+        ...parsed.data,
         owner_id: user.user_id,
         verified: false,
         featured: false,
-        price_negotiable: formData.priceNegotiable,
       });
       if (insertError) throw insertError;
 
@@ -726,7 +722,7 @@ const PhotosStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: s
     try {
       setLoading(true);
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsMultipleSelection: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -737,23 +733,24 @@ const PhotosStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: s
           Alert.alert('Limit Reached', 'You can upload a maximum of 10 photos.');
           return;
         }
-        // Upload each photo to Supabase Storage immediately
+        // Upload each photo through the shared hardened uploader.
+        if (!user?.user_id) {
+          Alert.alert('Sign In Required', 'Please sign in to upload photos.');
+          return;
+        }
         const uploadedUrls: string[] = [];
         for (const asset of result.assets) {
-          const ext = asset.uri.split('.').pop() ?? 'jpg';
-          const fileName = `properties/${user?.user_id ?? 'guest'}/${Date.now()}_${uploadedUrls.length}.${ext}`;
-          const response = await fetch(asset.uri);
-          const blob = await response.blob();
-          const arrayBuffer = await new Response(blob).arrayBuffer();
-          const { error: uploadError } = await supabase.storage
-            .from('property-images')
-            .upload(fileName, arrayBuffer, { contentType: `image/${ext}`, upsert: true });
-          if (uploadError) {
-            Alert.alert('Upload Error', `Failed to upload photo: ${uploadError.message}`);
-            continue;
+          try {
+            const url = await uploadImage({
+              localUri: asset.uri,
+              bucket: 'property-images',
+              userId: user.user_id,
+              prefix: 'properties',
+            });
+            uploadedUrls.push(url);
+          } catch (err) {
+            Alert.alert('Upload Error', err instanceof Error ? err.message : 'Failed to upload photo');
           }
-          const { data: urlData } = supabase.storage.from('property-images').getPublicUrl(fileName);
-          uploadedUrls.push(urlData.publicUrl);
         }
         updateFormData('photos', [...formData.photos, ...uploadedUrls]);
       }

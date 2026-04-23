@@ -36,6 +36,8 @@ interface PropertiesState {
   properties: Property[];
   filteredProperties: Property[];
   loading: boolean;
+  loadingMore: boolean;
+  hasMore: boolean;
   searchQuery: string;
   recentSearches: string[];
 
@@ -56,19 +58,27 @@ interface PropertiesState {
   searchProperties: (query: string) => Promise<void>;
   addRecentSearch: (search: string) => void;
   clearRecentSearches: () => void;
-  filterProperties: (filters: SearchFilters) => Promise<void>;
+  filterProperties: (filters: SearchFilters, opts?: { query?: string; append?: boolean }) => Promise<void>;
+  loadMoreFiltered: () => Promise<void>;
   filterByPreferredCities: (cities: string[]) => Property[];
   getPropertyById: (id: string) => Promise<Property | undefined>;
   getFeaturedProperties: () => Property[];
   getNearbyProperties: (type: 'buy' | 'rent') => Property[];
   getPropertiesByCity: (city: string) => Property[];
   getPropertiesByCategory: (category: 'residential' | 'commercial') => Property[];
+  // Cache of the last filter+query used, so load-more keeps parity.
+  _lastFilters?: SearchFilters;
+  _lastQuery?: string;
 }
+
+const PAGE_SIZE = 20;
 
 export const usePropertiesStore = create<PropertiesState>((set, get) => ({
   properties: [],
   filteredProperties: [],
   loading: false,
+  loadingMore: false,
+  hasMore: false,
   searchQuery: '',
   recentSearches: [],
 
@@ -210,16 +220,38 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
 
   clearRecentSearches: () => set({ recentSearches: [] }),
 
-  filterProperties: async (filters: SearchFilters) => {
-    set({ loading: true });
+  filterProperties: async (filters: SearchFilters, opts?: { query?: string; append?: boolean }) => {
+    const textQuery = (opts?.query ?? get().searchQuery).trim();
+    const append = opts?.append === true;
+    const existing = append ? get().filteredProperties : [];
+    const offset = existing.length;
+
+    set({
+      loading: !append,
+      loadingMore: append,
+      _lastFilters: filters,
+      _lastQuery: textQuery,
+    });
+
     try {
       let query = supabase
         .from('properties')
         .select('*')
         .order('featured', { ascending: false })
         .order('created_at', { ascending: false })
-        .limit(50);
+        .range(offset, offset + PAGE_SIZE - 1);
 
+      if (textQuery.length > 0) {
+        // Escape PostgREST-significant characters (comma, parens) and
+        // search across the useful text columns in a single OR.
+        const esc = textQuery.replace(/[(),*]/g, ' ').trim();
+        if (esc.length > 0) {
+          const pattern = `%${esc}%`;
+          query = query.or(
+            `title.ilike.${pattern},locality.ilike.${pattern},city.ilike.${pattern},description.ilike.${pattern}`,
+          );
+        }
+      }
       if (filters.city) {
         query = query.ilike('city', `%${filters.city}%`);
       }
@@ -253,11 +285,24 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
 
       const { data, error } = await query;
       if (error) throw error;
-      set({ filteredProperties: data || [], loading: false });
+      const page = data ?? [];
+      set({
+        filteredProperties: append ? [...existing, ...page] : page,
+        hasMore: page.length === PAGE_SIZE,
+        loading: false,
+        loadingMore: false,
+      });
     } catch (error) {
       console.error('Error filtering properties:', error);
-      set({ loading: false });
+      set({ loading: false, loadingMore: false });
     }
+  },
+
+  loadMoreFiltered: async () => {
+    const state = get();
+    if (state.loading || state.loadingMore || !state.hasMore) return;
+    const filters = state._lastFilters ?? {};
+    await get().filterProperties(filters, { query: state._lastQuery, append: true });
   },
 
   filterByPreferredCities: (cities) => {
@@ -282,8 +327,8 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
         .from('properties')
         .select(`
           *,
-          owner:users_profiles!properties_owner_id_fkey(*),
-          broker:users_profiles!properties_broker_id_fkey(*)
+          owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
+          broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
         `)
         .eq('id', id)
         .single();

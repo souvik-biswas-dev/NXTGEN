@@ -53,6 +53,7 @@ export default function ProjectsScreen() {
   const onRefresh = () => {
     setRefreshing(true);
     fetchProjects();
+    
   };
 
   return (
