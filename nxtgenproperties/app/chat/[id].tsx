@@ -38,11 +38,7 @@ function ReadReceipt({ isSender, read }: { isSender: boolean; read: boolean }) {
   if (!isSender) return null;
   return (
     <View className="flex-row items-center ml-1">
-      <Ionicons
-        name="checkmark-done"
-        size={14}
-        color={read ? '#3B82F6' : '#D1D5DB'}
-      />
+      <Ionicons name="checkmark-done" size={14} color={read ? '#3B82F6' : '#D1D5DB'} />
     </View>
   );
 }
@@ -142,9 +138,7 @@ export default function ChatRoomScreen() {
   // Mark new incoming messages as read
   useEffect(() => {
     if (conversationId && user?.id && currentMessages.length > 0) {
-      const hasUnread = currentMessages.some(
-        (m) => m.sender_id !== user.id && !m.read
-      );
+      const hasUnread = currentMessages.some((m) => m.sender_id !== user.id && !m.read);
       if (hasUnread) {
         markMessagesAsRead(conversationId, user.id);
       }
@@ -190,9 +184,7 @@ export default function ChatRoomScreen() {
     ({ item }: { item: Message }) => {
       const isSender = item.sender_id === user?.id;
       return (
-        <View
-          className={`px-4 py-1 flex-row ${isSender ? 'justify-end' : 'justify-start'}`}
-        >
+        <View className={`px-4 py-1 flex-row ${isSender ? 'justify-end' : 'justify-start'}`}>
           {/* Other user's avatar on received messages */}
           {!isSender && (
             <Image
@@ -210,9 +202,7 @@ export default function ChatRoomScreen() {
               }`}
             >
               <Text
-                className={`text-[15px] leading-5 ${
-                  isSender ? 'text-white' : 'text-gray-900'
-                }`}
+                className={`text-[15px] leading-5 ${isSender ? 'text-white' : 'text-gray-900'}`}
               >
                 {item.content}
               </Text>
@@ -255,14 +245,14 @@ export default function ChatRoomScreen() {
       >
         {/* Header with user info */}
         <View className="px-4 py-3 bg-white border-b border-gray-100 flex-row items-center">
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => {
               if (router.canGoBack()) {
                 router.back();
               } else {
                 router.replace('/(tabs)');
               }
-            }} 
+            }}
             className="mr-3"
           >
             <Ionicons name="chevron-back" size={24} color="#374151" />
@@ -278,9 +268,7 @@ export default function ChatRoomScreen() {
               {otherUser?.name || 'Loading...'}
             </Text>
             {otherUser?.role && (
-              <Text className="text-gray-400 text-xs capitalize">
-                {otherUser.role}
-              </Text>
+              <Text className="text-gray-400 text-xs capitalize">{otherUser.role}</Text>
             )}
           </View>
         </View>
@@ -293,10 +281,7 @@ export default function ChatRoomScreen() {
             onPress={() => router.push(`/(tabs)/search/${property.id}` as any)}
           >
             {property.photos?.[0] && (
-              <Image
-                source={{ uri: property.photos[0] }}
-                className="w-12 h-12 rounded-lg mr-3"
-              />
+              <Image source={{ uri: property.photos[0] }} className="w-12 h-12 rounded-lg mr-3" />
             )}
             <View className="flex-1">
               <Text className="text-gray-900 text-sm font-semibold" numberOfLines={1}>
@@ -307,7 +292,9 @@ export default function ChatRoomScreen() {
               </Text>
             </View>
             <Text className="text-[#FF6B35] text-sm font-bold ml-2">
-              {'\u20B9'}{formatPrice(property.price)}{property.type === 'rent' ? '/mo' : ''}
+              {'\u20B9'}
+              {formatPrice(property.price)}
+              {property.type === 'rent' ? '/mo' : ''}
             </Text>
           </TouchableOpacity>
         )}
@@ -324,9 +311,7 @@ export default function ChatRoomScreen() {
             paddingVertical: 8,
           }}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() =>
-            flatListRef.current?.scrollToEnd({ animated: false })
-          }
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
           ListEmptyComponent={
             <View className="items-center justify-center px-6">
               <Ionicons name="chatbubble-outline" size={48} color="#D1D5DB" />
@@ -359,11 +344,7 @@ export default function ChatRoomScreen() {
             {isSending ? (
               <ActivityIndicator size="small" color="white" />
             ) : (
-              <Ionicons
-                name="send"
-                size={18}
-                color={messageText.trim() ? 'white' : '#9CA3AF'}
-              />
+              <Ionicons name="send" size={18} color={messageText.trim() ? 'white' : '#9CA3AF'} />
             )}
           </TouchableOpacity>
         </View>

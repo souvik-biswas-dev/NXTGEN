@@ -6,16 +6,16 @@ import { supabase } from '@/lib/supabase';
 // network round-trip, and so we control the exact Content-Type header.
 
 export const IMAGE_MAX_BYTES = 5 * 1024 * 1024; // 5 MB — matches bucket limit.
-export const DOC_MAX_BYTES = 10 * 1024 * 1024;  // 10 MB — broker-documents bucket.
+export const DOC_MAX_BYTES = 10 * 1024 * 1024; // 10 MB — broker-documents bucket.
 
 // Magic-byte signatures (first few bytes of the file). Extensions lie; magic
 // bytes don't. We still reject unless BOTH the extension and the magic match.
 const SIGNATURES: Array<{ mime: string; ext: string[]; bytes: number[]; offset?: number }> = [
   { mime: 'image/jpeg', ext: ['jpg', 'jpeg'], bytes: [0xff, 0xd8, 0xff] },
-  { mime: 'image/png',  ext: ['png'],          bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] },
-  { mime: 'image/webp', ext: ['webp'],         bytes: [0x52, 0x49, 0x46, 0x46] }, // RIFF — followed by WEBP at +8
+  { mime: 'image/png', ext: ['png'], bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] },
+  { mime: 'image/webp', ext: ['webp'], bytes: [0x52, 0x49, 0x46, 0x46] }, // RIFF — followed by WEBP at +8
   { mime: 'image/heic', ext: ['heic', 'heif'], bytes: [0x66, 0x74, 0x79, 0x70], offset: 4 },
-  { mime: 'application/pdf', ext: ['pdf'],     bytes: [0x25, 0x50, 0x44, 0x46] }, // %PDF
+  { mime: 'application/pdf', ext: ['pdf'], bytes: [0x25, 0x50, 0x44, 0x46] }, // %PDF
 ];
 
 function detectMime(buf: ArrayBuffer, ext: string): string | null {
@@ -28,7 +28,12 @@ function detectMime(buf: ArrayBuffer, ext: string): string | null {
     if (match) {
       // WebP needs the trailing 'WEBP' marker at offset 8 to be real.
       if (sig.mime === 'image/webp') {
-        const marker = String.fromCharCode(view[8] ?? 0, view[9] ?? 0, view[10] ?? 0, view[11] ?? 0);
+        const marker = String.fromCharCode(
+          view[8] ?? 0,
+          view[9] ?? 0,
+          view[10] ?? 0,
+          view[11] ?? 0
+        );
         if (marker !== 'WEBP') continue;
       }
       return sig.mime;
@@ -94,7 +99,7 @@ export type UploadDocumentParams = {
  * path, not the signed URL — signed URLs expire.
  */
 export async function uploadBrokerDocument(
-  params: UploadDocumentParams,
+  params: UploadDocumentParams
 ): Promise<{ path: string; signedUrl: string }> {
   const { localUri, userId, prefix } = params;
 

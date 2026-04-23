@@ -1,12 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  Dimensions,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -16,26 +9,26 @@ const { width } = Dimensions.get('window');
 
 export default function EMICalculatorScreen() {
   const router = useRouter();
-  
+
   // State for loan details
   const [loanAmount, setLoanAmount] = useState(5000000); // 50 Lakh
   const [interestRate, setInterestRate] = useState(8.5);
   const [loanTenure, setLoanTenure] = useState(20); // Years
-  
+
   // Calculate EMI
   const emiDetails = useMemo(() => {
     const principal = loanAmount;
     const monthlyRate = interestRate / 12 / 100;
     const numberOfPayments = loanTenure * 12;
-    
+
     // EMI = P * r * (1 + r)^n / ((1 + r)^n - 1)
-    const emi = 
+    const emi =
       (principal * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) /
       (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
-    
+
     const totalPayment = emi * numberOfPayments;
     const totalInterest = totalPayment - principal;
-    
+
     return {
       emi: Math.round(emi),
       totalPayment: Math.round(totalPayment),
@@ -65,14 +58,14 @@ export default function EMICalculatorScreen() {
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
       <View className="flex-row items-center px-5 py-4 bg-white border-b border-gray-100">
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => {
             if (router.canGoBack()) {
               router.back();
             } else {
               router.replace('/(tabs)');
             }
-          }} 
+          }}
           className="mr-4"
         >
           <Ionicons name="arrow-back" size={24} color="#333" />
@@ -106,33 +99,35 @@ export default function EMICalculatorScreen() {
         {/* Breakdown Visual */}
         <View className="bg-white mx-5 mt-4 rounded-2xl p-5">
           <Text className="text-gray-900 text-lg font-bold mb-4">Payment Breakdown</Text>
-          
+
           {/* Progress Bar */}
           <View className="h-6 bg-gray-100 rounded-full overflow-hidden flex-row mb-4">
-            <View 
-              className="bg-primary h-full" 
-              style={{ width: `${principalPercent}%` }} 
-            />
-            <View 
-              className="bg-orange-400 h-full" 
-              style={{ width: `${interestPercent}%` }} 
-            />
+            <View className="bg-primary h-full" style={{ width: `${principalPercent}%` }} />
+            <View className="bg-orange-400 h-full" style={{ width: `${interestPercent}%` }} />
           </View>
 
           <View className="flex-row justify-between">
             <View className="flex-row items-center">
               <View className="w-3 h-3 bg-primary rounded-full mr-2" />
-              <Text className="text-gray-600 text-sm">Principal ({principalPercent.toFixed(0)}%)</Text>
+              <Text className="text-gray-600 text-sm">
+                Principal ({principalPercent.toFixed(0)}%)
+              </Text>
             </View>
-            <Text className="text-gray-900 font-semibold">{formatCurrency(emiDetails.principal)}</Text>
+            <Text className="text-gray-900 font-semibold">
+              {formatCurrency(emiDetails.principal)}
+            </Text>
           </View>
-          
+
           <View className="flex-row justify-between mt-2">
             <View className="flex-row items-center">
               <View className="w-3 h-3 bg-orange-400 rounded-full mr-2" />
-              <Text className="text-gray-600 text-sm">Interest ({interestPercent.toFixed(0)}%)</Text>
+              <Text className="text-gray-600 text-sm">
+                Interest ({interestPercent.toFixed(0)}%)
+              </Text>
             </View>
-            <Text className="text-gray-900 font-semibold">{formatCurrency(emiDetails.totalInterest)}</Text>
+            <Text className="text-gray-900 font-semibold">
+              {formatCurrency(emiDetails.totalInterest)}
+            </Text>
           </View>
         </View>
 
@@ -144,7 +139,7 @@ export default function EMICalculatorScreen() {
               <Text className="text-primary font-bold">{formatCurrency(loanAmount)}</Text>
             </View>
           </View>
-          
+
           <Slider
             style={{ width: '100%', height: 40 }}
             minimumValue={500000}
@@ -156,7 +151,7 @@ export default function EMICalculatorScreen() {
             maximumTrackTintColor="#E5E7EB"
             thumbTintColor="#FF6B35"
           />
-          
+
           <View className="flex-row justify-between">
             <Text className="text-gray-400 text-xs">₹5 L</Text>
             <Text className="text-gray-400 text-xs">₹10 Cr</Text>
@@ -171,7 +166,7 @@ export default function EMICalculatorScreen() {
               <Text className="text-primary font-bold">{interestRate.toFixed(1)}%</Text>
             </View>
           </View>
-          
+
           <Slider
             style={{ width: '100%', height: 40 }}
             minimumValue={5}
@@ -183,7 +178,7 @@ export default function EMICalculatorScreen() {
             maximumTrackTintColor="#E5E7EB"
             thumbTintColor="#FF6B35"
           />
-          
+
           <View className="flex-row justify-between">
             <Text className="text-gray-400 text-xs">5%</Text>
             <Text className="text-gray-400 text-xs">20%</Text>
@@ -198,7 +193,7 @@ export default function EMICalculatorScreen() {
               <Text className="text-primary font-bold">{loanTenure} Years</Text>
             </View>
           </View>
-          
+
           <Slider
             style={{ width: '100%', height: 40 }}
             minimumValue={1}
@@ -210,7 +205,7 @@ export default function EMICalculatorScreen() {
             maximumTrackTintColor="#E5E7EB"
             thumbTintColor="#FF6B35"
           />
-          
+
           <View className="flex-row justify-between">
             <Text className="text-gray-400 text-xs">1 Year</Text>
             <Text className="text-gray-400 text-xs">30 Years</Text>
@@ -226,15 +221,21 @@ export default function EMICalculatorScreen() {
           <View className="space-y-2">
             <View className="flex-row items-start">
               <Text className="text-primary mr-2">•</Text>
-              <Text className="text-gray-600 text-sm flex-1">Increase down payment to reduce loan amount</Text>
+              <Text className="text-gray-600 text-sm flex-1">
+                Increase down payment to reduce loan amount
+              </Text>
             </View>
             <View className="flex-row items-start">
               <Text className="text-primary mr-2">•</Text>
-              <Text className="text-gray-600 text-sm flex-1">Opt for longer tenure for lower EMI (but higher total interest)</Text>
+              <Text className="text-gray-600 text-sm flex-1">
+                Opt for longer tenure for lower EMI (but higher total interest)
+              </Text>
             </View>
             <View className="flex-row items-start">
               <Text className="text-primary mr-2">•</Text>
-              <Text className="text-gray-600 text-sm flex-1">Compare rates from multiple banks to get the best deal</Text>
+              <Text className="text-gray-600 text-sm flex-1">
+                Compare rates from multiple banks to get the best deal
+              </Text>
             </View>
           </View>
         </View>

@@ -47,7 +47,9 @@ export default function SettingsScreen() {
       setNewEmail('');
       Alert.alert(
         'Verification Sent',
-        'A confirmation link has been sent to ' + trimmed + '. Your email will update once you click the link.'
+        'A confirmation link has been sent to ' +
+          trimmed +
+          '. Your email will update once you click the link.'
       );
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Failed to update email.');
@@ -81,7 +83,10 @@ export default function SettingsScreen() {
           text: 'Delete Account',
           style: 'destructive',
           onPress: () =>
-            Alert.alert('Request Submitted', 'Our team will process your account deletion within 7 business days.'),
+            Alert.alert(
+              'Request Submitted',
+              'Our team will process your account deletion within 7 business days.'
+            ),
         },
       ]
     );
@@ -103,7 +108,6 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-
         {/* Account */}
         <Section title="Account">
           <RowItem
@@ -118,7 +122,10 @@ export default function SettingsScreen() {
             onPress={() =>
               Alert.alert('Change Password', 'A password reset link will be sent to your email.', [
                 { text: 'Cancel', style: 'cancel' },
-                { text: 'Send Link', onPress: () => Alert.alert('Sent', 'Check your inbox for the reset link.') },
+                {
+                  text: 'Send Link',
+                  onPress: () => Alert.alert('Sent', 'Check your inbox for the reset link.'),
+                },
               ])
             }
             showBorder
@@ -137,26 +144,81 @@ export default function SettingsScreen() {
         {/* Email Change Modal */}
         <Modal visible={emailModalVisible} animationType="slide" presentationStyle="pageSheet">
           <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.surface }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}>
-              <TouchableOpacity onPress={() => { setEmailModalVisible(false); setNewEmail(''); }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: 20,
+                paddingVertical: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: theme.colors.outlineVariant,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => {
+                  setEmailModalVisible(false);
+                  setNewEmail('');
+                }}
+              >
                 <Ionicons name="close" size={24} color={theme.colors.secondary} />
               </TouchableOpacity>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: theme.colors.secondary }}>Change Email</Text>
+              <Text style={{ fontSize: 17, fontWeight: '700', color: theme.colors.secondary }}>
+                Change Email
+              </Text>
               <TouchableOpacity onPress={handleChangeEmail} disabled={emailSaving}>
-                {emailSaving
-                  ? <ActivityIndicator size="small" color={theme.colors.primary} />
-                  : <Text style={{ color: theme.colors.primary, fontWeight: '600', fontSize: 15 }}>Save</Text>}
+                {emailSaving ? (
+                  <ActivityIndicator size="small" color={theme.colors.primary} />
+                ) : (
+                  <Text style={{ color: theme.colors.primary, fontWeight: '600', fontSize: 15 }}>
+                    Save
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
             <View style={{ padding: 20 }}>
-              <Text style={{ color: theme.colors.outline, fontSize: 13, marginBottom: 16, lineHeight: 18 }}>
-                Enter your new email address. A verification link will be sent to confirm the change.
+              <Text
+                style={{
+                  color: theme.colors.outline,
+                  fontSize: 13,
+                  marginBottom: 16,
+                  lineHeight: 18,
+                }}
+              >
+                Enter your new email address. A verification link will be sent to confirm the
+                change.
               </Text>
-              <Text style={{ color: theme.colors.outline, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>Current Email</Text>
-              <View style={{ backgroundColor: theme.colors.surfaceVariant, borderRadius: theme.roundness.lg, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 20 }}>
+              <Text
+                style={{
+                  color: theme.colors.outline,
+                  fontSize: 13,
+                  fontWeight: '600',
+                  marginBottom: 8,
+                }}
+              >
+                Current Email
+              </Text>
+              <View
+                style={{
+                  backgroundColor: theme.colors.surfaceVariant,
+                  borderRadius: theme.roundness.lg,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  marginBottom: 20,
+                }}
+              >
                 <Text style={{ color: theme.colors.outline }}>{user?.email || '—'}</Text>
               </View>
-              <Text style={{ color: theme.colors.outline, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>New Email</Text>
+              <Text
+                style={{
+                  color: theme.colors.outline,
+                  fontSize: 13,
+                  fontWeight: '600',
+                  marginBottom: 8,
+                }}
+              >
+                New Email
+              </Text>
               <TextInput
                 value={newEmail}
                 onChangeText={setNewEmail}
@@ -165,7 +227,14 @@ export default function SettingsScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
-                style={{ backgroundColor: theme.colors.surfaceVariant, borderRadius: theme.roundness.lg, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: theme.colors.secondary }}
+                style={{
+                  backgroundColor: theme.colors.surfaceVariant,
+                  borderRadius: theme.roundness.lg,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  fontSize: 15,
+                  color: theme.colors.secondary,
+                }}
               />
             </View>
           </SafeAreaView>
@@ -289,7 +358,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <Text className="text-base font-bold mb-3" style={{ color: theme.colors.secondary }}>
         {title}
       </Text>
-      <View className="bg-white rounded-2xl overflow-hidden" style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}>
+      <View
+        className="bg-white rounded-2xl overflow-hidden"
+        style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+      >
         {children}
       </View>
     </View>
@@ -355,7 +427,11 @@ function SwitchRow({ icon, label, value, onChange, showBorder }: SwitchRowProps)
           className="w-9 h-9 items-center justify-center"
           style={{ backgroundColor: theme.colors.surfaceVariant, borderRadius: theme.roundness.md }}
         >
-          <Ionicons name={icon} size={19} color={value ? theme.colors.primary : theme.colors.outline} />
+          <Ionicons
+            name={icon}
+            size={19}
+            color={value ? theme.colors.primary : theme.colors.outline}
+          />
         </View>
         <Text className="ml-3 text-base flex-1" style={{ color: theme.colors.secondary }}>
           {label}

@@ -13,7 +13,15 @@ export type BHKType = '1RK' | '1BHK' | '2BHK' | '3BHK' | '4BHK' | '5+BHK';
 
 export type FurnishingType = 'furnished' | 'semi-furnished' | 'unfurnished';
 
-export type FacingType = 'north' | 'south' | 'east' | 'west' | 'north-east' | 'north-west' | 'south-east' | 'south-west';
+export type FacingType =
+  | 'north'
+  | 'south'
+  | 'east'
+  | 'west'
+  | 'north-east'
+  | 'north-west'
+  | 'south-east'
+  | 'south-west';
 
 export type PossessionType = 'ready' | 'under-construction';
 

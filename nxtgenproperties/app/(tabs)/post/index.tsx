@@ -19,7 +19,14 @@ import * as ImagePicker from 'expo-image-picker';
 import { usePropertiesStore } from '@/stores/propertiesStore';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
-import { BHKType, FurnishingType, PropertyType, PropertyCategory, FacingType, PossessionType } from '@/types';
+import {
+  BHKType,
+  FurnishingType,
+  PropertyType,
+  PropertyCategory,
+  FacingType,
+  PossessionType,
+} from '@/types';
 import { theme } from '@/constants/theme';
 import { propertyPostSchema, firstError } from '@/lib/validation';
 import { uploadImage } from '@/lib/uploads';
@@ -60,7 +67,7 @@ export default function PostPropertyScreen() {
   const { user } = useAuthStore();
   const [currentStep, setCurrentStep] = useState<Step>('basic');
   const [submitting, setSubmitting] = useState(false);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     // Basic Info
@@ -68,7 +75,7 @@ export default function PostPropertyScreen() {
     category: 'residential' as PropertyCategory,
     title: '',
     description: '',
-    
+
     // Property Details
     bhk: '' as BHKType | '',
     furnishing: '' as FurnishingType | '',
@@ -83,18 +90,18 @@ export default function PostPropertyScreen() {
     bathrooms: '',
     kitchens: '',
     parkings: '',
-    
+
     // Location
     city: '',
     locality: '',
     address: '',
-    
+
     // Amenities
     amenities: [] as string[],
-    
+
     // Photos
     photos: [] as string[],
-    
+
     // Pricing
     price: '',
     maintenance: '',
@@ -111,18 +118,18 @@ export default function PostPropertyScreen() {
     { id: 'pricing', title: 'Pricing', icon: 'pricetag-outline' },
   ];
 
-  const currentStepIndex = steps.findIndex(s => s.id === currentStep);
+  const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
 
   const updateFormData = (key: string, value: any) => {
-    setFormData(prev => ({ ...prev, [key]: value }));
+    setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
   const toggleAmenity = (amenity: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       amenities: prev.amenities.includes(amenity)
-        ? prev.amenities.filter(a => a !== amenity)
-        : [...prev.amenities, amenity]
+        ? prev.amenities.filter((a) => a !== amenity)
+        : [...prev.amenities, amenity],
     }));
   };
 
@@ -220,7 +227,10 @@ export default function PostPropertyScreen() {
         [{ text: 'OK', onPress: () => router.push('/(tabs)') }]
       );
     } catch (err) {
-      Alert.alert('Submission Failed', err instanceof Error ? err.message : 'Could not post your property. Please try again.');
+      Alert.alert(
+        'Submission Failed',
+        err instanceof Error ? err.message : 'Could not post your property. Please try again.'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -258,15 +268,15 @@ export default function PostPropertyScreen() {
             {currentStepIndex + 1}/{steps.length}
           </Text>
         </View>
-        
+
         {/* Progress Bar */}
         <View className="flex-row mt-4">
           {steps.map((step, index) => (
             <View key={step.id} className="flex-1 flex-row items-center">
-              <View 
+              <View
                 className={`h-1 flex-1 rounded-full ${
                   index <= currentStepIndex ? 'bg-primary' : 'bg-gray-200'
-                }`} 
+                }`}
               />
             </View>
           ))}
@@ -282,19 +292,30 @@ export default function PostPropertyScreen() {
                 currentStep === step.id ? 'border-b-2 border-primary' : ''
               }`}
             >
-              <View className={`w-8 h-8 rounded-full items-center justify-center mr-2 ${
-                index < currentStepIndex ? 'bg-green-500' :
-                currentStep === step.id ? 'bg-primary' : 'bg-gray-200'
-              }`}>
+              <View
+                className={`w-8 h-8 rounded-full items-center justify-center mr-2 ${
+                  index < currentStepIndex
+                    ? 'bg-green-500'
+                    : currentStep === step.id
+                      ? 'bg-primary'
+                      : 'bg-gray-200'
+                }`}
+              >
                 {index < currentStepIndex ? (
                   <Ionicons name="checkmark" size={16} color="white" />
                 ) : (
-                  <Ionicons name={step.icon} size={16} color={currentStep === step.id ? 'white' : '#666'} />
+                  <Ionicons
+                    name={step.icon}
+                    size={16}
+                    color={currentStep === step.id ? 'white' : '#666'}
+                  />
                 )}
               </View>
-              <Text className={`text-sm font-medium ${
-                currentStep === step.id ? 'text-primary' : 'text-gray-500'
-              }`}>
+              <Text
+                className={`text-sm font-medium ${
+                  currentStep === step.id ? 'text-primary' : 'text-gray-500'
+                }`}
+              >
                 {step.title}
               </Text>
             </TouchableOpacity>
@@ -302,12 +323,12 @@ export default function PostPropertyScreen() {
         </ScrollView>
       </View>
 
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
-        <ScrollView 
-          className="flex-1" 
+        <ScrollView
+          className="flex-1"
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -315,7 +336,8 @@ export default function PostPropertyScreen() {
         </ScrollView>
 
         {/* Bottom Buttons — raised above the floating tab bar */}
-        <View className="bg-white px-5 border-t border-gray-100 flex-row"
+        <View
+          className="bg-white px-5 border-t border-gray-100 flex-row"
           style={{ paddingTop: 12, paddingBottom: theme.tabBarHeight }}
         >
           {currentStepIndex > 0 && (
@@ -326,7 +348,7 @@ export default function PostPropertyScreen() {
               <Text className="text-gray-700 text-center font-semibold">Previous</Text>
             </TouchableOpacity>
           )}
-          
+
           <TouchableOpacity
             onPress={currentStepIndex === steps.length - 1 ? handleSubmit : goToNextStep}
             disabled={submitting}
@@ -347,10 +369,10 @@ export default function PostPropertyScreen() {
 }
 
 // Step Components
-const BasicInfoStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: string, value: PropertyFormData[keyof PropertyFormData]) => void }> = ({ 
-  formData, 
-  updateFormData 
-}) => (
+const BasicInfoStep: React.FC<{
+  formData: PropertyFormData;
+  updateFormData: (key: string, value: PropertyFormData[keyof PropertyFormData]) => void;
+}> = ({ formData, updateFormData }) => (
   <View className="px-5 py-6">
     {/* Property For */}
     <View className="mb-6">
@@ -364,9 +386,11 @@ const BasicInfoStep: React.FC<{ formData: PropertyFormData; updateFormData: (key
               formData.type === type ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
             }`}
           >
-            <Text className={`text-center font-semibold capitalize ${
-              formData.type === type ? 'text-primary' : 'text-gray-600'
-            }`}>
+            <Text
+              className={`text-center font-semibold capitalize ${
+                formData.type === type ? 'text-primary' : 'text-gray-600'
+              }`}
+            >
               {type === 'buy' ? 'Sell' : 'Rent Out'}
             </Text>
           </TouchableOpacity>
@@ -383,12 +407,16 @@ const BasicInfoStep: React.FC<{ formData: PropertyFormData; updateFormData: (key
             key={category}
             onPress={() => updateFormData('category', category)}
             className={`flex-1 py-4 rounded-xl mr-2 border-2 ${
-              formData.category === category ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
+              formData.category === category
+                ? 'border-primary bg-orange-50'
+                : 'border-gray-200 bg-white'
             }`}
           >
-            <Text className={`text-center font-semibold capitalize ${
-              formData.category === category ? 'text-primary' : 'text-gray-600'
-            }`}>
+            <Text
+              className={`text-center font-semibold capitalize ${
+                formData.category === category ? 'text-primary' : 'text-gray-600'
+              }`}
+            >
               {category}
             </Text>
           </TouchableOpacity>
@@ -425,10 +453,10 @@ const BasicInfoStep: React.FC<{ formData: PropertyFormData; updateFormData: (key
   </View>
 );
 
-const PropertyDetailsStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: string, value: PropertyFormData[keyof PropertyFormData]) => void }> = ({ 
-  formData, 
-  updateFormData 
-}) => (
+const PropertyDetailsStep: React.FC<{
+  formData: PropertyFormData;
+  updateFormData: (key: string, value: PropertyFormData[keyof PropertyFormData]) => void;
+}> = ({ formData, updateFormData }) => (
   <View className="px-5 py-6">
     {/* BHK */}
     <View className="mb-6">
@@ -442,7 +470,9 @@ const PropertyDetailsStep: React.FC<{ formData: PropertyFormData; updateFormData
               formData.bhk === bhk ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
             }`}
           >
-            <Text className={`font-medium ${formData.bhk === bhk ? 'text-primary' : 'text-gray-600'}`}>
+            <Text
+              className={`font-medium ${formData.bhk === bhk ? 'text-primary' : 'text-gray-600'}`}
+            >
               {bhk}
             </Text>
           </TouchableOpacity>
@@ -459,12 +489,16 @@ const PropertyDetailsStep: React.FC<{ formData: PropertyFormData; updateFormData
             key={furnishing}
             onPress={() => updateFormData('furnishing', furnishing)}
             className={`px-5 py-3 rounded-xl mr-2 mb-2 border-2 ${
-              formData.furnishing === furnishing ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
+              formData.furnishing === furnishing
+                ? 'border-primary bg-orange-50'
+                : 'border-gray-200 bg-white'
             }`}
           >
-            <Text className={`font-medium capitalize ${
-              formData.furnishing === furnishing ? 'text-primary' : 'text-gray-600'
-            }`}>
+            <Text
+              className={`font-medium capitalize ${
+                formData.furnishing === furnishing ? 'text-primary' : 'text-gray-600'
+              }`}
+            >
               {furnishing}
             </Text>
           </TouchableOpacity>
@@ -565,12 +599,16 @@ const PropertyDetailsStep: React.FC<{ formData: PropertyFormData; updateFormData
             key={possession}
             onPress={() => updateFormData('possession', possession)}
             className={`flex-1 py-4 rounded-xl mr-2 border-2 ${
-              formData.possession === possession ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
+              formData.possession === possession
+                ? 'border-primary bg-orange-50'
+                : 'border-gray-200 bg-white'
             }`}
           >
-            <Text className={`text-center font-medium ${
-              formData.possession === possession ? 'text-primary' : 'text-gray-600'
-            }`}>
+            <Text
+              className={`text-center font-medium ${
+                formData.possession === possession ? 'text-primary' : 'text-gray-600'
+              }`}
+            >
               {possession === 'ready' ? 'Ready to Move' : 'Under Construction'}
             </Text>
           </TouchableOpacity>
@@ -580,136 +618,148 @@ const PropertyDetailsStep: React.FC<{ formData: PropertyFormData; updateFormData
   </View>
 );
 
-const LocationStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: string, value: PropertyFormData[keyof PropertyFormData]) => void }> = ({
-  formData,
-  updateFormData
-}) => {
+const LocationStep: React.FC<{
+  formData: PropertyFormData;
+  updateFormData: (key: string, value: PropertyFormData[keyof PropertyFormData]) => void;
+}> = ({ formData, updateFormData }) => {
   const { popularCities, popularLocalities } = usePropertiesStore();
   return (
-  <View className="px-5 py-6">
-    {/* City */}
-    <View className="mb-6">
-      <Text className="text-gray-900 font-semibold mb-3">City</Text>
-      <View className="flex-row flex-wrap">
-        {popularCities.slice(0, 6).map((city) => (
-          <TouchableOpacity
-            key={city.id}
-            onPress={() => updateFormData('city', city.name)}
-            className={`px-5 py-3 rounded-xl mr-2 mb-2 border-2 ${
-              formData.city === city.name ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
-            }`}
-          >
-            <Text className={`font-medium ${formData.city === city.name ? 'text-primary' : 'text-gray-600'}`}>
-              {city.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
-
-    {/* Locality */}
-    <View className="mb-6">
-      <Text className="text-gray-900 font-semibold mb-3">Locality</Text>
-      {formData.city && popularLocalities[formData.city] ? (
+    <View className="px-5 py-6">
+      {/* City */}
+      <View className="mb-6">
+        <Text className="text-gray-900 font-semibold mb-3">City</Text>
         <View className="flex-row flex-wrap">
-          {popularLocalities[formData.city].map((locality) => (
+          {popularCities.slice(0, 6).map((city) => (
             <TouchableOpacity
-              key={locality}
-              onPress={() => updateFormData('locality', locality)}
+              key={city.id}
+              onPress={() => updateFormData('city', city.name)}
               className={`px-5 py-3 rounded-xl mr-2 mb-2 border-2 ${
-                formData.locality === locality ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
+                formData.city === city.name
+                  ? 'border-primary bg-orange-50'
+                  : 'border-gray-200 bg-white'
               }`}
             >
-              <Text className={`font-medium ${formData.locality === locality ? 'text-primary' : 'text-gray-600'}`}>
-                {locality}
+              <Text
+                className={`font-medium ${formData.city === city.name ? 'text-primary' : 'text-gray-600'}`}
+              >
+                {city.name}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
-      ) : (
+      </View>
+
+      {/* Locality */}
+      <View className="mb-6">
+        <Text className="text-gray-900 font-semibold mb-3">Locality</Text>
+        {formData.city && popularLocalities[formData.city] ? (
+          <View className="flex-row flex-wrap">
+            {popularLocalities[formData.city].map((locality) => (
+              <TouchableOpacity
+                key={locality}
+                onPress={() => updateFormData('locality', locality)}
+                className={`px-5 py-3 rounded-xl mr-2 mb-2 border-2 ${
+                  formData.locality === locality
+                    ? 'border-primary bg-orange-50'
+                    : 'border-gray-200 bg-white'
+                }`}
+              >
+                <Text
+                  className={`font-medium ${formData.locality === locality ? 'text-primary' : 'text-gray-600'}`}
+                >
+                  {locality}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : (
+          <TextInput
+            value={formData.locality}
+            onChangeText={(text) => updateFormData('locality', text)}
+            placeholder="Enter locality"
+            placeholderTextColor="#999"
+            className="bg-white border border-gray-200 rounded-xl px-4 py-4 text-gray-900"
+          />
+        )}
+      </View>
+
+      {/* Full Address */}
+      <View className="mb-6">
+        <Text className="text-gray-900 font-semibold mb-3">Full Address</Text>
         <TextInput
-          value={formData.locality}
-          onChangeText={(text) => updateFormData('locality', text)}
-          placeholder="Enter locality"
+          value={formData.address}
+          onChangeText={(text) => updateFormData('address', text)}
+          placeholder="Building name, street, landmark..."
           placeholderTextColor="#999"
-          className="bg-white border border-gray-200 rounded-xl px-4 py-4 text-gray-900"
+          multiline
+          numberOfLines={3}
+          textAlignVertical="top"
+          className="bg-white border border-gray-200 rounded-xl px-4 py-4 text-gray-900 min-h-[100px]"
         />
-      )}
-    </View>
+      </View>
 
-    {/* Full Address */}
-    <View className="mb-6">
-      <Text className="text-gray-900 font-semibold mb-3">Full Address</Text>
-      <TextInput
-        value={formData.address}
-        onChangeText={(text) => updateFormData('address', text)}
-        placeholder="Building name, street, landmark..."
-        placeholderTextColor="#999"
-        multiline
-        numberOfLines={3}
-        textAlignVertical="top"
-        className="bg-white border border-gray-200 rounded-xl px-4 py-4 text-gray-900 min-h-[100px]"
-      />
+      {/* Map placeholder */}
+      <View className="bg-gray-100 rounded-xl h-40 items-center justify-center">
+        <Ionicons name="location" size={40} color="#999" />
+        <Text className="text-gray-500 mt-2">Map location (coming soon)</Text>
+      </View>
     </View>
-
-    {/* Map placeholder */}
-    <View className="bg-gray-100 rounded-xl h-40 items-center justify-center">
-      <Ionicons name="location" size={40} color="#999" />
-      <Text className="text-gray-500 mt-2">Map location (coming soon)</Text>
-    </View>
-  </View>
   );
 };
 
-const AmenitiesStep: React.FC<{ formData: PropertyFormData; toggleAmenity: (amenity: string) => void }> = ({
-  formData,
-  toggleAmenity
-}) => {
+const AmenitiesStep: React.FC<{
+  formData: PropertyFormData;
+  toggleAmenity: (amenity: string) => void;
+}> = ({ formData, toggleAmenity }) => {
   const { allAmenities } = usePropertiesStore();
   return (
-  <View className="px-5 py-6">
-    <Text className="text-gray-900 font-semibold mb-4">Select Amenities</Text>
-    <Text className="text-gray-500 text-sm mb-6">
-      Choose all the amenities available in your property
-    </Text>
-    
-    <View className="flex-row flex-wrap">
-      {allAmenities.map((amenity) => (
-        <TouchableOpacity
-          key={amenity}
-          onPress={() => toggleAmenity(amenity)}
-          className={`px-4 py-3 rounded-xl mr-2 mb-3 border-2 flex-row items-center ${
-            formData.amenities.includes(amenity) ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
-          }`}
-        >
-          <Ionicons 
-            name={formData.amenities.includes(amenity) ? 'checkbox' : 'square-outline'} 
-            size={18} 
-            color={formData.amenities.includes(amenity) ? '#FF6B35' : '#999'} 
-          />
-          <Text className={`ml-2 font-medium ${
-            formData.amenities.includes(amenity) ? 'text-primary' : 'text-gray-600'
-          }`}>
-            {amenity}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-
-    <View className="mt-4 p-4 bg-orange-50 rounded-xl flex-row items-center">
-      <Ionicons name="information-circle" size={20} color="#FF6B35" />
-      <Text className="text-orange-800 text-sm ml-2 flex-1">
-        Properties with more amenities get 2x more views
+    <View className="px-5 py-6">
+      <Text className="text-gray-900 font-semibold mb-4">Select Amenities</Text>
+      <Text className="text-gray-500 text-sm mb-6">
+        Choose all the amenities available in your property
       </Text>
+
+      <View className="flex-row flex-wrap">
+        {allAmenities.map((amenity) => (
+          <TouchableOpacity
+            key={amenity}
+            onPress={() => toggleAmenity(amenity)}
+            className={`px-4 py-3 rounded-xl mr-2 mb-3 border-2 flex-row items-center ${
+              formData.amenities.includes(amenity)
+                ? 'border-primary bg-orange-50'
+                : 'border-gray-200 bg-white'
+            }`}
+          >
+            <Ionicons
+              name={formData.amenities.includes(amenity) ? 'checkbox' : 'square-outline'}
+              size={18}
+              color={formData.amenities.includes(amenity) ? '#FF6B35' : '#999'}
+            />
+            <Text
+              className={`ml-2 font-medium ${
+                formData.amenities.includes(amenity) ? 'text-primary' : 'text-gray-600'
+              }`}
+            >
+              {amenity}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View className="mt-4 p-4 bg-orange-50 rounded-xl flex-row items-center">
+        <Ionicons name="information-circle" size={20} color="#FF6B35" />
+        <Text className="text-orange-800 text-sm ml-2 flex-1">
+          Properties with more amenities get 2x more views
+        </Text>
+      </View>
     </View>
-  </View>
   );
 };
 
-const PhotosStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: string, value: PropertyFormData[keyof PropertyFormData]) => void }> = ({
-  formData,
-  updateFormData
-}) => {
+const PhotosStep: React.FC<{
+  formData: PropertyFormData;
+  updateFormData: (key: string, value: PropertyFormData[keyof PropertyFormData]) => void;
+}> = ({ formData, updateFormData }) => {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
 
@@ -749,7 +799,10 @@ const PhotosStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: s
             });
             uploadedUrls.push(url);
           } catch (err) {
-            Alert.alert('Upload Error', err instanceof Error ? err.message : 'Failed to upload photo');
+            Alert.alert(
+              'Upload Error',
+              err instanceof Error ? err.message : 'Failed to upload photo'
+            );
           }
         }
         updateFormData('photos', [...formData.photos, ...uploadedUrls]);
@@ -774,16 +827,18 @@ const PhotosStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: s
       </Text>
 
       {/* Upload Button */}
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={pickImages}
         disabled={loading}
         className="bg-white border-2 border-dashed border-gray-300 rounded-2xl h-48 items-center justify-center mb-6"
       >
         <View className="items-center">
           <View className="w-16 h-16 bg-orange-50 rounded-full items-center justify-center mb-3">
-            <Ionicons name={loading ? "hourglass" : "camera"} size={28} color="#FF6B35" />
+            <Ionicons name={loading ? 'hourglass' : 'camera'} size={28} color="#FF6B35" />
           </View>
-          <Text className="text-gray-900 font-semibold">{loading ? 'Loading...' : 'Upload Photos'}</Text>
+          <Text className="text-gray-900 font-semibold">
+            {loading ? 'Loading...' : 'Upload Photos'}
+          </Text>
           <Text className="text-gray-500 text-sm mt-1">JPG, PNG up to 10MB each</Text>
           <Text className="text-gray-400 text-xs mt-2">{formData.photos.length}/10 photos</Text>
         </View>
@@ -792,16 +847,14 @@ const PhotosStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: s
       {/* Uploaded Photos Grid */}
       {formData.photos.length > 0 && (
         <View className="mb-6">
-          <Text className="text-gray-900 font-semibold mb-3">Uploaded Photos ({formData.photos.length})</Text>
+          <Text className="text-gray-900 font-semibold mb-3">
+            Uploaded Photos ({formData.photos.length})
+          </Text>
           <View className="flex-row flex-wrap">
             {formData.photos.map((photo: string, index: number) => (
               <View key={index} className="w-1/3 pr-3 pb-3">
                 <View className="relative rounded-xl overflow-hidden bg-gray-200">
-                  <Image
-                    source={{ uri: photo }}
-                    className="w-full h-24"
-                    resizeMode="cover"
-                  />
+                  <Image source={{ uri: photo }} className="w-full h-24" resizeMode="cover" />
                   <TouchableOpacity
                     onPress={() => removePhoto(index)}
                     className="absolute top-1 right-1 bg-red-500 rounded-full p-1"
@@ -837,15 +890,14 @@ const PhotosStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: s
           </View>
         </View>
       </View>
-
     </View>
   );
 };
 
-const PricingStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: string, value: PropertyFormData[keyof PropertyFormData]) => void }> = ({ 
-  formData, 
-  updateFormData 
-}) => (
+const PricingStep: React.FC<{
+  formData: PropertyFormData;
+  updateFormData: (key: string, value: PropertyFormData[keyof PropertyFormData]) => void;
+}> = ({ formData, updateFormData }) => (
   <View className="px-5 py-6">
     {/* Price */}
     <View className="mb-6">
@@ -905,16 +957,17 @@ const PricingStep: React.FC<{ formData: PropertyFormData; updateFormData: (key: 
       className="flex-row items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-4 mb-6"
     >
       <Text className="text-gray-900 font-medium">Price is negotiable</Text>
-      <View className={`w-12 h-7 rounded-full p-1 ${formData.priceNegotiable ? 'bg-primary' : 'bg-gray-200'}`}>
-        <View className={`w-5 h-5 rounded-full bg-white shadow ${formData.priceNegotiable ? 'ml-auto' : ''}`} />
+      <View
+        className={`w-12 h-7 rounded-full p-1 ${formData.priceNegotiable ? 'bg-primary' : 'bg-gray-200'}`}
+      >
+        <View
+          className={`w-5 h-5 rounded-full bg-white shadow ${formData.priceNegotiable ? 'ml-auto' : ''}`}
+        />
       </View>
     </TouchableOpacity>
 
     {/* Summary Card */}
-    <LinearGradient
-      colors={['#FF6B35', '#0F1923']}
-      className="rounded-2xl p-5"
-    >
+    <LinearGradient colors={['#FF6B35', '#0F1923']} className="rounded-2xl p-5">
       <Text className="text-white/80 text-sm mb-2">Property Summary</Text>
       <Text className="text-white text-2xl font-bold mb-4">
         {formData.title || 'Your Property'}

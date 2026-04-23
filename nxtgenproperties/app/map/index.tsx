@@ -73,7 +73,7 @@ export default function MapViewScreen() {
       const c = centroids[p.city.toLowerCase()];
       if (!c) return;
       const jitter = 0.01; // ~1 km
-      const angle = (idx * 137.5) * (Math.PI / 180); // golden-angle spiral
+      const angle = idx * 137.5 * (Math.PI / 180); // golden-angle spiral
       out.push({
         property: p,
         lat: c.latitude + Math.sin(angle) * jitter,
@@ -123,7 +123,9 @@ export default function MapViewScreen() {
         >
           <Ionicons name="arrow-back" size={24} color={theme.colors.secondary} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 18, fontWeight: '700', marginLeft: 6, color: theme.colors.secondary }}>
+        <Text
+          style={{ fontSize: 18, fontWeight: '700', marginLeft: 6, color: theme.colors.secondary }}
+        >
           Map
         </Text>
         <View
@@ -194,7 +196,12 @@ export default function MapViewScreen() {
           </View>
         )}
 
-        {selected && <SelectedCard property={selected} onOpen={() => router.push(`/(tabs)/search/${selected.id}`)} />}
+        {selected && (
+          <SelectedCard
+            property={selected}
+            onOpen={() => router.push(`/(tabs)/search/${selected.id}`)}
+          />
+        )}
       </View>
 
       {Platform.OS === 'android' && (

@@ -1,22 +1,12 @@
 import { useCallback } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '@/stores/authStore';
-import {
-  useSubscriptionStore,
-  PlanDefinition,
-} from '@/stores/subscriptionStore';
+import { useSubscriptionStore, PlanDefinition } from '@/stores/subscriptionStore';
 import { SubscriptionPlan } from '@/types';
 
 const PLAN_ORDER: SubscriptionPlan[] = ['free', 'silver', 'gold'];
@@ -24,8 +14,7 @@ const PLAN_ORDER: SubscriptionPlan[] = ['free', 'silver', 'gold'];
 export default function MembershipScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { subscription, plans, loading, fetchSubscription, subscribe } =
-    useSubscriptionStore();
+  const { subscription, plans, loading, fetchSubscription, subscribe } = useSubscriptionStore();
 
   const currentPlan: SubscriptionPlan = subscription?.plan ?? 'free';
 
@@ -61,7 +50,10 @@ export default function MembershipScreen() {
               await subscribe(plan);
               Alert.alert('Success', 'Your plan has been updated.');
             } catch (err) {
-              Alert.alert('Error', err instanceof Error ? err.message : 'Failed to update plan. Please try again.');
+              Alert.alert(
+                'Error',
+                err instanceof Error ? err.message : 'Failed to update plan. Please try again.'
+              );
             }
           },
         },
@@ -122,10 +114,7 @@ export default function MembershipScreen() {
     }
 
     return (
-      <View
-        key={planDef.plan}
-        className="rounded-2xl p-5 mb-4 bg-white border border-gray-200"
-      >
+      <View key={planDef.plan} className="rounded-2xl p-5 mb-4 bg-white border border-gray-200">
         <PlanContent
           planDef={planDef}
           isCurrent={isCurrent}
@@ -216,44 +205,30 @@ function PlanContent({
   const checkColor = isLight ? '#ffffff' : '#FF6B35';
 
   const buttonBg =
-    variant === 'gold'
-      ? 'bg-white'
-      : variant === 'silver'
-        ? 'bg-[#FF6B35]'
-        : 'bg-gray-800';
+    variant === 'gold' ? 'bg-white' : variant === 'silver' ? 'bg-[#FF6B35]' : 'bg-gray-800';
 
   const buttonText =
-    variant === 'gold'
-      ? 'text-amber-600'
-      : variant === 'silver'
-        ? 'text-white'
-        : 'text-white';
+    variant === 'gold' ? 'text-amber-600' : variant === 'silver' ? 'text-white' : 'text-white';
 
   return (
     <>
       {/* Plan name & price */}
       <View className="flex-row items-end justify-between mb-4">
         <View>
-          <Text className={`text-xl font-bold ${nameColor}`}>
-            {planDef.name}
-          </Text>
+          <Text className={`text-xl font-bold ${nameColor}`}>{planDef.name}</Text>
           {planDef.price > 0 ? (
             <Text className={`text-2xl font-extrabold mt-1 ${priceColor}`}>
               {`₹${planDef.price.toLocaleString('en-IN')}`}
               <Text className="text-sm font-normal">/month</Text>
             </Text>
           ) : (
-            <Text className={`text-2xl font-extrabold mt-1 ${priceColor}`}>
-              Free
-            </Text>
+            <Text className={`text-2xl font-extrabold mt-1 ${priceColor}`}>Free</Text>
           )}
         </View>
 
         {isCurrent && (
           <View className="bg-white/20 rounded-full px-3 py-1">
-            <Text
-              className={`text-xs font-semibold ${isLight ? 'text-white' : 'text-[#FF6B35]'}`}
-            >
+            <Text className={`text-xs font-semibold ${isLight ? 'text-white' : 'text-[#FF6B35]'}`}>
               ACTIVE
             </Text>
           </View>
@@ -280,9 +255,7 @@ function PlanContent({
         {loading ? (
           <ActivityIndicator color={variant === 'gold' ? '#D97706' : '#fff'} />
         ) : (
-          <Text className={`font-bold text-base ${buttonText}`}>
-            {buttonLabel}
-          </Text>
+          <Text className={`font-bold text-base ${buttonText}`}>{buttonLabel}</Text>
         )}
       </TouchableOpacity>
     </>

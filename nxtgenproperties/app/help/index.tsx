@@ -126,16 +126,17 @@ export default function HelpSupportScreen() {
     setExpanded((prev) => (prev === key ? null : key));
   };
 
-  const filtered = query.trim().length > 1
-    ? FAQ_DATA.map((cat) => ({
-        ...cat,
-        items: cat.items.filter(
-          (it) =>
-            it.q.toLowerCase().includes(query.toLowerCase()) ||
-            it.a.toLowerCase().includes(query.toLowerCase())
-        ),
-      })).filter((cat) => cat.items.length > 0)
-    : FAQ_DATA;
+  const filtered =
+    query.trim().length > 1
+      ? FAQ_DATA.map((cat) => ({
+          ...cat,
+          items: cat.items.filter(
+            (it) =>
+              it.q.toLowerCase().includes(query.toLowerCase()) ||
+              it.a.toLowerCase().includes(query.toLowerCase())
+          ),
+        })).filter((cat) => cat.items.length > 0)
+      : FAQ_DATA;
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.surface }}>
@@ -153,7 +154,6 @@ export default function HelpSupportScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-
         {/* Search bar */}
         <View className="px-4 pt-5 pb-2">
           <View
@@ -258,7 +258,10 @@ export default function HelpSupportScreen() {
                         className="flex-row items-center justify-between px-4 py-4"
                         style={
                           idx < cat.items.length - 1 || open
-                            ? { borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }
+                            ? {
+                                borderBottomWidth: 1,
+                                borderBottomColor: theme.colors.outlineVariant,
+                              }
                             : undefined
                         }
                       >
@@ -279,7 +282,10 @@ export default function HelpSupportScreen() {
                           className="px-4 pb-4 pt-2"
                           style={{ backgroundColor: theme.colors.surfaceVariant + '60' }}
                         >
-                          <Text className="text-sm leading-6" style={{ color: theme.colors.outline }}>
+                          <Text
+                            className="text-sm leading-6"
+                            style={{ color: theme.colors.outline }}
+                          >
                             {item.a}
                           </Text>
                         </View>

@@ -73,7 +73,10 @@ export default function LoginScreen() {
 
       router.replace('/(tabs)');
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message :'Email login failed. Please try again.');
+      Alert.alert(
+        'Error',
+        error instanceof Error ? error.message : 'Email login failed. Please try again.'
+      );
     } finally {
       setEmailLoading(false);
     }
@@ -94,7 +97,10 @@ export default function LoginScreen() {
         await Linking.openURL(data.url);
       }
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message :'Google login failed. Please try again.');
+      Alert.alert(
+        'Error',
+        error instanceof Error ? error.message : 'Google login failed. Please try again.'
+      );
     } finally {
       setGoogleLoading(false);
     }
@@ -112,7 +118,12 @@ export default function LoginScreen() {
           className="flex-1"
         >
           <ScrollView
-            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 80 }}
+            contentContainerStyle={{
+              flexGrow: 1,
+              justifyContent: 'center',
+              paddingHorizontal: 24,
+              paddingVertical: 80,
+            }}
             showsVerticalScrollIndicator={false}
           >
             {/* Logo */}
@@ -159,15 +170,11 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
-            <Text className="text-white/80 text-center mb-6">
-              We'll send otp for verification
-            </Text>
+            <Text className="text-white/80 text-center mb-6">We'll send otp for verification</Text>
 
             {/* Email/password login */}
             <View className="mb-6">
-              <Text className="text-white/80 text-center mb-3">
-                Or log in with email
-              </Text>
+              <Text className="text-white/80 text-center mb-3">Or log in with email</Text>
               <View className="bg-white/90 rounded-2xl px-4 py-4 mb-3">
                 <TextInput
                   placeholder="Email"
@@ -209,9 +216,7 @@ export default function LoginScreen() {
               activeOpacity={0.8}
             >
               <Ionicons name="logo-facebook" size={24} color="white" />
-              <Text className="text-white text-base font-semibold ml-3">
-                Log in with Facebook
-              </Text>
+              <Text className="text-white text-base font-semibold ml-3">Log in with Facebook</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

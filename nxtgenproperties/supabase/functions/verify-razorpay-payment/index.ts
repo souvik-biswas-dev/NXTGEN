@@ -121,12 +121,10 @@ async function hmacSha256Hex(secret: string, data: string): Promise<string> {
     enc.encode(secret),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ['sign'],
+    ['sign']
   );
   const signed = await crypto.subtle.sign('HMAC', key, enc.encode(data));
-  return [...new Uint8Array(signed)]
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  return [...new Uint8Array(signed)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 function json(data: unknown, status = 200) {

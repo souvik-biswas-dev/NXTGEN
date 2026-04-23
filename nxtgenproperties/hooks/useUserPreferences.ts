@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { UserPreferences, SearchHistory, SearchFilters, PropertyType, PropertyCategory } from '@/types';
+import {
+  UserPreferences,
+  SearchHistory,
+  SearchFilters,
+  PropertyType,
+  PropertyCategory,
+} from '@/types';
 import { useAuthStore } from '@/stores/authStore';
 
 export const useUserPreferences = () => {
@@ -22,7 +28,7 @@ export const useUserPreferences = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const { data, error: fetchError } = await supabase
         .from('user_preferences')
         .select('*')
@@ -56,7 +62,9 @@ export const useUserPreferences = () => {
     // getUser() confirms an active session before hitting RLS-protected tables.
     let sessionUserId: string | null = null;
     for (let attempt = 0; attempt < 5; attempt++) {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
       if (authUser?.id) {
         sessionUserId = authUser.id;
         break;
@@ -72,13 +80,16 @@ export const useUserPreferences = () => {
     try {
       const { data, error } = await supabase
         .from('user_preferences')
-        .upsert({
-          user_id: sessionUserId,
-          preferred_cities: [],
-          preferred_types: [],
-          preferred_categories: [],
-          search_history: [],
-        }, { onConflict: 'user_id' })
+        .upsert(
+          {
+            user_id: sessionUserId,
+            preferred_cities: [],
+            preferred_types: [],
+            preferred_categories: [],
+            search_history: [],
+          },
+          { onConflict: 'user_id' }
+        )
         .select()
         .single();
 

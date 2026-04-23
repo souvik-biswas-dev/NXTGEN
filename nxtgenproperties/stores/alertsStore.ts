@@ -18,7 +18,9 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
   fetchAlerts: async () => {
     set({ loading: true });
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -39,7 +41,9 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
   createAlert: async (filters: SearchFilters, name: string) => {
     set({ loading: true });
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -59,7 +63,9 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
 
   deleteAlert: async (id: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase
@@ -77,7 +83,9 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
 
   toggleAlert: async (id: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const alert = get().alerts.find((a) => a.id === id);
@@ -91,9 +99,7 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
 
       if (error) throw error;
       set({
-        alerts: get().alerts.map((a) =>
-          a.id === id ? { ...a, active: !a.active } : a
-        ),
+        alerts: get().alerts.map((a) => (a.id === id ? { ...a, active: !a.active } : a)),
       });
     } catch (error) {
       console.error('Error toggling alert:', error);

@@ -58,7 +58,10 @@ interface PropertiesState {
   searchProperties: (query: string) => Promise<void>;
   addRecentSearch: (search: string) => void;
   clearRecentSearches: () => void;
-  filterProperties: (filters: SearchFilters, opts?: { query?: string; append?: boolean }) => Promise<void>;
+  filterProperties: (
+    filters: SearchFilters,
+    opts?: { query?: string; append?: boolean }
+  ) => Promise<void>;
   loadMoreFiltered: () => Promise<void>;
   filterByPreferredCities: (cities: string[]) => Property[];
   getPropertyById: (id: string) => Promise<Property | undefined>;
@@ -131,13 +134,18 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
         const preferred = allProperties.filter((p) =>
           preferredCities.some((c) => p.city.toLowerCase() === c.toLowerCase())
         );
-        const others = allProperties.filter((p) =>
-          !preferredCities.some((c) => p.city.toLowerCase() === c.toLowerCase())
+        const others = allProperties.filter(
+          (p) => !preferredCities.some((c) => p.city.toLowerCase() === c.toLowerCase())
         );
         allProperties = [...preferred, ...others];
       }
 
-      set({ properties: allProperties, filteredProperties: allProperties, loading: false, propertiesLoaded: true });
+      set({
+        properties: allProperties,
+        filteredProperties: allProperties,
+        loading: false,
+        propertiesLoaded: true,
+      });
     } catch (error) {
       console.error('Error fetching properties:', error);
       set({ loading: false });
@@ -146,9 +154,7 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
 
   fetchPlatformData: async () => {
     try {
-      const { data, error } = await supabase
-        .from('platform_data')
-        .select('*');
+      const { data, error } = await supabase.from('platform_data').select('*');
 
       if (error) throw error;
 
@@ -162,7 +168,8 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
         popularLocalities: (platformMap.popular_localities as Record<string, string[]>) ?? {},
         newLaunches: (platformMap.new_launches as NewLaunch[]) ?? [],
         marketTrends: (platformMap.market_trends as MarketTrend[]) ?? [],
-        priceRanges: (platformMap.price_ranges as Record<string, PriceRange[]>) ?? get().priceRanges,
+        priceRanges:
+          (platformMap.price_ranges as Record<string, PriceRange[]>) ?? get().priceRanges,
         allAmenities: (platformMap.amenities as string[]) ?? [],
         platformDataLoaded: true,
       });
@@ -248,7 +255,7 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
         if (esc.length > 0) {
           const pattern = `%${esc}%`;
           query = query.or(
-            `title.ilike.${pattern},locality.ilike.${pattern},city.ilike.${pattern},description.ilike.${pattern}`,
+            `title.ilike.${pattern},locality.ilike.${pattern},city.ilike.${pattern},description.ilike.${pattern}`
           );
         }
       }
@@ -312,8 +319,8 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
     const preferred = properties.filter((p) =>
       cities.some((city) => p.city.toLowerCase() === city.toLowerCase())
     );
-    const others = properties.filter((p) =>
-      !cities.some((city) => p.city.toLowerCase() === city.toLowerCase())
+    const others = properties.filter(
+      (p) => !cities.some((city) => p.city.toLowerCase() === city.toLowerCase())
     );
     return [...preferred, ...others];
   },
@@ -325,11 +332,13 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
     try {
       const { data, error } = await supabase
         .from('properties')
-        .select(`
+        .select(
+          `
           *,
           owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
           broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
-        `)
+        `
+        )
         .eq('id', id)
         .single();
 
@@ -346,13 +355,13 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
   },
 
   getNearbyProperties: (type) => {
-    return get().properties.filter((p) => p.type === type).slice(0, 6);
+    return get()
+      .properties.filter((p) => p.type === type)
+      .slice(0, 6);
   },
 
   getPropertiesByCity: (city) => {
-    return get().properties.filter(
-      (p) => p.city.toLowerCase() === city.toLowerCase()
-    );
+    return get().properties.filter((p) => p.city.toLowerCase() === city.toLowerCase());
   },
 
   getPropertiesByCategory: (category) => {

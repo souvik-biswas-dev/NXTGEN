@@ -75,23 +75,23 @@ export default function SignupScreen() {
           className="flex-1"
         >
           <ScrollView
-            contentContainerStyle={{ 
-              flexGrow: 1, 
-              justifyContent: 'center', 
-              paddingHorizontal: 24, 
-              paddingVertical: 80 
+            contentContainerStyle={{
+              flexGrow: 1,
+              justifyContent: 'center',
+              paddingHorizontal: 24,
+              paddingVertical: 80,
             }}
             showsVerticalScrollIndicator={false}
           >
             {/* Header */}
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => {
                 if (router.canGoBack()) {
                   router.back();
                 } else {
                   router.replace('/(auth)');
                 }
-              }} 
+              }}
               className="mb-8"
             >
               <Ionicons name="arrow-back" size={28} color="white" />

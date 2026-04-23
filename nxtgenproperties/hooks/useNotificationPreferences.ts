@@ -56,12 +56,9 @@ export function useNotificationPreferences() {
       // Upsert by user_id so the row is created on first toggle.
       void supabase
         .from('user_preferences')
-        .upsert(
-          { user_id: user.user_id, notifications: next },
-          { onConflict: 'user_id' },
-        );
+        .upsert({ user_id: user.user_id, notifications: next }, { onConflict: 'user_id' });
     },
-    [user?.user_id],
+    [user?.user_id]
   );
 
   const update = useCallback(
@@ -73,7 +70,7 @@ export function useNotificationPreferences() {
         return next;
       });
     },
-    [persist],
+    [persist]
   );
 
   useEffect(() => {

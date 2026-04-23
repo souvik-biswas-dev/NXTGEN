@@ -95,7 +95,10 @@ export default function BrokerVerificationScreen() {
       else if (slot === 'rera') setReraDoc(uploaded);
       else setAgencyDoc(uploaded);
     } catch (err) {
-      Alert.alert('Upload Failed', err instanceof Error ? err.message : 'Could not upload document');
+      Alert.alert(
+        'Upload Failed',
+        err instanceof Error ? err.message : 'Could not upload document'
+      );
     } finally {
       setUploading(null);
     }
@@ -145,7 +148,7 @@ export default function BrokerVerificationScreen() {
       Alert.alert(
         'Submitted',
         'Your verification request has been received. Our team will review your documents within 48 hours.',
-        [{ text: 'OK', onPress: () => router.back() }],
+        [{ text: 'OK', onPress: () => router.back() }]
       );
     } catch (err) {
       Alert.alert('Submit Failed', err instanceof Error ? err.message : 'Please try again');
@@ -167,7 +170,11 @@ export default function BrokerVerificationScreen() {
   const alreadyApproved = existing?.status === 'approved';
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.surface }} edges={['top']}>
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: theme.colors.surface }}
+      edges={['top']}
+    >
       <Header onBack={() => router.back()} />
 
       <KeyboardAvoidingView
@@ -187,7 +194,14 @@ export default function BrokerVerificationScreen() {
               }}
             >
               <Ionicons name="shield-checkmark" size={36} color={theme.colors.primary} />
-              <Text style={{ fontSize: 18, fontWeight: '700', marginTop: 12, color: theme.colors.secondary }}>
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontWeight: '700',
+                  marginTop: 12,
+                  color: theme.colors.secondary,
+                }}
+              >
                 You are a verified broker
               </Text>
               <Text style={{ marginTop: 6, color: theme.colors.outline }}>
@@ -259,7 +273,8 @@ export default function BrokerVerificationScreen() {
               >
                 <Ionicons name="lock-closed" size={16} color={theme.colors.outline} />
                 <Text style={{ marginLeft: 8, flex: 1, color: theme.colors.outline, fontSize: 12 }}>
-                  Documents are stored in a private bucket. Only you and the NxtGen verification team can access them.
+                  Documents are stored in a private bucket. Only you and the NxtGen verification
+                  team can access them.
                 </Text>
               </View>
             </>
@@ -314,10 +329,15 @@ function Header({ onBack }: { onBack: () => void }) {
         paddingVertical: 12,
       }}
     >
-      <TouchableOpacity onPress={onBack} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+      <TouchableOpacity
+        onPress={onBack}
+        style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}
+      >
         <Ionicons name="arrow-back" size={24} color={theme.colors.secondary} />
       </TouchableOpacity>
-      <Text style={{ fontSize: 18, fontWeight: '700', marginLeft: 8, color: theme.colors.secondary }}>
+      <Text
+        style={{ fontSize: 18, fontWeight: '700', marginLeft: 8, color: theme.colors.secondary }}
+      >
         Broker verification
       </Text>
     </View>
@@ -342,9 +362,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-function LabeledInput(
-  props: React.ComponentProps<typeof TextInput> & { label: string },
-) {
+function LabeledInput(props: React.ComponentProps<typeof TextInput> & { label: string }) {
   const { label, ...rest } = props;
   return (
     <View style={{ marginBottom: 12 }}>
@@ -429,9 +447,26 @@ function DocumentSlot({
 function StatusBanner({ existing }: { existing: ExistingRequest | null }) {
   if (!existing) return null;
   const map = {
-    pending: { bg: '#FEF3C7', fg: '#92400E', icon: 'time-outline', msg: 'Your request is under review. We usually respond in 24–48 hours.' },
-    approved: { bg: '#D1FAE5', fg: '#065F46', icon: 'shield-checkmark', msg: 'Your broker profile is verified.' },
-    rejected: { bg: '#FEE2E2', fg: '#991B1B', icon: 'close-circle-outline', msg: existing.reviewer_notes ?? 'The team could not verify your documents. Please review and resubmit.' },
+    pending: {
+      bg: '#FEF3C7',
+      fg: '#92400E',
+      icon: 'time-outline',
+      msg: 'Your request is under review. We usually respond in 24–48 hours.',
+    },
+    approved: {
+      bg: '#D1FAE5',
+      fg: '#065F46',
+      icon: 'shield-checkmark',
+      msg: 'Your broker profile is verified.',
+    },
+    rejected: {
+      bg: '#FEE2E2',
+      fg: '#991B1B',
+      icon: 'close-circle-outline',
+      msg:
+        existing.reviewer_notes ??
+        'The team could not verify your documents. Please review and resubmit.',
+    },
     none: null,
   } as const;
   const state = map[existing.status];

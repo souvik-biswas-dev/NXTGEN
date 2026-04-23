@@ -27,14 +27,16 @@ export default function ShortlistScreen() {
       setLoading(true);
       const { data, error } = await supabase
         .from('favorites')
-        .select(`
+        .select(
+          `
           *,
           property:properties(
             *,
             owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
             broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
           )
-        `)
+        `
+        )
         .eq('user_id', user.id);
 
       if (error) throw error;

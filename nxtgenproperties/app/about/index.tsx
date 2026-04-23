@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Linking,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -53,10 +47,30 @@ const LEGAL_LINKS: { label: string; url: string }[] = [
 ];
 
 const SOCIAL: { icon: IoniconsName; label: string; url: string; color: string }[] = [
-  { icon: 'logo-instagram', label: 'Instagram', url: 'https://instagram.com/nxtgenproperties', color: '#E1306C' },
-  { icon: 'logo-linkedin', label: 'LinkedIn', url: 'https://linkedin.com/company/nxtgenproperties', color: '#0A66C2' },
-  { icon: 'logo-twitter', label: 'Twitter / X', url: 'https://twitter.com/nxtgenprops', color: '#1DA1F2' },
-  { icon: 'logo-youtube', label: 'YouTube', url: 'https://youtube.com/@nxtgenproperties', color: '#FF0000' },
+  {
+    icon: 'logo-instagram',
+    label: 'Instagram',
+    url: 'https://instagram.com/nxtgenproperties',
+    color: '#E1306C',
+  },
+  {
+    icon: 'logo-linkedin',
+    label: 'LinkedIn',
+    url: 'https://linkedin.com/company/nxtgenproperties',
+    color: '#0A66C2',
+  },
+  {
+    icon: 'logo-twitter',
+    label: 'Twitter / X',
+    url: 'https://twitter.com/nxtgenprops',
+    color: '#1DA1F2',
+  },
+  {
+    icon: 'logo-youtube',
+    label: 'YouTube',
+    url: 'https://youtube.com/@nxtgenproperties',
+    color: '#FF0000',
+  },
 ];
 
 export default function AboutScreen() {
@@ -78,7 +92,6 @@ export default function AboutScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-
         {/* Hero banner */}
         <LinearGradient
           colors={['#FF6B35', '#F7931E']}
@@ -93,12 +106,20 @@ export default function AboutScreen() {
             <Ionicons name="home" size={42} color="white" />
           </View>
           <Text className="text-white text-2xl font-bold">NxtGen Properties</Text>
-          <Text className="text-white/80 text-sm mt-1">India's Next Generation Real Estate Platform</Text>
+          <Text className="text-white/80 text-sm mt-1">
+            India's Next Generation Real Estate Platform
+          </Text>
           <View className="flex-row mt-4 gap-3">
-            <View className="px-3 py-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
+            <View
+              className="px-3 py-1 rounded-full"
+              style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+            >
               <Text className="text-white text-xs font-semibold">v{APP_VERSION}</Text>
             </View>
-            <View className="px-3 py-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
+            <View
+              className="px-3 py-1 rounded-full"
+              style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+            >
               <Text className="text-white text-xs font-semibold">Build {BUILD_NUMBER}</Text>
             </View>
           </View>
@@ -110,9 +131,9 @@ export default function AboutScreen() {
             Our Mission
           </Text>
           <Text className="text-sm leading-6" style={{ color: theme.colors.outline }}>
-            NxtGenProperties is built to simplify India's real estate journey. Whether you are searching for
-            your dream home, listing a property, or tracking the market — we bring buyers, owners, and brokers
-            together in one trusted platform.
+            NxtGenProperties is built to simplify India's real estate journey. Whether you are
+            searching for your dream home, listing a property, or tracking the market — we bring
+            buyers, owners, and brokers together in one trusted platform.
           </Text>
         </View>
 
@@ -137,7 +158,10 @@ export default function AboutScreen() {
               >
                 <View
                   className="w-10 h-10 items-center justify-center mr-3 mt-0.5"
-                  style={{ backgroundColor: theme.colors.primaryContainer, borderRadius: theme.roundness.md }}
+                  style={{
+                    backgroundColor: theme.colors.primaryContainer,
+                    borderRadius: theme.roundness.md,
+                  }}
                 >
                   <Ionicons name={f.icon} size={20} color={theme.colors.primary} />
                 </View>
@@ -224,7 +248,6 @@ export default function AboutScreen() {
             All rights reserved. Made with ❤️ in India.
           </Text>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );

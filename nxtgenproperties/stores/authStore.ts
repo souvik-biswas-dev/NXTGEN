@@ -23,9 +23,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   userPreferences: null,
 
   setUser: (user) => set({ user }),
-  
+
   setSession: (session) => set({ session }),
-  
+
   setLoading: (loading) => set({ loading }),
 
   setUserPreferences: (preferences) => set({ userPreferences: preferences }),
@@ -46,7 +46,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       // Only send columns granted to the 'authenticated' role (see migration 006).
       // `updated_at` is maintained by a DB trigger.
-      const { id: _ignoreId, user_id: _ignoreUid, created_at: _ignoreCreated, updated_at: _ignoreUpdated, rating: _ignoreRating, verified_broker: _ignoreVerified, ...safeUpdates } = updates as any;
+      const {
+        id: _ignoreId,
+        user_id: _ignoreUid,
+        created_at: _ignoreCreated,
+        updated_at: _ignoreUpdated,
+        rating: _ignoreRating,
+        verified_broker: _ignoreVerified,
+        ...safeUpdates
+      } = updates as any;
       const { error } = await supabase
         .from('users_profiles')
         .update(safeUpdates)

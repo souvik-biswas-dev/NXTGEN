@@ -28,7 +28,7 @@ const { height } = Dimensions.get('window');
 export default function SearchScreen() {
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const {
     filteredProperties,
     recentSearches,
@@ -41,18 +41,18 @@ export default function SearchScreen() {
     priceRanges,
     loadMoreFiltered,
   } = usePropertiesStore();
-  
+
   const searchStore = useSearchStore();
   const { addToSearchHistory } = useUserPreferences();
-  
+
   const [localFilters, setLocalFilters] = useState({
     type: searchStore.type as PropertyType | undefined,
     category: searchStore.category as PropertyCategory | undefined,
     city: searchStore.city,
     minPrice: searchStore.minPrice,
     maxPrice: searchStore.maxPrice,
-    bhk: searchStore.bhk || [] as BHKType[],
-    furnishing: searchStore.furnishing || [] as FurnishingType[],
+    bhk: searchStore.bhk || ([] as BHKType[]),
+    furnishing: searchStore.furnishing || ([] as FurnishingType[]),
     possession: searchStore.possession,
     ownerOnly: searchStore.ownerOnly || false,
   });
@@ -67,8 +67,8 @@ export default function SearchScreen() {
         city: s.city,
         minPrice: s.minPrice,
         maxPrice: s.maxPrice,
-        bhk: s.bhk || [] as BHKType[],
-        furnishing: s.furnishing || [] as FurnishingType[],
+        bhk: s.bhk || ([] as BHKType[]),
+        furnishing: s.furnishing || ([] as FurnishingType[]),
         possession: s.possession,
         ownerOnly: s.ownerOnly || false,
       };
@@ -87,7 +87,7 @@ export default function SearchScreen() {
     // otherwise the empty-state screen is shown.
     const hasText = debouncedQuery.trim().length > 0;
     const hasFilter = Object.values(localFilters).some(
-      (v) => v !== undefined && v !== false && !(Array.isArray(v) && v.length === 0),
+      (v) => v !== undefined && v !== false && !(Array.isArray(v) && v.length === 0)
     );
     if (!hasText && !hasFilter) return;
     usePropertiesStore.getState().filterProperties(localFilters, { query: debouncedQuery });
@@ -140,31 +140,39 @@ export default function SearchScreen() {
   };
 
   const toggleBHK = (bhk: BHKType) => {
-    setLocalFilters(prev => ({
+    setLocalFilters((prev) => ({
       ...prev,
-      bhk: prev.bhk.includes(bhk)
-        ? prev.bhk.filter(b => b !== bhk)
-        : [...prev.bhk, bhk]
+      bhk: prev.bhk.includes(bhk) ? prev.bhk.filter((b) => b !== bhk) : [...prev.bhk, bhk],
     }));
   };
 
   const toggleFurnishing = (furnishing: FurnishingType) => {
-    setLocalFilters(prev => ({
+    setLocalFilters((prev) => ({
       ...prev,
       furnishing: prev.furnishing.includes(furnishing)
-        ? prev.furnishing.filter(f => f !== furnishing)
-        : [...prev.furnishing, furnishing]
+        ? prev.furnishing.filter((f) => f !== furnishing)
+        : [...prev.furnishing, furnishing],
     }));
   };
 
   const activeFilterCount = searchStore.getActiveFilterCount();
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.surface }} edges={['top']}>
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: theme.colors.surface }}
+      edges={['top']}
+    >
       {/* Search Header */}
       <View className="px-5 py-4" style={{ backgroundColor: theme.colors.surface }}>
         <View className="flex-row items-center">
-          <View className="flex-1 flex-row items-center px-4 py-3" style={{ backgroundColor: theme.colors.surfaceVariant, borderRadius: theme.roundness.xl }}>
+          <View
+            className="flex-1 flex-row items-center px-4 py-3"
+            style={{
+              backgroundColor: theme.colors.surfaceVariant,
+              borderRadius: theme.roundness.xl,
+            }}
+          >
             <Ionicons name="search" size={20} color={theme.colors.outline} />
             <TextInput
               placeholder="Search by city, locality or project"
@@ -180,15 +188,24 @@ export default function SearchScreen() {
               </TouchableOpacity>
             )}
           </View>
-          
+
           <TouchableOpacity
             onPress={() => setShowFilters(true)}
             className="ml-3 p-3 relative"
-            style={{ backgroundColor: theme.colors.primaryContainer, borderRadius: theme.roundness.lg }}
+            style={{
+              backgroundColor: theme.colors.primaryContainer,
+              borderRadius: theme.roundness.lg,
+            }}
           >
             <Ionicons name="options" size={22} color={theme.colors.primary} />
             {activeFilterCount > 0 && (
-              <View className="absolute -top-1 -right-1 w-5 h-5 items-center justify-center" style={{ backgroundColor: theme.colors.primary, borderRadius: theme.roundness.full }}>
+              <View
+                className="absolute -top-1 -right-1 w-5 h-5 items-center justify-center"
+                style={{
+                  backgroundColor: theme.colors.primary,
+                  borderRadius: theme.roundness.full,
+                }}
+              >
                 <Text className="text-white text-xs font-bold">{activeFilterCount}</Text>
               </View>
             )}
@@ -199,48 +216,94 @@ export default function SearchScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3">
           <TouchableOpacity
             onPress={() => {
-              const newType = localFilters.type === 'buy' ? undefined : 'buy' as PropertyType | undefined;
+              const newType =
+                localFilters.type === 'buy' ? undefined : ('buy' as PropertyType | undefined);
               const newFilters = { ...localFilters, type: newType };
               setLocalFilters(newFilters);
               searchStore.setFilters(newFilters);
               usePropertiesStore.getState().filterProperties(newFilters);
             }}
             className="px-4 py-2 mr-2"
-            style={{ backgroundColor: localFilters.type === 'buy' ? theme.colors.primary : theme.colors.surfaceVariant, borderRadius: theme.roundness.full }}
+            style={{
+              backgroundColor:
+                localFilters.type === 'buy' ? theme.colors.primary : theme.colors.surfaceVariant,
+              borderRadius: theme.roundness.full,
+            }}
           >
-            <Text className="text-sm font-medium" style={{ color: localFilters.type === 'buy' ? theme.colors.onPrimary : theme.colors.secondary }}>Buy</Text>
+            <Text
+              className="text-sm font-medium"
+              style={{
+                color:
+                  localFilters.type === 'buy' ? theme.colors.onPrimary : theme.colors.secondary,
+              }}
+            >
+              Buy
+            </Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             onPress={() => {
-              const newType = localFilters.type === 'rent' ? undefined : 'rent' as PropertyType | undefined;
+              const newType =
+                localFilters.type === 'rent' ? undefined : ('rent' as PropertyType | undefined);
               const newFilters = { ...localFilters, type: newType };
               setLocalFilters(newFilters);
               searchStore.setFilters(newFilters);
               usePropertiesStore.getState().filterProperties(newFilters);
             }}
             className="px-4 py-2 mr-2"
-            style={{ backgroundColor: localFilters.type === 'rent' ? theme.colors.primary : theme.colors.surfaceVariant, borderRadius: theme.roundness.full }}
+            style={{
+              backgroundColor:
+                localFilters.type === 'rent' ? theme.colors.primary : theme.colors.surfaceVariant,
+              borderRadius: theme.roundness.full,
+            }}
           >
-            <Text className="text-sm font-medium" style={{ color: localFilters.type === 'rent' ? theme.colors.onPrimary : theme.colors.secondary }}>Rent</Text>
+            <Text
+              className="text-sm font-medium"
+              style={{
+                color:
+                  localFilters.type === 'rent' ? theme.colors.onPrimary : theme.colors.secondary,
+              }}
+            >
+              Rent
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => setShowFilters(true)}
             className="px-4 py-2 mr-2 flex-row items-center"
-            style={{ backgroundColor: theme.colors.surfaceVariant, borderRadius: theme.roundness.full }}
+            style={{
+              backgroundColor: theme.colors.surfaceVariant,
+              borderRadius: theme.roundness.full,
+            }}
           >
-            <Text className="text-sm font-medium" style={{ color: theme.colors.secondary }}>BHK</Text>
-            <Ionicons name="chevron-down" size={16} color={theme.colors.outline} style={{ marginLeft: 4 }} />
+            <Text className="text-sm font-medium" style={{ color: theme.colors.secondary }}>
+              BHK
+            </Text>
+            <Ionicons
+              name="chevron-down"
+              size={16}
+              color={theme.colors.outline}
+              style={{ marginLeft: 4 }}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => setShowFilters(true)}
             className="px-4 py-2 mr-2 flex-row items-center"
-            style={{ backgroundColor: theme.colors.surfaceVariant, borderRadius: theme.roundness.full }}
+            style={{
+              backgroundColor: theme.colors.surfaceVariant,
+              borderRadius: theme.roundness.full,
+            }}
           >
-            <Text className="text-sm font-medium" style={{ color: theme.colors.secondary }}>Budget</Text>
-            <Ionicons name="chevron-down" size={16} color={theme.colors.outline} style={{ marginLeft: 4 }} />
+            <Text className="text-sm font-medium" style={{ color: theme.colors.secondary }}>
+              Budget
+            </Text>
+            <Ionicons
+              name="chevron-down"
+              size={16}
+              color={theme.colors.outline}
+              style={{ marginLeft: 4 }}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -252,9 +315,19 @@ export default function SearchScreen() {
               usePropertiesStore.getState().filterProperties(newFilters);
             }}
             className="px-4 py-2 mr-2"
-            style={{ backgroundColor: localFilters.ownerOnly ? theme.colors.success : theme.colors.surfaceVariant, borderRadius: theme.roundness.full }}
+            style={{
+              backgroundColor: localFilters.ownerOnly
+                ? theme.colors.success
+                : theme.colors.surfaceVariant,
+              borderRadius: theme.roundness.full,
+            }}
           >
-            <Text className="text-sm font-medium" style={{ color: localFilters.ownerOnly ? '#FFFFFF' : theme.colors.secondary }}>Owner Only</Text>
+            <Text
+              className="text-sm font-medium"
+              style={{ color: localFilters.ownerOnly ? '#FFFFFF' : theme.colors.secondary }}
+            >
+              Owner Only
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -294,7 +367,12 @@ export default function SearchScreen() {
                   key={city.id}
                   onPress={() => handleSearch(city.name)}
                   className="px-4 py-2 mr-2 mb-2"
-                  style={{ borderRadius: theme.roundness.full, borderWidth: 1, borderColor: theme.colors.outlineVariant, backgroundColor: theme.colors.surface }}
+                  style={{
+                    borderRadius: theme.roundness.full,
+                    borderWidth: 1,
+                    borderColor: theme.colors.outlineVariant,
+                    backgroundColor: theme.colors.surface,
+                  }}
                 >
                   <Text style={{ color: theme.colors.secondary }}>{city.name}</Text>
                 </TouchableOpacity>
@@ -350,154 +428,418 @@ export default function SearchScreen() {
       )}
 
       {/* Filters Modal */}
-      <Modal
-        visible={showFilters}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
+      <Modal visible={showFilters} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.surface }}>
           {/* Modal Header */}
-          <View className="flex-row items-center justify-between px-5 py-4" style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}>
+          <View
+            className="flex-row items-center justify-between px-5 py-4"
+            style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}
+          >
             <TouchableOpacity onPress={() => setShowFilters(false)}>
               <Ionicons name="close" size={24} color={theme.colors.secondary} />
             </TouchableOpacity>
-            <Text className="text-lg font-bold" style={{ color: theme.colors.secondary }}>Filters</Text>
+            <Text className="text-lg font-bold" style={{ color: theme.colors.secondary }}>
+              Filters
+            </Text>
             <TouchableOpacity onPress={resetFilters}>
-              <Text className="font-medium" style={{ color: theme.colors.primary }}>Reset</Text>
+              <Text className="font-medium" style={{ color: theme.colors.primary }}>
+                Reset
+              </Text>
             </TouchableOpacity>
           </View>
 
           <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
             {/* Property Type */}
-            <View className="px-5 py-5" style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}>
-              <Text className="font-semibold mb-3" style={{ color: theme.colors.secondary }}>Property For</Text>
+            <View
+              className="px-5 py-5"
+              style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}
+            >
+              <Text className="font-semibold mb-3" style={{ color: theme.colors.secondary }}>
+                Property For
+              </Text>
               <View className="flex-row">
                 <TouchableOpacity
-                  onPress={() => setLocalFilters(prev => ({ ...prev, type: 'buy' }))}
-                  className="flex-1 py-3" style={{ borderTopLeftRadius: theme.roundness.lg, borderBottomLeftRadius: theme.roundness.lg, borderWidth: 1, backgroundColor: localFilters.type === 'buy' ? theme.colors.primary : theme.colors.surface, borderColor: localFilters.type === 'buy' ? theme.colors.primary : theme.colors.outlineVariant }}
+                  onPress={() => setLocalFilters((prev) => ({ ...prev, type: 'buy' }))}
+                  className="flex-1 py-3"
+                  style={{
+                    borderTopLeftRadius: theme.roundness.lg,
+                    borderBottomLeftRadius: theme.roundness.lg,
+                    borderWidth: 1,
+                    backgroundColor:
+                      localFilters.type === 'buy' ? theme.colors.primary : theme.colors.surface,
+                    borderColor:
+                      localFilters.type === 'buy'
+                        ? theme.colors.primary
+                        : theme.colors.outlineVariant,
+                  }}
                 >
-                  <Text className="text-center font-medium" style={{ color: localFilters.type === 'buy' ? theme.colors.onPrimary : theme.colors.secondary }}>Buy</Text>
+                  <Text
+                    className="text-center font-medium"
+                    style={{
+                      color:
+                        localFilters.type === 'buy'
+                          ? theme.colors.onPrimary
+                          : theme.colors.secondary,
+                    }}
+                  >
+                    Buy
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => setLocalFilters(prev => ({ ...prev, type: 'rent' }))}
-                  className="flex-1 py-3" style={{ borderTopRightRadius: theme.roundness.lg, borderBottomRightRadius: theme.roundness.lg, borderWidth: 1, borderLeftWidth: 0, backgroundColor: localFilters.type === 'rent' ? theme.colors.primary : theme.colors.surface, borderColor: localFilters.type === 'rent' ? theme.colors.primary : theme.colors.outlineVariant }}
+                  onPress={() => setLocalFilters((prev) => ({ ...prev, type: 'rent' }))}
+                  className="flex-1 py-3"
+                  style={{
+                    borderTopRightRadius: theme.roundness.lg,
+                    borderBottomRightRadius: theme.roundness.lg,
+                    borderWidth: 1,
+                    borderLeftWidth: 0,
+                    backgroundColor:
+                      localFilters.type === 'rent' ? theme.colors.primary : theme.colors.surface,
+                    borderColor:
+                      localFilters.type === 'rent'
+                        ? theme.colors.primary
+                        : theme.colors.outlineVariant,
+                  }}
                 >
-                  <Text className="text-center font-medium" style={{ color: localFilters.type === 'rent' ? theme.colors.onPrimary : theme.colors.secondary }}>Rent</Text>
+                  <Text
+                    className="text-center font-medium"
+                    style={{
+                      color:
+                        localFilters.type === 'rent'
+                          ? theme.colors.onPrimary
+                          : theme.colors.secondary,
+                    }}
+                  >
+                    Rent
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* Category */}
-            <View className="px-5 py-5" style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}>
-              <Text className="font-semibold mb-3" style={{ color: theme.colors.secondary }}>Property Category</Text>
+            <View
+              className="px-5 py-5"
+              style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}
+            >
+              <Text className="font-semibold mb-3" style={{ color: theme.colors.secondary }}>
+                Property Category
+              </Text>
               <View className="flex-row">
                 <TouchableOpacity
-                  onPress={() => setLocalFilters(prev => ({ ...prev, category: 'residential' }))}
-                  className="flex-1 py-3" style={{ borderTopLeftRadius: theme.roundness.lg, borderBottomLeftRadius: theme.roundness.lg, borderWidth: 1, backgroundColor: localFilters.category === 'residential' ? theme.colors.primary : theme.colors.surface, borderColor: localFilters.category === 'residential' ? theme.colors.primary : theme.colors.outlineVariant }}
+                  onPress={() => setLocalFilters((prev) => ({ ...prev, category: 'residential' }))}
+                  className="flex-1 py-3"
+                  style={{
+                    borderTopLeftRadius: theme.roundness.lg,
+                    borderBottomLeftRadius: theme.roundness.lg,
+                    borderWidth: 1,
+                    backgroundColor:
+                      localFilters.category === 'residential'
+                        ? theme.colors.primary
+                        : theme.colors.surface,
+                    borderColor:
+                      localFilters.category === 'residential'
+                        ? theme.colors.primary
+                        : theme.colors.outlineVariant,
+                  }}
                 >
-                  <Text className="text-center font-medium" style={{ color: localFilters.category === 'residential' ? theme.colors.onPrimary : theme.colors.secondary }}>Residential</Text>
+                  <Text
+                    className="text-center font-medium"
+                    style={{
+                      color:
+                        localFilters.category === 'residential'
+                          ? theme.colors.onPrimary
+                          : theme.colors.secondary,
+                    }}
+                  >
+                    Residential
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => setLocalFilters(prev => ({ ...prev, category: 'commercial' }))}
-                  className="flex-1 py-3" style={{ borderTopRightRadius: theme.roundness.lg, borderBottomRightRadius: theme.roundness.lg, borderWidth: 1, borderLeftWidth: 0, backgroundColor: localFilters.category === 'commercial' ? theme.colors.primary : theme.colors.surface, borderColor: localFilters.category === 'commercial' ? theme.colors.primary : theme.colors.outlineVariant }}
+                  onPress={() => setLocalFilters((prev) => ({ ...prev, category: 'commercial' }))}
+                  className="flex-1 py-3"
+                  style={{
+                    borderTopRightRadius: theme.roundness.lg,
+                    borderBottomRightRadius: theme.roundness.lg,
+                    borderWidth: 1,
+                    borderLeftWidth: 0,
+                    backgroundColor:
+                      localFilters.category === 'commercial'
+                        ? theme.colors.primary
+                        : theme.colors.surface,
+                    borderColor:
+                      localFilters.category === 'commercial'
+                        ? theme.colors.primary
+                        : theme.colors.outlineVariant,
+                  }}
                 >
-                  <Text className="text-center font-medium" style={{ color: localFilters.category === 'commercial' ? theme.colors.onPrimary : theme.colors.secondary }}>Commercial</Text>
+                  <Text
+                    className="text-center font-medium"
+                    style={{
+                      color:
+                        localFilters.category === 'commercial'
+                          ? theme.colors.onPrimary
+                          : theme.colors.secondary,
+                    }}
+                  >
+                    Commercial
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* BHK */}
-            <View className="px-5 py-5" style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}>
-              <Text className="font-semibold mb-3" style={{ color: theme.colors.secondary }}>BHK Type</Text>
+            <View
+              className="px-5 py-5"
+              style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}
+            >
+              <Text className="font-semibold mb-3" style={{ color: theme.colors.secondary }}>
+                BHK Type
+              </Text>
               <View className="flex-row flex-wrap">
                 {(['1RK', '1BHK', '2BHK', '3BHK', '4BHK', '5+BHK'] as BHKType[]).map((bhk) => (
                   <TouchableOpacity
                     key={bhk}
                     onPress={() => toggleBHK(bhk)}
-                    className="px-4 py-2 mr-2 mb-2" style={{ borderRadius: theme.roundness.full, borderWidth: 1, backgroundColor: localFilters.bhk.includes(bhk) ? theme.colors.primary : theme.colors.surface, borderColor: localFilters.bhk.includes(bhk) ? theme.colors.primary : theme.colors.outlineVariant }}
+                    className="px-4 py-2 mr-2 mb-2"
+                    style={{
+                      borderRadius: theme.roundness.full,
+                      borderWidth: 1,
+                      backgroundColor: localFilters.bhk.includes(bhk)
+                        ? theme.colors.primary
+                        : theme.colors.surface,
+                      borderColor: localFilters.bhk.includes(bhk)
+                        ? theme.colors.primary
+                        : theme.colors.outlineVariant,
+                    }}
                   >
-                    <Text className="font-medium" style={{ color: localFilters.bhk.includes(bhk) ? theme.colors.onPrimary : theme.colors.secondary }}>{bhk}</Text>
+                    <Text
+                      className="font-medium"
+                      style={{
+                        color: localFilters.bhk.includes(bhk)
+                          ? theme.colors.onPrimary
+                          : theme.colors.secondary,
+                      }}
+                    >
+                      {bhk}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
 
             {/* Budget */}
-            <View className="px-5 py-5" style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}>
-              <Text className="font-semibold mb-3" style={{ color: theme.colors.secondary }}>Budget</Text>
+            <View
+              className="px-5 py-5"
+              style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}
+            >
+              <Text className="font-semibold mb-3" style={{ color: theme.colors.secondary }}>
+                Budget
+              </Text>
               <View className="flex-row flex-wrap">
                 {priceRanges[localFilters.type || 'buy'].map((range, index) => (
                   <TouchableOpacity
                     key={index}
-                    onPress={() => setLocalFilters(prev => ({ ...prev, minPrice: range.min, maxPrice: range.max ?? undefined }))}
-                    className="px-4 py-2 mr-2 mb-2" style={{ borderRadius: theme.roundness.full, borderWidth: 1, backgroundColor: localFilters.minPrice === range.min ? theme.colors.primary : theme.colors.surface, borderColor: localFilters.minPrice === range.min ? theme.colors.primary : theme.colors.outlineVariant }}
+                    onPress={() =>
+                      setLocalFilters((prev) => ({
+                        ...prev,
+                        minPrice: range.min,
+                        maxPrice: range.max ?? undefined,
+                      }))
+                    }
+                    className="px-4 py-2 mr-2 mb-2"
+                    style={{
+                      borderRadius: theme.roundness.full,
+                      borderWidth: 1,
+                      backgroundColor:
+                        localFilters.minPrice === range.min
+                          ? theme.colors.primary
+                          : theme.colors.surface,
+                      borderColor:
+                        localFilters.minPrice === range.min
+                          ? theme.colors.primary
+                          : theme.colors.outlineVariant,
+                    }}
                   >
-                    <Text className="font-medium" style={{ color: localFilters.minPrice === range.min ? theme.colors.onPrimary : theme.colors.secondary }}>{range.label}</Text>
+                    <Text
+                      className="font-medium"
+                      style={{
+                        color:
+                          localFilters.minPrice === range.min
+                            ? theme.colors.onPrimary
+                            : theme.colors.secondary,
+                      }}
+                    >
+                      {range.label}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
 
             {/* Furnishing */}
-            <View className="px-5 py-5" style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}>
-              <Text className="font-semibold mb-3" style={{ color: theme.colors.secondary }}>Furnishing</Text>
+            <View
+              className="px-5 py-5"
+              style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}
+            >
+              <Text className="font-semibold mb-3" style={{ color: theme.colors.secondary }}>
+                Furnishing
+              </Text>
               <View className="flex-row flex-wrap">
-                {(['furnished', 'semi-furnished', 'unfurnished'] as FurnishingType[]).map((furnishing) => (
-                  <TouchableOpacity
-                    key={furnishing}
-                    onPress={() => toggleFurnishing(furnishing)}
-                    className="px-4 py-2 mr-2 mb-2" style={{ borderRadius: theme.roundness.full, borderWidth: 1, backgroundColor: localFilters.furnishing.includes(furnishing) ? theme.colors.primary : theme.colors.surface, borderColor: localFilters.furnishing.includes(furnishing) ? theme.colors.primary : theme.colors.outlineVariant }}
-                  >
-                    <Text className="font-medium capitalize" style={{ color: localFilters.furnishing.includes(furnishing) ? theme.colors.onPrimary : theme.colors.secondary }}>{furnishing}</Text>
-                  </TouchableOpacity>
-                ))}
+                {(['furnished', 'semi-furnished', 'unfurnished'] as FurnishingType[]).map(
+                  (furnishing) => (
+                    <TouchableOpacity
+                      key={furnishing}
+                      onPress={() => toggleFurnishing(furnishing)}
+                      className="px-4 py-2 mr-2 mb-2"
+                      style={{
+                        borderRadius: theme.roundness.full,
+                        borderWidth: 1,
+                        backgroundColor: localFilters.furnishing.includes(furnishing)
+                          ? theme.colors.primary
+                          : theme.colors.surface,
+                        borderColor: localFilters.furnishing.includes(furnishing)
+                          ? theme.colors.primary
+                          : theme.colors.outlineVariant,
+                      }}
+                    >
+                      <Text
+                        className="font-medium capitalize"
+                        style={{
+                          color: localFilters.furnishing.includes(furnishing)
+                            ? theme.colors.onPrimary
+                            : theme.colors.secondary,
+                        }}
+                      >
+                        {furnishing}
+                      </Text>
+                    </TouchableOpacity>
+                  )
+                )}
               </View>
             </View>
 
             {/* Possession */}
-            <View className="px-5 py-5" style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}>
-              <Text className="font-semibold mb-3" style={{ color: theme.colors.secondary }}>Possession Status</Text>
+            <View
+              className="px-5 py-5"
+              style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}
+            >
+              <Text className="font-semibold mb-3" style={{ color: theme.colors.secondary }}>
+                Possession Status
+              </Text>
               <View className="flex-row">
                 <TouchableOpacity
-                  onPress={() => setLocalFilters(prev => ({ ...prev, possession: 'ready' }))}
-                  className="flex-1 py-3" style={{ borderTopLeftRadius: theme.roundness.lg, borderBottomLeftRadius: theme.roundness.lg, borderWidth: 1, backgroundColor: localFilters.possession === 'ready' ? theme.colors.primary : theme.colors.surface, borderColor: localFilters.possession === 'ready' ? theme.colors.primary : theme.colors.outlineVariant }}
+                  onPress={() => setLocalFilters((prev) => ({ ...prev, possession: 'ready' }))}
+                  className="flex-1 py-3"
+                  style={{
+                    borderTopLeftRadius: theme.roundness.lg,
+                    borderBottomLeftRadius: theme.roundness.lg,
+                    borderWidth: 1,
+                    backgroundColor:
+                      localFilters.possession === 'ready'
+                        ? theme.colors.primary
+                        : theme.colors.surface,
+                    borderColor:
+                      localFilters.possession === 'ready'
+                        ? theme.colors.primary
+                        : theme.colors.outlineVariant,
+                  }}
                 >
-                  <Text className="text-center font-medium" style={{ color: localFilters.possession === 'ready' ? theme.colors.onPrimary : theme.colors.secondary }}>Ready to Move</Text>
+                  <Text
+                    className="text-center font-medium"
+                    style={{
+                      color:
+                        localFilters.possession === 'ready'
+                          ? theme.colors.onPrimary
+                          : theme.colors.secondary,
+                    }}
+                  >
+                    Ready to Move
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => setLocalFilters(prev => ({ ...prev, possession: 'under-construction' }))}
-                  className="flex-1 py-3" style={{ borderTopRightRadius: theme.roundness.lg, borderBottomRightRadius: theme.roundness.lg, borderWidth: 1, borderLeftWidth: 0, backgroundColor: localFilters.possession === 'under-construction' ? theme.colors.primary : theme.colors.surface, borderColor: localFilters.possession === 'under-construction' ? theme.colors.primary : theme.colors.outlineVariant }}
+                  onPress={() =>
+                    setLocalFilters((prev) => ({ ...prev, possession: 'under-construction' }))
+                  }
+                  className="flex-1 py-3"
+                  style={{
+                    borderTopRightRadius: theme.roundness.lg,
+                    borderBottomRightRadius: theme.roundness.lg,
+                    borderWidth: 1,
+                    borderLeftWidth: 0,
+                    backgroundColor:
+                      localFilters.possession === 'under-construction'
+                        ? theme.colors.primary
+                        : theme.colors.surface,
+                    borderColor:
+                      localFilters.possession === 'under-construction'
+                        ? theme.colors.primary
+                        : theme.colors.outlineVariant,
+                  }}
                 >
-                  <Text className="text-center font-medium" style={{ color: localFilters.possession === 'under-construction' ? theme.colors.onPrimary : theme.colors.secondary }}>Under Construction</Text>
+                  <Text
+                    className="text-center font-medium"
+                    style={{
+                      color:
+                        localFilters.possession === 'under-construction'
+                          ? theme.colors.onPrimary
+                          : theme.colors.secondary,
+                    }}
+                  >
+                    Under Construction
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* Owner Only */}
-            <View className="px-5 py-5" style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}>
+            <View
+              className="px-5 py-5"
+              style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}
+            >
               <TouchableOpacity
-                onPress={() => setLocalFilters(prev => ({ ...prev, ownerOnly: !prev.ownerOnly }))}
+                onPress={() => setLocalFilters((prev) => ({ ...prev, ownerOnly: !prev.ownerOnly }))}
                 className="flex-row items-center justify-between"
               >
                 <View>
-                  <Text className="font-semibold" style={{ color: theme.colors.secondary }}>Owner Properties Only</Text>
-                  <Text className="text-sm mt-1" style={{ color: theme.colors.outline }}>Hide broker listings</Text>
+                  <Text className="font-semibold" style={{ color: theme.colors.secondary }}>
+                    Owner Properties Only
+                  </Text>
+                  <Text className="text-sm mt-1" style={{ color: theme.colors.outline }}>
+                    Hide broker listings
+                  </Text>
                 </View>
-                <View className="w-12 h-7 p-1" style={{ borderRadius: theme.roundness.full, backgroundColor: localFilters.ownerOnly ? theme.colors.primary : theme.colors.outlineVariant }}>
-                  <View className={`w-5 h-5 bg-white shadow ${localFilters.ownerOnly ? 'ml-auto' : ''}`} style={{ borderRadius: theme.roundness.full }} />
+                <View
+                  className="w-12 h-7 p-1"
+                  style={{
+                    borderRadius: theme.roundness.full,
+                    backgroundColor: localFilters.ownerOnly
+                      ? theme.colors.primary
+                      : theme.colors.outlineVariant,
+                  }}
+                >
+                  <View
+                    className={`w-5 h-5 bg-white shadow ${localFilters.ownerOnly ? 'ml-auto' : ''}`}
+                    style={{ borderRadius: theme.roundness.full }}
+                  />
                 </View>
               </TouchableOpacity>
             </View>
           </ScrollView>
 
           {/* Apply Button */}
-          <View className="px-5 py-4" style={{ borderTopWidth: 1, borderTopColor: theme.colors.outlineVariant }}>
+          <View
+            className="px-5 py-4"
+            style={{ borderTopWidth: 1, borderTopColor: theme.colors.outlineVariant }}
+          >
             <TouchableOpacity
               onPress={applyFilters}
               className="py-4"
               style={{ backgroundColor: theme.colors.primary, borderRadius: theme.roundness.xl }}
             >
-              <Text className="text-center font-semibold text-lg" style={{ color: theme.colors.onPrimary }}>
+              <Text
+                className="text-center font-semibold text-lg"
+                style={{ color: theme.colors.onPrimary }}
+              >
                 Apply Filters
               </Text>
             </TouchableOpacity>

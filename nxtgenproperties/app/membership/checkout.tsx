@@ -50,7 +50,14 @@ export default function CheckoutScreen() {
   const onMessage = async (e: WebViewMessageEvent) => {
     try {
       const msg = JSON.parse(e.nativeEvent.data) as
-        | { type: 'success'; payload: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string } }
+        | {
+            type: 'success';
+            payload: {
+              razorpay_order_id: string;
+              razorpay_payment_id: string;
+              razorpay_signature: string;
+            };
+          }
         | { type: 'failed'; payload: { description?: string } }
         | { type: 'dismissed' };
 
@@ -105,7 +112,9 @@ export default function CheckoutScreen() {
         >
           <Ionicons name="arrow-back" size={24} color={theme.colors.secondary} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 17, fontWeight: '700', marginLeft: 4, color: theme.colors.secondary }}>
+        <Text
+          style={{ fontSize: 17, fontWeight: '700', marginLeft: 4, color: theme.colors.secondary }}
+        >
           Upgrade to {planDef?.name ?? plan}
         </Text>
       </View>
@@ -131,7 +140,9 @@ export default function CheckoutScreen() {
           <Text style={{ marginTop: 12, fontWeight: '600', color: theme.colors.secondary }}>
             Payment failed
           </Text>
-          <Text style={{ marginTop: 6, color: theme.colors.outline, textAlign: 'center' }}>{errorMsg}</Text>
+          <Text style={{ marginTop: 6, color: theme.colors.outline, textAlign: 'center' }}>
+            {errorMsg}
+          </Text>
           <TouchableOpacity
             onPress={() => router.back()}
             style={{

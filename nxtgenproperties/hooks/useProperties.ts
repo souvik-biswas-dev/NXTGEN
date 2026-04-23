@@ -17,11 +17,13 @@ export const useProperties = (filters?: SearchFilters, limit: number = 20) => {
       setLoading(true);
       let query = supabase
         .from('properties')
-        .select(`
+        .select(
+          `
           *,
           owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
           broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
-        `)
+        `
+        )
         .range(offset, offset + limit - 1)
         .order('created_at', { ascending: false });
 
@@ -109,11 +111,13 @@ export const useFeaturedProperties = () => {
     try {
       const { data, error } = await supabase
         .from('properties')
-        .select(`
+        .select(
+          `
           *,
           owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
           broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
-        `)
+        `
+        )
         .eq('featured', true)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -147,15 +151,17 @@ export const usePreferredCitiesProperties = (preferredCities?: string[], limit: 
   const fetchByPreferredCities = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch properties from preferred cities with case-insensitive match
       const { data, error: fetchError } = await supabase
         .from('properties')
-        .select(`
+        .select(
+          `
           *,
           owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
           broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
-        `)
+        `
+        )
         .in('city', preferredCities || [])
         .limit(limit)
         .order('created_at', { ascending: false });
@@ -194,11 +200,13 @@ export const useProperty = (id: string) => {
       setLoading(true);
       const { data, error: fetchError } = await supabase
         .from('properties')
-        .select(`
+        .select(
+          `
           *,
           owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
           broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
-        `)
+        `
+        )
         .eq('id', id)
         .single();
 

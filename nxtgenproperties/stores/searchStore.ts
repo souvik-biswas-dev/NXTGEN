@@ -34,7 +34,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
   getActiveFilterCount: () => {
     const state = get();
     let count = 0;
-    
+
     if (state.city) count++;
     if (state.locality) count++;
     if (state.minPrice !== undefined) count++;
@@ -49,7 +49,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
     if (state.ownerOnly) count++;
     if (state.facing && state.facing.length > 0) count++;
     if (state.amenities && state.amenities.length > 0) count++;
-    
+
     return count;
   },
 }));

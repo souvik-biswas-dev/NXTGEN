@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     const text = await razorpayRes.text();
     return json({ error: 'Razorpay order failed', detail: text }, 502);
   }
-  const order = await razorpayRes.json() as any;
+  const order = (await razorpayRes.json()) as any;
 
   // --- Persist a payment row (service role key bypasses RLS)
   const service = createClient(supabaseUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);

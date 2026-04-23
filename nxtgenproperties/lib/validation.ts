@@ -20,7 +20,12 @@ export const phoneSchema = z
   .trim()
   .regex(/^(\+91)?[6-9]\d{9}$/, 'Enter a valid Indian mobile number');
 
-export const emailSchema = z.string().trim().toLowerCase().email('Enter a valid email address').max(254);
+export const emailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .email('Enter a valid email address')
+  .max(254);
 
 // NIST-recommended: ≥ 8 chars, at least one letter + one digit. No upper limit arbitrarily low,
 // but cap at 72 (bcrypt limit).
@@ -65,10 +70,10 @@ export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
 // --- Property post -------------------------------------------
 
 // Reasonable ceilings for Indian real-estate. Adjust as the market requires.
-const MIN_PRICE = 1_000;                     // ₹1 000
-const MAX_PRICE = 10_000_00_00_000;          // ₹10 000 Cr (effectively unbounded)
-const MIN_AREA = 50;                         // 50 sqft
-const MAX_AREA = 1_000_000;                  // 1 M sqft
+const MIN_PRICE = 1_000; // ₹1 000
+const MAX_PRICE = 10_000_00_00_000; // ₹10 000 Cr (effectively unbounded)
+const MIN_AREA = 50; // 50 sqft
+const MAX_AREA = 1_000_000; // 1 M sqft
 
 export const propertyPostSchema = z
   .object({
@@ -91,7 +96,16 @@ export const propertyPostSchema = z
     floor: z.string().max(20).optional().or(z.literal('')),
     total_floors: z.string().max(20).optional().or(z.literal('')),
     facing: z
-      .enum(['north', 'south', 'east', 'west', 'north-east', 'north-west', 'south-east', 'south-west'])
+      .enum([
+        'north',
+        'south',
+        'east',
+        'west',
+        'north-east',
+        'north-west',
+        'south-east',
+        'south-west',
+      ])
       .optional(),
     possession: z.enum(['ready', 'under-construction']),
     age_years: z.number().int().min(0).max(200).optional(),

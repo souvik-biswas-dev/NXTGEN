@@ -103,14 +103,14 @@ export default function VerifyScreen() {
         >
           {/* Header */}
           <View className="pt-16 px-6">
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => {
                 if (router.canGoBack()) {
                   router.back();
                 } else {
                   router.replace('/(auth)');
                 }
-              }} 
+              }}
               className="mb-8"
             >
               <Ionicons name="arrow-back" size={28} color="white" />
@@ -135,13 +135,15 @@ export default function VerifyScreen() {
                       isFilled
                         ? 'bg-white/30 border-2 border-primary'
                         : isFocused
-                        ? 'bg-white/20 border-2 border-white'
-                        : 'bg-white/10 border border-white/30'
+                          ? 'bg-white/20 border-2 border-white'
+                          : 'bg-white/10 border border-white/30'
                     }`}
                     style={{ width: 52, height: 64 }}
                   >
                     <TextInput
-                      ref={(ref) => { inputs.current[index] = ref; }}
+                      ref={(ref) => {
+                        inputs.current[index] = ref;
+                      }}
                       value={digit}
                       onChangeText={(value) => handleOtpChange(value, index)}
                       onKeyPress={(e) => handleKeyPress(e, index)}
@@ -160,7 +162,10 @@ export default function VerifyScreen() {
           </View>
 
           {loading && (
-            <View className="rounded-2xl mx-6 p-5 items-center mb-6 border border-white/30" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
+            <View
+              className="rounded-2xl mx-6 p-5 items-center mb-6 border border-white/30"
+              style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+            >
               <ActivityIndicator size="large" color="#FF6B35" />
               <Text className="text-white/90 mt-3 font-medium text-base">Verifying...</Text>
             </View>

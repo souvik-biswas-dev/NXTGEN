@@ -28,9 +28,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = React.memo(({ images })
         />
         {images.length > 1 && (
           <View className="absolute bottom-3 right-3 bg-black/70 rounded-lg px-3 py-1.5">
-            <Text className="text-white text-sm font-medium">
-              +{images.length - 1} more
-            </Text>
+            <Text className="text-white text-sm font-medium">+{images.length - 1} more</Text>
           </View>
         )}
       </TouchableOpacity>
@@ -73,11 +71,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = React.memo(({ images })
             })}
             renderItem={({ item }) => (
               <View style={{ width, height }}>
-                <Image
-                  source={{ uri: item }}
-                  style={{ width, height }}
-                  resizeMode="contain"
-                />
+                <Image source={{ uri: item }} style={{ width, height }} resizeMode="contain" />
               </View>
             )}
             keyExtractor={(item, index) => `${item}-${index}`}

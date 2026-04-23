@@ -36,10 +36,10 @@ interface BrokerProfileModalProps {
   };
 }
 
-export const BrokerBadge: React.FC<BrokerBadgeProps> = ({ 
-  verified = false, 
+export const BrokerBadge: React.FC<BrokerBadgeProps> = ({
+  verified = false,
   size = 'md',
-  variant = 'badge' 
+  variant = 'badge',
 }) => {
   if (!verified) return null;
 
@@ -120,7 +120,9 @@ export const BrokerCard: React.FC<BrokerCardProps> = ({
   };
 
   const handleWhatsApp = async () => {
-    const message = encodeURIComponent('Hi, I am interested in your property listed on NxtGen Properties');
+    const message = encodeURIComponent(
+      'Hi, I am interested in your property listed on NxtGen Properties'
+    );
     const url = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${message}`;
     const supported = await Linking.canOpenURL(url);
     if (supported) {
@@ -135,9 +137,7 @@ export const BrokerCard: React.FC<BrokerCardProps> = ({
       {/* Header */}
       <View className="flex-row items-center mb-4">
         <View className="w-16 h-16 bg-orange-100 rounded-full items-center justify-center">
-          <Text className="text-2xl font-bold text-primary">
-            {name.charAt(0).toUpperCase()}
-          </Text>
+          <Text className="text-2xl font-bold text-primary">{name.charAt(0).toUpperCase()}</Text>
         </View>
         <View className="ml-4 flex-1">
           <View className="flex-row items-center">
@@ -154,9 +154,7 @@ export const BrokerCard: React.FC<BrokerCardProps> = ({
             <Text className="text-gray-400 mx-2">•</Text>
             <Text className="text-gray-500">{totalDeals}+ Deals</Text>
           </View>
-          {verified && (
-            <BrokerBadge verified={true} size="sm" variant="badge" />
-          )}
+          {verified && <BrokerBadge verified={true} size="sm" variant="badge" />}
         </View>
       </View>
 
@@ -198,14 +196,14 @@ export const BrokerCard: React.FC<BrokerCardProps> = ({
 
       {/* Actions */}
       <View className="flex-row">
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={handleCall}
           className="flex-1 bg-primary rounded-xl py-3 flex-row items-center justify-center mr-2"
         >
           <Ionicons name="call" size={18} color="white" />
           <Text className="text-white font-semibold ml-2">Call Now</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={handleWhatsApp}
           className="flex-1 bg-green-500 rounded-xl py-3 flex-row items-center justify-center"
         >
@@ -233,7 +231,9 @@ export const BrokerProfileModal: React.FC<BrokerProfileModalProps> = ({
   };
 
   const handleWhatsApp = async () => {
-    const message = encodeURIComponent('Hi, I am interested in your property listed on NxtGen Properties');
+    const message = encodeURIComponent(
+      'Hi, I am interested in your property listed on NxtGen Properties'
+    );
     const url = `https://wa.me/${broker.phone.replace(/[^0-9]/g, '')}?text=${message}`;
     const supported = await Linking.canOpenURL(url);
     if (supported) {
@@ -244,23 +244,19 @@ export const BrokerProfileModal: React.FC<BrokerProfileModalProps> = ({
   };
 
   const handleReport = () => {
-    Alert.alert(
-      'Report Broker',
-      'Are you sure you want to report this broker?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Report', style: 'destructive', onPress: () => Alert.alert('Reported', 'Thank you for your feedback. We will review this report.') }
-      ]
-    );
+    Alert.alert('Report Broker', 'Are you sure you want to report this broker?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Report',
+        style: 'destructive',
+        onPress: () =>
+          Alert.alert('Reported', 'Thank you for your feedback. We will review this report.'),
+      },
+    ]);
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
       <View className="flex-1 bg-black/50 justify-end">
         <View className="bg-white rounded-t-3xl max-h-[80%]">
           {/* Handle */}
@@ -295,7 +291,9 @@ export const BrokerProfileModal: React.FC<BrokerProfileModalProps> = ({
               </View>
               <View className="flex-row items-center mt-2">
                 <Ionicons name="star" size={16} color="#FFB800" />
-                <Text className="text-gray-700 ml-1 font-semibold">{broker.rating?.toFixed(1) || '4.5'}</Text>
+                <Text className="text-gray-700 ml-1 font-semibold">
+                  {broker.rating?.toFixed(1) || '4.5'}
+                </Text>
                 <Text className="text-gray-400 mx-2">•</Text>
                 <Text className="text-gray-500">{broker.totalDeals || 0}+ Deals</Text>
               </View>
@@ -361,14 +359,14 @@ export const BrokerProfileModal: React.FC<BrokerProfileModalProps> = ({
 
             {/* Actions */}
             <View className="flex-row mb-4">
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={handleCall}
                 className="flex-1 bg-primary rounded-xl py-4 flex-row items-center justify-center mr-2"
               >
                 <Ionicons name="call" size={20} color="white" />
                 <Text className="text-white font-bold ml-2">Call Now</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={handleWhatsApp}
                 className="flex-1 bg-green-500 rounded-xl py-4 flex-row items-center justify-center"
               >
@@ -378,7 +376,7 @@ export const BrokerProfileModal: React.FC<BrokerProfileModalProps> = ({
             </View>
 
             {/* Report */}
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={handleReport}
               className="flex-row items-center justify-center py-2"
             >
@@ -410,10 +408,7 @@ export const VerificationRequestCard: React.FC<{ onRequest: () => void }> = ({ o
           <Text className="text-white/80 text-sm mb-4">
             Verified brokers get 3x more leads and higher visibility in search results.
           </Text>
-          <TouchableOpacity 
-            onPress={onRequest}
-            className="bg-white rounded-xl py-3 items-center"
-          >
+          <TouchableOpacity onPress={onRequest} className="bg-white rounded-xl py-3 items-center">
             <Text className="text-primary font-bold">Request Verification</Text>
           </TouchableOpacity>
         </View>

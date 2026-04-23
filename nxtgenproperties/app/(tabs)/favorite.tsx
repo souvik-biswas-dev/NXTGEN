@@ -29,10 +29,7 @@ export default function FavoritesScreen() {
       setLoading(true);
       try {
         const favoriteIds = Array.from(favorites);
-        const { data, error } = await supabase
-          .from('properties')
-          .select('*')
-          .in('id', favoriteIds);
+        const { data, error } = await supabase.from('properties').select('*').in('id', favoriteIds);
 
         if (error) throw error;
         if (!cancelled) setProperties(data || []);
@@ -44,7 +41,9 @@ export default function FavoritesScreen() {
     };
 
     loadPropertyDetails();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [favorites]);
 
   // Pull-to-refresh: re-fetch from Supabase → updates store Set → triggers effect above
@@ -80,8 +79,14 @@ export default function FavoritesScreen() {
 
       {/* Content */}
       {favoriteCount === 0 ? (
-        <View className="flex-1 items-center justify-center px-6" style={{ paddingBottom: theme.tabBarHeight }}>
-          <View className="w-28 h-28 rounded-full items-center justify-center mb-5" style={{ backgroundColor: theme.colors.primaryContainer }}>
+        <View
+          className="flex-1 items-center justify-center px-6"
+          style={{ paddingBottom: theme.tabBarHeight }}
+        >
+          <View
+            className="w-28 h-28 rounded-full items-center justify-center mb-5"
+            style={{ backgroundColor: theme.colors.primaryContainer }}
+          >
             <Ionicons name="heart-outline" size={48} color={theme.colors.primary} />
           </View>
           <Text className="text-xl font-semibold" style={{ color: theme.colors.secondary }}>
@@ -96,7 +101,11 @@ export default function FavoritesScreen() {
           data={properties}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <PropertyCard property={item} />}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: theme.tabBarHeight + 16 }}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingTop: 12,
+            paddingBottom: theme.tabBarHeight + 16,
+          }}
           showsVerticalScrollIndicator={false}
           numColumns={2}
           columnWrapperStyle={{ justifyContent: 'space-between' }}

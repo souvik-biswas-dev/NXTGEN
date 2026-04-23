@@ -16,7 +16,9 @@ export const useRecentlyViewedStore = create<RecentlyViewedState>((set) => ({
 
   addToRecentlyViewed: async (propertyId: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const user = session?.user;
       if (!user) return;
 
@@ -36,7 +38,9 @@ export const useRecentlyViewedStore = create<RecentlyViewedState>((set) => ({
   fetchRecentlyViewed: async () => {
     set({ loading: true });
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const user = session?.user;
       if (!user) {
         set({ loading: false });
@@ -63,17 +67,16 @@ export const useRecentlyViewedStore = create<RecentlyViewedState>((set) => ({
   clearRecentlyViewed: async () => {
     set({ loading: true });
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const user = session?.user;
       if (!user) {
         set({ loading: false });
         return;
       }
 
-      const { error } = await supabase
-        .from('recently_viewed')
-        .delete()
-        .eq('user_id', user.id);
+      const { error } = await supabase.from('recently_viewed').delete().eq('user_id', user.id);
 
       if (error) throw error;
       set({ recentItems: [] });

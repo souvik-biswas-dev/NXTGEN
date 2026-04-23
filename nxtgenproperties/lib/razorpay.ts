@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 
 export type RazorpayOrder = {
   order_id: string;
-  amount: number;   // paise
+  amount: number; // paise
   currency: string; // 'INR'
   key_id: string;
 };
@@ -18,10 +18,9 @@ export type PaymentResult = {
  * never trust the client's number.
  */
 export async function createOrder(plan: 'silver' | 'gold'): Promise<RazorpayOrder> {
-  const { data, error } = await supabase.functions.invoke<RazorpayOrder>(
-    'create-razorpay-order',
-    { body: { plan } },
-  );
+  const { data, error } = await supabase.functions.invoke<RazorpayOrder>('create-razorpay-order', {
+    body: { plan },
+  });
   if (error || !data) {
     throw new Error(error?.message ?? 'Could not start payment');
   }
@@ -35,7 +34,7 @@ export async function createOrder(plan: 'silver' | 'gold'): Promise<RazorpayOrde
 export async function verifyPayment(result: PaymentResult): Promise<string> {
   const { data, error } = await supabase.functions.invoke<{ ok: boolean; subscription_id: string }>(
     'verify-razorpay-payment',
-    { body: result },
+    { body: result }
   );
   if (error || !data?.ok) {
     throw new Error(error?.message ?? 'Payment verification failed');

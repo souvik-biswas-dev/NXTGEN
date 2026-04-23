@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  ScrollView, 
-  TouchableOpacity, 
-  Dimensions 
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -101,8 +95,8 @@ export default function InsightsScreen() {
     loadData();
   }, []);
 
-  const cityTrend =
-    marketTrends.find((t) => t.city === selectedCity) || marketTrends[0] || {
+  const cityTrend = marketTrends.find((t) => t.city === selectedCity) ||
+    marketTrends[0] || {
       city: selectedCity,
       trend: 'up' as const,
       change: '+0.0%',
@@ -127,14 +121,14 @@ export default function InsightsScreen() {
         className="pt-14 pb-8 px-4"
       >
         <View className="flex-row items-center mb-4">
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => {
               if (router.canGoBack()) {
                 router.back();
               } else {
                 router.replace('/(tabs)');
               }
-            }} 
+            }}
             className="mr-4"
           >
             <Ionicons name="arrow-back" size={24} color="white" />
@@ -151,7 +145,7 @@ export default function InsightsScreen() {
         <View className="bg-white rounded-2xl p-4 shadow-lg">
           <Text className="text-gray-500 text-sm mb-3">Select City</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {popularCities.slice(0, 6).map((city) => (
+            {popularCities.slice(0, 6).map((city) => (
               <TouchableOpacity
                 key={city.name}
                 onPress={() => setSelectedCity(city.name)}
@@ -159,9 +153,11 @@ export default function InsightsScreen() {
                   selectedCity === city.name ? 'bg-primary' : 'bg-gray-100'
                 }`}
               >
-                <Text className={`font-medium ${
-                  selectedCity === city.name ? 'text-white' : 'text-gray-700'
-                }`}>
+                <Text
+                  className={`font-medium ${
+                    selectedCity === city.name ? 'text-white' : 'text-gray-700'
+                  }`}
+                >
                   {city.name}
                 </Text>
               </TouchableOpacity>
@@ -173,32 +169,34 @@ export default function InsightsScreen() {
       {/* Market Overview */}
       <View className="px-4 mt-6">
         <Text className="text-lg font-bold text-gray-900 mb-4">{selectedCity} Market Overview</Text>
-        
+
         <View className="flex-row">
           <View className="flex-1 bg-white rounded-xl p-4 mr-2 shadow-sm">
             <View className="flex-row items-center mb-2">
-              <View className={`w-8 h-8 rounded-full items-center justify-center ${
-                cityTrend.trend === 'up' ? 'bg-green-100' : 'bg-red-100'
-              }`}>
-                <Ionicons 
-                  name={cityTrend.trend === 'up' ? 'trending-up' : 'trending-down'} 
-                  size={18} 
-                  color={cityTrend.trend === 'up' ? '#22C55E' : '#EF4444'} 
+              <View
+                className={`w-8 h-8 rounded-full items-center justify-center ${
+                  cityTrend.trend === 'up' ? 'bg-green-100' : 'bg-red-100'
+                }`}
+              >
+                <Ionicons
+                  name={cityTrend.trend === 'up' ? 'trending-up' : 'trending-down'}
+                  size={18}
+                  color={cityTrend.trend === 'up' ? '#22C55E' : '#EF4444'}
                 />
               </View>
-              <Text className={`ml-2 font-bold ${
-                cityTrend.trend === 'up' ? 'text-green-600' : 'text-red-600'
-              }`}>
+              <Text
+                className={`ml-2 font-bold ${
+                  cityTrend.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                }`}
+              >
                 {cityTrend.change}
               </Text>
             </View>
             <Text className="text-gray-500 text-sm">Price Change (YoY)</Text>
           </View>
-          
+
           <View className="flex-1 bg-white rounded-xl p-4 ml-2 shadow-sm">
-            <Text className="text-2xl font-bold text-gray-900 mb-1">
-              ₹{cityTrend.avgPrice}
-            </Text>
+            <Text className="text-2xl font-bold text-gray-900 mb-1">₹{cityTrend.avgPrice}</Text>
             <Text className="text-gray-500 text-sm">Avg. Price/sqft</Text>
           </View>
         </View>
@@ -214,13 +212,13 @@ export default function InsightsScreen() {
                 <TouchableOpacity
                   key={range}
                   onPress={() => setTimeRange(range)}
-                  className={`px-3 py-1 rounded-md ${
-                    timeRange === range ? 'bg-primary' : ''
-                  }`}
+                  className={`px-3 py-1 rounded-md ${timeRange === range ? 'bg-primary' : ''}`}
                 >
-                  <Text className={`text-sm font-medium ${
-                    timeRange === range ? 'text-white' : 'text-gray-500'
-                  }`}>
+                  <Text
+                    className={`text-sm font-medium ${
+                      timeRange === range ? 'text-white' : 'text-gray-500'
+                    }`}
+                  >
                     {range}
                   </Text>
                 </TouchableOpacity>
@@ -253,7 +251,7 @@ export default function InsightsScreen() {
       {/* Property Type Performance */}
       <View className="px-4 mt-6">
         <Text className="text-lg font-bold text-gray-900 mb-4">Property Type Performance</Text>
-        
+
         <View className="bg-white rounded-2xl p-4 shadow-sm">
           <View className="flex-row bg-gray-100 rounded-lg p-1 mb-4">
             <TouchableOpacity
@@ -262,9 +260,11 @@ export default function InsightsScreen() {
                 propertyType === 'residential' ? 'bg-primary' : ''
               }`}
             >
-              <Text className={`text-center font-medium ${
-                propertyType === 'residential' ? 'text-white' : 'text-gray-500'
-              }`}>
+              <Text
+                className={`text-center font-medium ${
+                  propertyType === 'residential' ? 'text-white' : 'text-gray-500'
+                }`}
+              >
                 Residential
               </Text>
             </TouchableOpacity>
@@ -274,9 +274,11 @@ export default function InsightsScreen() {
                 propertyType === 'commercial' ? 'bg-primary' : ''
               }`}
             >
-              <Text className={`text-center font-medium ${
-                propertyType === 'commercial' ? 'text-white' : 'text-gray-500'
-              }`}>
+              <Text
+                className={`text-center font-medium ${
+                  propertyType === 'commercial' ? 'text-white' : 'text-gray-500'
+                }`}
+              >
                 Commercial
               </Text>
             </TouchableOpacity>
@@ -323,10 +325,10 @@ export default function InsightsScreen() {
       {/* Top Localities */}
       <View className="px-4 mt-6">
         <Text className="text-lg font-bold text-gray-900 mb-4">Top Performing Localities</Text>
-        
+
         <View className="bg-white rounded-2xl p-4 shadow-sm">
           {topLocalities.slice(0, 5).map((locality, index) => (
-            <View 
+            <View
               key={locality.name}
               className={`flex-row items-center justify-between py-3 ${
                 index < topLocalities.slice(0, 5).length - 1 ? 'border-b border-gray-100' : ''
@@ -342,14 +344,16 @@ export default function InsightsScreen() {
                 </View>
               </View>
               <View className="flex-row items-center">
-                <Ionicons 
+                <Ionicons
                   name={locality.trend === 'up' ? 'trending-up' : 'trending-down'}
                   size={16}
                   color={locality.trend === 'up' ? '#22C55E' : '#EF4444'}
                 />
-                <Text className={`ml-1 font-medium ${
-                  locality.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                }`}>
+                <Text
+                  className={`ml-1 font-medium ${
+                    locality.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                  }`}
+                >
                   {locality.change}
                 </Text>
               </View>
@@ -361,10 +365,10 @@ export default function InsightsScreen() {
       {/* Market Comparison */}
       <View className="px-4 mt-6">
         <Text className="text-lg font-bold text-gray-900 mb-4">City Comparison</Text>
-        
+
         <View className="bg-white rounded-2xl p-4 shadow-sm">
           {marketTrends.slice(0, 5).map((trend, index) => (
-            <View 
+            <View
               key={trend.city}
               className={`py-3 ${index < 4 ? 'border-b border-gray-100' : ''}`}
             >
@@ -383,14 +387,16 @@ export default function InsightsScreen() {
                   />
                 </View>
                 <View className="flex-row items-center w-16">
-                  <Ionicons 
+                  <Ionicons
                     name={trend.trend === 'up' ? 'arrow-up' : 'arrow-down'}
                     size={12}
                     color={trend.trend === 'up' ? '#22C55E' : '#EF4444'}
                   />
-                  <Text className={`text-sm font-medium ml-1 ${
-                    trend.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                  }`}>
+                  <Text
+                    className={`text-sm font-medium ml-1 ${
+                      trend.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                    }`}
+                  >
                     {trend.change}
                   </Text>
                 </View>
@@ -403,7 +409,7 @@ export default function InsightsScreen() {
       {/* Investment Tips */}
       <View className="px-4 mt-6 mb-8">
         <Text className="text-lg font-bold text-gray-900 mb-4">Investment Tips</Text>
-        
+
         <View className="bg-gradient-to-br from-primary to-orange-600 rounded-2xl p-5">
           <View className="flex-row items-start mb-4">
             <View className="bg-white/20 rounded-full p-2">
@@ -412,12 +418,12 @@ export default function InsightsScreen() {
             <View className="flex-1 ml-3">
               <Text className="text-white font-bold text-lg mb-1">Pro Tip</Text>
               <Text className="text-white/90">
-                Suburban areas of {selectedCity} are showing strong growth potential with 
+                Suburban areas of {selectedCity} are showing strong growth potential with
                 infrastructure developments planned for the next 2 years.
               </Text>
             </View>
           </View>
-          
+
           <View className="bg-white/10 rounded-xl p-4">
             <Text className="text-white/80 text-sm mb-3">Key Investment Zones</Text>
             <View className="flex-row flex-wrap">

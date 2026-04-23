@@ -20,7 +20,9 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       // Use cached session — avoids a network round-trip to Supabase Auth
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const user = session?.user;
 
       if (!user) {
@@ -38,7 +40,7 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
         throw error;
       }
 
-      const favoriteIds = new Set(data?.map(f => f.property_id) || []);
+      const favoriteIds = new Set(data?.map((f) => f.property_id) || []);
       set({ favorites: favoriteIds, loading: false });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch favorites';
@@ -52,7 +54,9 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
     const isFav = favorites.has(propertyId);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const user = session?.user;
 
       if (!user) {

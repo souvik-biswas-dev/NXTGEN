@@ -3,8 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
-const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseUrl =
+  Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey =
+  Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please check your .env file.');
@@ -20,14 +22,17 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // Helper functions
-export const uploadPropertyImage = async (uri: string, propertyId: string): Promise<string | null> => {
+export const uploadPropertyImage = async (
+  uri: string,
+  propertyId: string
+): Promise<string | null> => {
   try {
     const response = await fetch(uri);
     const blob = await response.blob();
     const arrayBuffer = await blob.arrayBuffer();
     const fileExt = uri.split('.').pop();
     const fileName = `${propertyId}/${Date.now()}.${fileExt}`;
-    
+
     const { data, error } = await supabase.storage
       .from('property-images')
       .upload(fileName, arrayBuffer, {
@@ -36,9 +41,9 @@ export const uploadPropertyImage = async (uri: string, propertyId: string): Prom
 
     if (error) throw error;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('property-images')
-      .getPublicUrl(fileName);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('property-images').getPublicUrl(fileName);
 
     return publicUrl;
   } catch (error) {
@@ -54,7 +59,7 @@ export const uploadAvatar = async (uri: string, userId: string): Promise<string 
     const arrayBuffer = await blob.arrayBuffer();
     const fileExt = uri.split('.').pop();
     const fileName = `${userId}.${fileExt}`;
-    
+
     const { data, error } = await supabase.storage
       .from('profile-avatars')
       .upload(fileName, arrayBuffer, {
@@ -64,9 +69,9 @@ export const uploadAvatar = async (uri: string, userId: string): Promise<string 
 
     if (error) throw error;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('profile-avatars')
-      .getPublicUrl(fileName);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('profile-avatars').getPublicUrl(fileName);
 
     return publicUrl;
   } catch (error) {

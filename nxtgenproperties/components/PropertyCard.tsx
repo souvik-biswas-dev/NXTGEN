@@ -1,10 +1,17 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, Pressable, StyleSheet, GestureResponderEvent } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  Pressable,
+  StyleSheet,
+  GestureResponderEvent,
+} from 'react-native';
 import { Property } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFavoritesStore } from '@/stores/favoritesStore';
-import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '@/constants/theme';
 
 interface PropertyCardProps {
@@ -12,163 +19,158 @@ interface PropertyCardProps {
   variant?: 'default' | 'featured';
 }
 
-export const PropertyCard: React.FC<PropertyCardProps> = React.memo(({ property, variant = 'default' }) => {
-  const router = useRouter();
-  const { isFavorite, toggleFavorite } = useFavoritesStore();
-  const isLiked = isFavorite(property.id);
+// Visual identity:
+//   • asymmetric radii — large top-left + bottom-right, small top-right + bottom-left
+//   • floating price "tag" that breaks the image/body edge
+//   • locality rendered as a chip instead of plain text
+//   • verified broker shown as a vertical ribbon on the image
+// Deliberately different from the flat, symmetric cards on 99acres/Housing.
 
-  const handleFavorite = async (e: GestureResponderEvent) => {
-    e.stopPropagation();
-    try {
-      await toggleFavorite(property.id);
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-    }
-  };
+export const PropertyCard: React.FC<PropertyCardProps> = React.memo(
+  ({ property, variant = 'default' }) => {
+    const router = useRouter();
+    const { isFavorite, toggleFavorite } = useFavoritesStore();
+    const isLiked = isFavorite(property.id);
 
-  const formatPrice = (price: number) => {
-    if (price >= 10000000) {
-      return `\u20B9${(price / 10000000).toFixed(2)} Cr`;
-    } else if (price >= 100000) {
-      return `\u20B9${(price / 100000).toFixed(2)} L`;
-    }
-    return `\u20B9${price.toLocaleString()}`;
-  };
+    const handleFavorite = async (e: GestureResponderEvent) => {
+      e.stopPropagation();
+      try {
+        await toggleFavorite(property.id);
+      } catch (error) {
+        console.error('Error toggling favorite:', error);
+      }
+    };
 
-  const isFeatured = variant === 'featured';
+    const formatPrice = (price: number) => {
+      if (price >= 1_00_00_000) return `₹${(price / 1_00_00_000).toFixed(2)} Cr`;
+      if (price >= 1_00_000) return `₹${(price / 1_00_000).toFixed(1)} L`;
+      return `₹${price.toLocaleString('en-IN')}`;
+    };
 
-  return (
-    <TouchableOpacity
-      onPress={() => router.push(`/(tabs)/search/${property.id}`)}
-      activeOpacity={0.8}
-      style={[styles.card, isFeatured ? styles.cardFeatured : styles.cardDefault]}
-    >
-      {/* Image Section */}
-      <View className="relative overflow-hidden" style={{ borderTopLeftRadius: theme.roundness.lg, borderTopRightRadius: theme.roundness.lg }}>
-        <Image
-          source={{ uri: property.photos[0] || 'https://via.placeholder.com/400x300' }}
-          className={`w-full ${isFeatured ? 'h-56' : 'h-40'}`}
-          resizeMode="cover"
-          fadeDuration={0}
-          style={{ backgroundColor: theme.colors.surfaceVariant }}
-        />
+    const isFeatured = variant === 'featured';
+    const isRent = property.type === 'rent';
 
-        {/* Frosted price overlay */}
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.6)']}
-          style={styles.priceGradient}
-        >
-          <View className="flex-row items-end justify-between px-3 pb-3">
-            <Text className="text-white text-xl font-bold" style={styles.priceText}>
-              {formatPrice(property.price)}
-            </Text>
-            {property.type && (
-              <View
-                style={{
-                  backgroundColor: theme.colors.primaryContainer,
-                  borderRadius: theme.roundness.sm,
-                  paddingHorizontal: 8,
-                  paddingVertical: 2,
-                }}
-              >
-                <Text style={{ color: theme.colors.onPrimaryContainer, fontSize: 11, fontWeight: '600' }}>
-                  {property.type === 'buy' ? 'Sale' : 'Rent'}
-                </Text>
-              </View>
-            )}
-          </View>
-        </LinearGradient>
-
-        {/* Favorite Button - MD3 Icon Button */}
-        <Pressable
-          onPress={handleFavorite}
-          style={styles.favoriteBtn}
-        >
-          <Ionicons
-            name={isLiked ? 'heart' : 'heart-outline'}
-            size={20}
-            color={isLiked ? theme.colors.primary : theme.colors.outline}
+    return (
+      <TouchableOpacity
+        onPress={() => router.push(`/(tabs)/search/${property.id}`)}
+        activeOpacity={0.85}
+        style={[styles.card, isFeatured ? styles.cardFeatured : styles.cardDefault]}
+      >
+        {/* Image with asymmetric corner */}
+        <View style={[styles.imageWrap, isFeatured ? { height: 200 } : { height: 150 }]}>
+          <Image
+            source={{ uri: property.photos[0] || 'https://via.placeholder.com/400x300' }}
+            style={styles.image}
+            resizeMode="cover"
+            fadeDuration={0}
           />
-        </Pressable>
 
-        {/* Featured badge */}
-        {property.featured && (
-          <View
-            style={{
-              position: 'absolute',
-              top: 10,
-              left: 10,
-              backgroundColor: theme.colors.gold,
-              borderRadius: theme.roundness.sm,
-              paddingHorizontal: 8,
-              paddingVertical: 3,
-              flexDirection: 'row',
-              alignItems: 'center',
-            }}
-          >
-            <Ionicons name="star" size={10} color="#fff" />
-            <Text className="text-white text-xs font-bold ml-1">FEATURED</Text>
-          </View>
-        )}
-      </View>
+          {/* Top-left "verified broker" strap */}
+          {property.broker?.verified_broker && (
+            <View style={styles.verifiedStrap}>
+              <Ionicons name="shield-checkmark" size={11} color="#fff" />
+              <Text style={styles.verifiedText}>VERIFIED</Text>
+            </View>
+          )}
 
-      {/* Content Section */}
-      <View className="p-3">
-        <Text
-          className="text-base font-semibold mb-1"
-          style={{ color: theme.colors.secondary }}
-          numberOfLines={isFeatured ? 2 : 1}
-        >
-          {property.title}
-        </Text>
-        <View className="flex-row items-center mb-1">
-          <Ionicons name="location-outline" size={14} color={theme.colors.outline} />
-          <Text className="text-sm ml-1" style={{ color: theme.colors.outline }} numberOfLines={1}>
-            {property.locality}, {property.city}
-          </Text>
+          {/* Top-right favorite button */}
+          <Pressable onPress={handleFavorite} style={styles.favoriteBtn} hitSlop={8}>
+            <Ionicons
+              name={isLiked ? 'heart' : 'heart-outline'}
+              size={18}
+              color={isLiked ? theme.colors.primary : '#1B2838'}
+            />
+          </Pressable>
+
+          {/* Featured gold ribbon (corner) */}
+          {property.featured && (
+            <View style={styles.featuredRibbon}>
+              <Ionicons name="star" size={10} color="#1B2838" />
+              <Text style={styles.featuredRibbonText}>FEATURED</Text>
+            </View>
+          )}
         </View>
 
-        {isFeatured && (
-          <View className="flex-row items-center mt-2 pt-2" style={{ borderTopWidth: 1, borderTopColor: theme.colors.outlineVariant }}>
-            {[
-              { icon: 'bed-outline' as const, value: property.bedrooms },
-              { icon: 'water-outline' as const, value: property.bathrooms },
-              { icon: 'restaurant-outline' as const, value: property.kitchens },
-              { icon: 'car-outline' as const, value: property.parkings },
-            ].map((item, index) => (
-              <View key={index} className="flex-row items-center mr-4">
-                <View
-                  style={{
-                    backgroundColor: theme.colors.surfaceVariant,
-                    borderRadius: theme.roundness.sm,
-                    padding: 4,
-                  }}
-                >
-                  <Ionicons name={item.icon} size={14} color={theme.colors.primary} />
-                </View>
-                <Text className="text-xs ml-1.5 font-medium" style={{ color: theme.colors.secondary }}>
-                  {item.value}
-                </Text>
-              </View>
-            ))}
+        {/* Floating price tag — sits over the image/body boundary.
+            Using a negative top-margin on the body would clip the tag under
+            `overflow: hidden`, so we render it as an absolute overlay with a
+            per-variant top offset matched to the image height. */}
+        <View
+          style={[styles.priceTag, { top: (isFeatured ? 200 : 150) - 18 }]}
+          pointerEvents="none"
+        >
+          <Text style={styles.priceText}>{formatPrice(property.price)}</Text>
+          {isRent && <Text style={styles.priceUnit}>/mo</Text>}
+        </View>
+
+        {/* Body */}
+        <View style={styles.body}>
+          <Text style={styles.title} numberOfLines={isFeatured ? 2 : 1}>
+            {property.title}
+          </Text>
+
+          <View style={styles.localityChip}>
+            <Ionicons name="location" size={11} color={theme.colors.primary} />
+            <Text style={styles.localityText} numberOfLines={1}>
+              {property.locality}, {property.city}
+            </Text>
           </View>
-        )}
-      </View>
-    </TouchableOpacity>
+
+          {/* Info pills — compact two-column grid on default, row on featured */}
+          <View style={[styles.pillsRow, !isFeatured && { flexWrap: 'wrap' }]}>
+            <InfoPill icon="bed-outline" label={`${property.bedrooms}`} suffix="BHK" />
+            <InfoPill icon="resize-outline" label={`${property.area_sqft}`} suffix="sqft" />
+            {isFeatured && (
+              <InfoPill icon="water-outline" label={`${property.bathrooms}`} suffix="Bath" />
+            )}
+            {isFeatured && (
+              <InfoPill icon="car-outline" label={`${property.parkings}`} suffix="Park" />
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+);
+
+function InfoPill({
+  icon,
+  label,
+  suffix,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  suffix: string;
+}) {
+  return (
+    <View style={styles.pill}>
+      <Ionicons name={icon} size={11} color={theme.colors.primary} />
+      <Text style={styles.pillValue}>{label}</Text>
+      <Text style={styles.pillSuffix}>{suffix}</Text>
+    </View>
   );
-});
+}
+
+const CORNER_LG = 22;
+const CORNER_SM = 6;
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: theme.colors.cardBackground,
-    borderRadius: theme.roundness.lg,
-    overflow: 'hidden',
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    // Asymmetric radii: signature shape.
+    borderTopLeftRadius: CORNER_LG,
+    borderTopRightRadius: CORNER_SM,
+    borderBottomLeftRadius: CORNER_SM,
+    borderBottomRightRadius: CORNER_LG,
+    backgroundColor: theme.colors.surface,
+    overflow: 'visible',
+    marginBottom: 16,
+    shadowColor: '#1B2838',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 14,
     elevation: 4,
+    borderWidth: 1,
+    borderColor: theme.colors.outlineVariant,
   },
   cardDefault: {
     width: '48%' as any,
@@ -176,33 +178,152 @@ const styles = StyleSheet.create({
   cardFeatured: {
     width: '100%',
   },
-  priceGradient: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 80,
-    justifyContent: 'flex-end',
+  imageWrap: {
+    borderTopLeftRadius: CORNER_LG,
+    borderTopRightRadius: CORNER_SM,
+    overflow: 'hidden',
+    backgroundColor: theme.colors.surfaceVariant,
+    position: 'relative',
   },
-  priceText: {
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  verifiedStrap: {
+    position: 'absolute',
+    top: 10,
+    left: 0,
+    backgroundColor: theme.colors.secondary,
+    paddingLeft: 8,
+    paddingRight: 10,
+    paddingVertical: 3,
+    borderTopRightRadius: 10,
+    borderBottomRightRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  verifiedText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '800',
+    marginLeft: 3,
+    letterSpacing: 0.5,
   },
   favoriteBtn: {
     position: 'absolute',
     top: 10,
     right: 10,
-    width: 36,
-    height: 36,
-    borderRadius: 9999,
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255, 251, 255, 0.95)',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
     elevation: 3,
+  },
+  featuredRibbon: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    backgroundColor: theme.colors.gold,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  featuredRibbonText: {
+    color: '#1B2838',
+    fontSize: 9,
+    fontWeight: '800',
+    marginLeft: 3,
+    letterSpacing: 0.6,
+  },
+  priceTag: {
+    position: 'absolute',
+    right: 12,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+    zIndex: 10,
+  },
+  priceText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  priceUnit: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 10,
+    fontWeight: '600',
+    marginLeft: 2,
+  },
+  body: {
+    paddingHorizontal: 12,
+    paddingTop: 18,
+    paddingBottom: 12,
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: theme.colors.secondary,
+    marginBottom: 6,
+    lineHeight: 18,
+  },
+  localityChip: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.primaryContainer,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginBottom: 8,
+    maxWidth: '100%',
+  },
+  localityText: {
+    color: theme.colors.secondary,
+    fontSize: 10.5,
+    fontWeight: '600',
+    marginLeft: 3,
+  },
+  pillsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 2,
+  },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surfaceVariant,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
+    gap: 2,
+  },
+  pillValue: {
+    color: theme.colors.secondary,
+    fontSize: 10.5,
+    fontWeight: '700',
+    marginLeft: 2,
+  },
+  pillSuffix: {
+    color: theme.colors.outline,
+    fontSize: 9,
+    fontWeight: '600',
+    marginLeft: 1,
   },
 });

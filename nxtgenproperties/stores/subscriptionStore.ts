@@ -39,7 +39,13 @@ const PLANS: PlanDefinition[] = [
     name: 'Gold',
     price: 2499,
     maxListings: null,
-    features: ['Unlimited listings', 'Featured placement', 'Dedicated manager', 'Premium badge', 'Top search ranking'],
+    features: [
+      'Unlimited listings',
+      'Featured placement',
+      'Dedicated manager',
+      'Premium badge',
+      'Top search ranking',
+    ],
   },
 ];
 
@@ -51,7 +57,9 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
   fetchSubscription: async () => {
     set({ loading: true });
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         // User not authenticated, just clear subscription and return
         set({ subscription: null, loading: false });
@@ -88,7 +96,9 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
     }
     set({ loading: true });
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const now = new Date();
@@ -127,7 +137,9 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
   cancelSubscription: async () => {
     set({ loading: true });
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase

@@ -73,7 +73,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       ]);
 
       const profileMap: Record<string, User> = {};
-      (profiles || []).forEach((p) => { profileMap[p.user_id] = p; });
+      (profiles || []).forEach((p) => {
+        profileMap[p.user_id] = p;
+      });
 
       const unreadMap: Record<string, number> = {};
       (unreadRows || []).forEach((row) => {
@@ -81,8 +83,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       });
 
       const conversationsWithUsers: Conversation[] = data.map((conv) => {
-        const otherUserId =
-          conv.participant_1 === userId ? conv.participant_2 : conv.participant_1;
+        const otherUserId = conv.participant_1 === userId ? conv.participant_2 : conv.participant_1;
         return {
           ...conv,
           other_user: profileMap[otherUserId] || undefined,
@@ -232,9 +233,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         (payload) => {
           const msg = payload.new as Message;
           set((state) => {
-            const convIndex = state.conversations.findIndex(
-              (c) => c.id === msg.conversation_id
-            );
+            const convIndex = state.conversations.findIndex((c) => c.id === msg.conversation_id);
             if (convIndex === -1) {
               // New conversation not yet in list — full refresh to get profile data
               get().fetchConversations(userId);
@@ -320,7 +319,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const { count } = await supabase
         .from('messages')
         .select('*', { count: 'exact', head: true })
-        .in('conversation_id', convos.map((c) => c.id))
+        .in(
+          'conversation_id',
+          convos.map((c) => c.id)
+        )
         .eq('read', false)
         .neq('sender_id', userId);
 

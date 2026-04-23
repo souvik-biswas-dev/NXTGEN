@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
+import { PUBLIC_PROFILE_COLUMNS } from '@/types';
+import { registerForPushNotifications } from '@/lib/pushNotifications';
 
 export const useAuth = () => {
   const { user, session, loading, setUser, setSession, setLoading } = useAuthStore();
@@ -37,15 +39,25 @@ export const useAuth = () => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('users_profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
+      const [{ data: profile, error: profileError }, { data: contact }] = await Promise.all([
+        supabase
+          .from('users_profiles')
+          .select(PUBLIC_PROFILE_COLUMNS)
+          .eq('user_id', userId)
+          .maybeSingle(),
+        supabase.rpc('get_my_contact'),
+      ]);
 
-      if (error) throw error;
-      // If no profile row exists yet, set user to null (profile not created)
-      setUser(data ?? null);
+      if (profileError) throw profileError;
+      if (!profile) {
+        setUser(null);
+        return;
+      }
+      const { email, phone } =
+        Array.isArray(contact) && contact[0] ? contact[0] : { email: undefined, phone: undefined };
+      setUser({ ...(profile as any), email, phone });
+      // Register Expo push token in the background — don't block profile load.
+      registerForPushNotifications({ userId }).catch(() => {});
     } catch (error) {
       console.error('Error fetching user profile:', error);
     } finally {

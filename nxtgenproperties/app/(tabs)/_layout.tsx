@@ -1,48 +1,93 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform, Animated } from 'react-native';
+import { Platform, Animated, View, Text } from 'react-native';
 import { useRef, useEffect } from 'react';
 import { theme } from '@/constants/theme';
 
-function TabIcon({
+// Signature design choice: inactive tabs are icon-only (dim), the ACTIVE tab
+// inflates into a navy pill showing icon + label. It's instantly clear which
+// tab you're on without relying on subtle colour tints, and keeps the bar
+// compact when glanced at.
+
+function Pill({
+  focused,
   name,
   outlineName,
-  color,
-  focused,
+  label,
 }: {
+  focused: boolean;
   name: React.ComponentProps<typeof Ionicons>['name'];
   outlineName: React.ComponentProps<typeof Ionicons>['name'];
-  color: string;
-  focused: boolean;
+  label: string;
 }) {
-  const scale = useRef(new Animated.Value(1)).current;
+  const widthAnim = useRef(new Animated.Value(focused ? 1 : 0)).current;
 
   useEffect(() => {
-    if (focused) {
-      Animated.sequence([
-        Animated.timing(scale, { toValue: 1.2, duration: 120, useNativeDriver: true }),
-        Animated.timing(scale, { toValue: 1, duration: 120, useNativeDriver: true }),
-      ]).start();
-    }
+    Animated.spring(widthAnim, {
+      toValue: focused ? 1 : 0,
+      friction: 8,
+      tension: 120,
+      useNativeDriver: false,
+    }).start();
   }, [focused]);
 
+  const extraWidth = widthAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 72] });
+  const labelOpacity = widthAnim.interpolate({
+    inputRange: [0.6, 1],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
-      <Ionicons
-        name={focused ? name : outlineName}
-        size={22}
-        color={focused ? theme.colors.primary : color}
-      />
-    </Animated.View>
+    <View
+      style={{
+        height: 40,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Animated.View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          height: 40,
+          paddingHorizontal: 12,
+          borderRadius: 20,
+          backgroundColor: focused ? theme.colors.secondary : 'transparent',
+        }}
+      >
+        <Ionicons
+          name={focused ? name : outlineName}
+          size={20}
+          color={focused ? '#fff' : theme.colors.outline}
+        />
+        <Animated.View style={{ overflow: 'hidden', width: extraWidth }}>
+          <Animated.Text
+            numberOfLines={1}
+            style={{
+              color: '#fff',
+              fontWeight: '700',
+              fontSize: 12,
+              marginLeft: 6,
+              opacity: labelOpacity,
+            }}
+          >
+            {label}
+          </Animated.Text>
+        </Animated.View>
+      </Animated.View>
+    </View>
   );
 }
 
-function PostTabIcon({ focused }: { focused: boolean }) {
+// Raised Post FAB — sits half above the tab bar for a clear primary CTA.
+function PostButton({ focused }: { focused: boolean }) {
   const scale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.spring(scale, {
-      toValue: focused ? 1.15 : 1,
+      toValue: focused ? 1.08 : 1,
       friction: 4,
       tension: 160,
       useNativeDriver: true,
@@ -50,25 +95,36 @@ function PostTabIcon({ focused }: { focused: boolean }) {
   }, [focused]);
 
   return (
-    <Animated.View
+    <View
       style={{
-        width: 54,
-        height: 54,
-        borderRadius: theme.roundness.xl,
-        backgroundColor: theme.colors.primary,
+        width: 64,
+        height: 64,
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 5,
-        shadowColor: theme.colors.primary,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: focused ? 0.5 : 0.35,
-        shadowRadius: 10,
-        elevation: 10,
-        transform: [{ scale }],
+        marginTop: -18,
       }}
     >
-      <Ionicons name="add" size={30} color={theme.colors.onPrimary} />
-    </Animated.View>
+      <Animated.View
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          backgroundColor: theme.colors.primary,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: 4,
+          borderColor: theme.colors.surface,
+          shadowColor: theme.colors.primary,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: focused ? 0.5 : 0.35,
+          shadowRadius: 10,
+          elevation: 10,
+          transform: [{ scale }],
+        }}
+      >
+        <Ionicons name="add" size={28} color="#fff" />
+      </Animated.View>
+    </View>
   );
 }
 
@@ -77,83 +133,74 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarShowLabel: false,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.outline,
         tabBarStyle: {
           position: 'absolute',
           bottom: Platform.OS === 'ios' ? 24 : 16,
-          left: 16,
-          right: 16,
-          height: 70,
+          left: 14,
+          right: 14,
+          height: 64,
           backgroundColor: theme.colors.surface,
-          borderRadius: theme.roundness.xl,
+          borderRadius: 32,
           borderTopWidth: 0,
-          paddingBottom: 8,
-          paddingTop: 8,
+          paddingTop: 6,
+          paddingBottom: 6,
           paddingHorizontal: 4,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.08,
-          shadowRadius: 20,
-          elevation: 12,
-          borderWidth: 0,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-          marginTop: 2,
+          shadowColor: '#1B2838',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.12,
+          shadowRadius: 24,
+          elevation: 14,
+          borderWidth: 1,
+          borderColor: theme.colors.outlineVariant,
         },
         tabBarItemStyle: {
-          paddingVertical: 4,
+          justifyContent: 'center',
         },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="home" outlineName="home-outline" color={color} focused={focused} />
+          tabBarIcon: ({ focused }) => (
+            <Pill focused={focused} name="home" outlineName="home-outline" label="Home" />
           ),
         }}
       />
       <Tabs.Screen
         name="search/index"
         options={{
-          title: 'Search',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="search" outlineName="search-outline" color={color} focused={focused} />
+          tabBarIcon: ({ focused }) => (
+            <Pill focused={focused} name="search" outlineName="search-outline" label="Search" />
           ),
         }}
       />
       <Tabs.Screen
         name="post/index"
         options={{
-          title: 'Post',
-          tabBarIcon: ({ focused }) => <PostTabIcon focused={focused} />,
-          tabBarLabel: () => null,
+          tabBarIcon: ({ focused }) => <PostButton focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="favorite"
         options={{
           href: null,
-          title: 'Saved',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="heart" outlineName="heart-outline" color={color} focused={focused} />
+          tabBarIcon: ({ focused }) => (
+            <Pill focused={focused} name="heart" outlineName="heart-outline" label="Saved" />
           ),
         }}
       />
       <Tabs.Screen
         name="inbox/index"
         options={{
-          title: 'Inbox',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon
+          tabBarIcon: ({ focused }) => (
+            <Pill
+              focused={focused}
               name="chatbubble"
               outlineName="chatbubble-outline"
-              color={color}
-              focused={focused}
+              label="Inbox"
             />
           ),
         }}
@@ -161,9 +208,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile/index"
         options={{
-          title: 'Account',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="person" outlineName="person-outline" color={color} focused={focused} />
+          tabBarIcon: ({ focused }) => (
+            <Pill focused={focused} name="person" outlineName="person-outline" label="Account" />
           ),
         }}
       />
