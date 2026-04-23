@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Nxt Gen Properties",
-    "slug": "nxt-gen-properties",
+    "slug": "nxtplot",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -36,11 +36,12 @@
         "backgroundColor": "#FF6B35"
       },
       "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "INTERNET",
-        "RECEIVE_BOOT_COMPLETED",
-        "VIBRATE"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.INTERNET",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.RECORD_AUDIO"
       ],
       "config": {
         "googleMaps": {
@@ -70,9 +71,11 @@
       "typedRoutes": true
     },
     "extra": {
+      "router": {},
       "eas": {
-        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+        "projectId": "3fe60882-cebd-4ff6-95ae-60e36b26e882"
       }
-    }
+    },
+    "owner": "dev.souvikbiswas"
   }
 }
