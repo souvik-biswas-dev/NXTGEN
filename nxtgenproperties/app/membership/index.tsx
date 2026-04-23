@@ -42,8 +42,13 @@ export default function MembershipScreen() {
     const currentIndex = PLAN_ORDER.indexOf(currentPlan);
     const isDowngrade = planIndex < currentIndex;
 
-    const action = isDowngrade ? 'downgrade' : 'upgrade';
+    // Paid plans go through Razorpay checkout; downgrade/free stays here.
+    if (!isDowngrade && (plan === 'silver' || plan === 'gold')) {
+      router.push({ pathname: '/membership/checkout', params: { plan } } as any);
+      return;
+    }
 
+    const action = isDowngrade ? 'downgrade' : 'upgrade';
     Alert.alert(
       `${action.charAt(0).toUpperCase() + action.slice(1)} Plan`,
       `Are you sure you want to ${action} to the ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan?`,
@@ -55,8 +60,8 @@ export default function MembershipScreen() {
             try {
               await subscribe(plan);
               Alert.alert('Success', 'Your plan has been updated.');
-            } catch {
-              Alert.alert('Error', 'Failed to update plan. Please try again.');
+            } catch (err) {
+              Alert.alert('Error', err instanceof Error ? err.message : 'Failed to update plan. Please try again.');
             }
           },
         },

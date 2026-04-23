@@ -19,20 +19,18 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '@/stores/authStore';
 import { useFavoritesStore } from '@/stores/favoritesStore';
-import { supabase } from '@/lib/supabase';
+import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { LinearGradient } from 'expo-linear-gradient';
 import { VerificationRequestCard } from '@/components/BrokerBadge';
 import { theme } from '@/constants/theme';
+import { uploadImage } from '@/lib/uploads';
+import { profileUpdateSchema, firstError } from '@/lib/validation';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, signOut, updateProfile } = useAuthStore();
   const { favorites, fetchFavorites } = useFavoritesStore();
-  const [notifications, setNotifications] = React.useState({
-    matched: true,
-    newLaunched: false,
-    propertyNews: false,
-  });
+  const { prefs: notifications, update: updateNotifications } = useNotificationPreferences();
   const [editModalVisible, setEditModalVisible] = React.useState(false);
   const [editForm, setEditForm] = React.useState({
     name: user?.name || '',
@@ -49,33 +47,25 @@ export default function ProfileScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
     });
     if (result.canceled || !result.assets[0]) return;
 
+    if (!user?.user_id) {
+      Alert.alert('Sign In Required', 'Please sign in to change your avatar.');
+      return;
+    }
     setAvatarUploading(true);
     try {
-      const asset = result.assets[0];
-      const ext = asset.uri.split('.').pop() ?? 'jpg';
-      const fileName = `avatars/${user!.user_id}.${ext}`;
-
-      const response = await fetch(asset.uri);
-      const blob = await response.blob();
-      const arrayBuffer = await new Response(blob).arrayBuffer();
-
-      const { error: uploadError } = await supabase.storage
-        .from('property-images')
-        .upload(fileName, arrayBuffer, { contentType: `image/${ext}`, upsert: true });
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from('property-images')
-        .getPublicUrl(fileName);
-
-      await updateProfile({ avatar_url: urlData.publicUrl });
+      const url = await uploadImage({
+        localUri: result.assets[0].uri,
+        bucket: 'profile-avatars',
+        userId: user.user_id,
+      });
+      await updateProfile({ avatar_url: url });
     } catch (err) {
       Alert.alert('Upload Failed', err instanceof Error ? err.message : 'Could not upload photo. Please try again.');
     } finally {
@@ -116,16 +106,17 @@ export default function ProfileScreen() {
   };
 
   const handleSaveProfile = async () => {
-    if (!editForm.name.trim()) {
-      Alert.alert('Error', 'Name cannot be empty');
+    const parsed = profileUpdateSchema.safeParse({
+      name: editForm.name,
+      phone: editForm.phone,
+    });
+    if (!parsed.success) {
+      Alert.alert('Check your details', firstError(parsed.error));
       return;
     }
     setSaving(true);
     try {
-      await updateProfile({
-        name: editForm.name.trim(),
-        phone: editForm.phone.trim(),
-      });
+      await updateProfile(parsed.data);
       setEditModalVisible(false);
       Alert.alert('Success', 'Profile updated successfully');
     } catch (error) {
@@ -259,17 +250,8 @@ export default function ProfileScreen() {
 
         {/* Broker Verification Card - Show for brokers who aren't verified */}
         {user?.role === 'broker' && !user?.verified_broker && (
-          <VerificationRequestCard 
-            onRequest={() => {
-              Alert.alert(
-                'Verification Request',
-                'To get verified, you need to submit:\n\n• RERA Registration Number\n• Government ID Proof\n• Address Proof\n• Business Registration (if applicable)\n\nOur team will review your documents within 2-3 business days.',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Start Verification', onPress: () => Alert.alert('Success', 'Verification request submitted! You will receive an email with next steps.') }
-                ]
-              );
-            }}
+          <VerificationRequestCard
+            onRequest={() => router.push('/broker-verification' as any)}
           />
         )}
 
@@ -369,25 +351,25 @@ export default function ProfileScreen() {
             <SwitchItem
               label="Matched Properties"
               value={notifications.matched}
-              onValueChange={(value) =>
-                setNotifications({ ...notifications, matched: value })
-              }
+              onValueChange={(value) => updateNotifications({ matched: value })}
               showBorder
             />
             <SwitchItem
               label="New Launched Properties"
-              value={notifications.newLaunched}
-              onValueChange={(value) =>
-                setNotifications({ ...notifications, newLaunched: value })
-              }
+              value={notifications.new_launches}
+              onValueChange={(value) => updateNotifications({ new_launches: value })}
+              showBorder
+            />
+            <SwitchItem
+              label="Price Drop Alerts"
+              value={notifications.price_drop}
+              onValueChange={(value) => updateNotifications({ price_drop: value })}
               showBorder
             />
             <SwitchItem
               label="Property News & Updates"
-              value={notifications.propertyNews}
-              onValueChange={(value) =>
-                setNotifications({ ...notifications, propertyNews: value })
-              }
+              value={notifications.property_news}
+              onValueChange={(value) => updateNotifications({ property_news: value })}
             />
           </View>
         </View>

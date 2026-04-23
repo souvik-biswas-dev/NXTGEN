@@ -76,7 +76,16 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
     }
   },
 
+  /**
+   * `subscribe('free')` activates immediately (no payment).
+   * `subscribe('silver' | 'gold')` is now a no-op at the store level — the UI
+   * must navigate to `/membership/checkout?plan=...` which drives the Razorpay
+   * flow. Only the `verify-razorpay-payment` edge function inserts paid rows.
+   */
   subscribe: async (plan: SubscriptionPlan) => {
+    if (plan !== 'free') {
+      throw new Error('Paid plans must go through /membership/checkout');
+    }
     set({ loading: true });
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -85,6 +94,13 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
       const now = new Date();
       const endsAt = new Date(now);
       endsAt.setDate(endsAt.getDate() + 30);
+
+      // Cancel any prior active sub, then create a free one.
+      await supabase
+        .from('subscriptions')
+        .update({ status: 'cancelled' })
+        .eq('user_id', user.id)
+        .eq('status', 'active');
 
       const { data, error } = await supabase
         .from('subscriptions')
@@ -102,6 +118,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
       set({ subscription: data });
     } catch (error) {
       console.error('Error subscribing:', error);
+      throw error;
     } finally {
       set({ loading: false });
     }

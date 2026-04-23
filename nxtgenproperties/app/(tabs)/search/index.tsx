@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Modal,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +17,7 @@ import { PropertyCard } from '@/components/PropertyCard';
 import { usePropertiesStore } from '@/stores/propertiesStore';
 import { useSearchStore } from '@/stores/searchStore';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { BHKType, FurnishingType, PropertyType, PropertyCategory } from '@/types';
 import { theme } from '@/constants/theme';
 
@@ -30,11 +32,14 @@ export default function SearchScreen() {
   const {
     filteredProperties,
     recentSearches,
+    loadingMore,
+    hasMore,
     setSearchQuery: updateSearch,
     addRecentSearch,
     clearRecentSearches,
     popularCities,
     priceRanges,
+    loadMoreFiltered,
   } = usePropertiesStore();
   
   const searchStore = useSearchStore();
@@ -73,9 +78,23 @@ export default function SearchScreen() {
     }, [])
   );
 
+  // Debounce the text input so every keystroke doesn't hit the server.
+  const debouncedQuery = useDebouncedValue(searchQuery, 300);
+
+  useEffect(() => {
+    updateSearch(debouncedQuery);
+    // Only query the server if either a text query or an active filter is set;
+    // otherwise the empty-state screen is shown.
+    const hasText = debouncedQuery.trim().length > 0;
+    const hasFilter = Object.values(localFilters).some(
+      (v) => v !== undefined && v !== false && !(Array.isArray(v) && v.length === 0),
+    );
+    if (!hasText && !hasFilter) return;
+    usePropertiesStore.getState().filterProperties(localFilters, { query: debouncedQuery });
+  }, [debouncedQuery]);
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    updateSearch(query);
     if (query.trim()) {
       addRecentSearch(query);
       // Track search in user preferences
@@ -302,6 +321,17 @@ export default function SearchScreen() {
           contentContainerStyle={{ paddingTop: 16, paddingBottom: TAB_BOTTOM }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => <PropertyCard property={item} />}
+          onEndReachedThreshold={0.4}
+          onEndReached={() => {
+            if (hasMore && !loadingMore) loadMoreFiltered();
+          }}
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+                <ActivityIndicator color={theme.colors.primary} />
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <View className="flex-1 items-center justify-center py-20">
               <Ionicons name="search" size={48} color="#D1D5DB" />
