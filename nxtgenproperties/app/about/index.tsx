@@ -4,14 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import Constants from 'expo-constants';
 import { theme } from '@/constants/theme';
-
-const APP_VERSION = '1.0.0';
-const BUILD_NUMBER = '100';
+import { supabase } from '@/lib/supabase';
+import { AboutFeature, LinkItem, SocialLink } from '@/types';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
-const FEATURES: { icon: IoniconsName; title: string; description: string }[] = [
+const FEATURES_FALLBACK: AboutFeature[] = [
   {
     icon: 'search-outline',
     title: 'Smart Search',
@@ -39,14 +39,14 @@ const FEATURES: { icon: IoniconsName; title: string; description: string }[] = [
   },
 ];
 
-const LEGAL_LINKS: { label: string; url: string }[] = [
+const LEGAL_FALLBACK: LinkItem[] = [
   { label: 'Privacy Policy', url: 'https://nxtgenproperties.com/privacy' },
   { label: 'Terms of Service', url: 'https://nxtgenproperties.com/terms' },
   { label: 'Cookie Policy', url: 'https://nxtgenproperties.com/cookies' },
   { label: 'RERA Compliance', url: 'https://nxtgenproperties.com/rera' },
 ];
 
-const SOCIAL: { icon: IoniconsName; label: string; url: string; color: string }[] = [
+const SOCIAL_FALLBACK: SocialLink[] = [
   {
     icon: 'logo-instagram',
     label: 'Instagram',
@@ -75,6 +75,35 @@ const SOCIAL: { icon: IoniconsName; label: string; url: string; color: string }[
 
 export default function AboutScreen() {
   const router = useRouter();
+  const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
+  const BUILD_NUMBER = String(
+    Constants.expoConfig?.android?.versionCode ??
+      (Constants.expoConfig as unknown as { ios?: { buildNumber?: string } })?.ios?.buildNumber ??
+      '1'
+  );
+  const [features, setFeatures] = React.useState<AboutFeature[]>(FEATURES_FALLBACK);
+  const [legal, setLegal] = React.useState<LinkItem[]>(LEGAL_FALLBACK);
+  const [social, setSocial] = React.useState<SocialLink[]>(SOCIAL_FALLBACK);
+
+  React.useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('platform_data')
+        .select('key, data')
+        .in('key', ['about_features', 'legal_links', 'social_links']);
+      data?.forEach((row: { key: string; data: unknown }) => {
+        if (row.key === 'about_features' && Array.isArray(row.data)) {
+          setFeatures(row.data as AboutFeature[]);
+        }
+        if (row.key === 'legal_links' && Array.isArray(row.data)) {
+          setLegal(row.data as LinkItem[]);
+        }
+        if (row.key === 'social_links' && Array.isArray(row.data)) {
+          setSocial(row.data as SocialLink[]);
+        }
+      });
+    })();
+  }, []);
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.surface }}>
@@ -146,12 +175,12 @@ export default function AboutScreen() {
             className="bg-white rounded-2xl overflow-hidden"
             style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
           >
-            {FEATURES.map((f, i) => (
+            {features.map((f, i) => (
               <View
                 key={f.title}
                 className="flex-row items-start px-4 py-4"
                 style={
-                  i < FEATURES.length - 1
+                  i < features.length - 1
                     ? { borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }
                     : undefined
                 }
@@ -163,7 +192,7 @@ export default function AboutScreen() {
                     borderRadius: theme.roundness.md,
                   }}
                 >
-                  <Ionicons name={f.icon} size={20} color={theme.colors.primary} />
+                  <Ionicons name={f.icon as IoniconsName} size={20} color={theme.colors.primary} />
                 </View>
                 <View className="flex-1">
                   <Text className="text-sm font-semibold" style={{ color: theme.colors.secondary }}>
@@ -184,7 +213,7 @@ export default function AboutScreen() {
             Follow Us
           </Text>
           <View className="flex-row flex-wrap" style={{ gap: 10 }}>
-            {SOCIAL.map((s) => (
+            {social.map((s) => (
               <TouchableOpacity
                 key={s.label}
                 onPress={() => Linking.openURL(s.url)}
@@ -202,7 +231,7 @@ export default function AboutScreen() {
                   gap: 8,
                 }}
               >
-                <Ionicons name={s.icon} size={22} color={s.color} />
+                <Ionicons name={s.icon as IoniconsName} size={22} color={s.color} />
                 <Text className="text-sm font-medium" style={{ color: theme.colors.secondary }}>
                   {s.label}
                 </Text>
@@ -220,14 +249,14 @@ export default function AboutScreen() {
             className="bg-white rounded-2xl overflow-hidden"
             style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
           >
-            {LEGAL_LINKS.map((l, i) => (
+            {legal.map((l, i) => (
               <TouchableOpacity
                 key={l.label}
                 onPress={() => Linking.openURL(l.url)}
                 activeOpacity={0.7}
                 className="flex-row items-center justify-between px-4 py-4"
                 style={
-                  i < LEGAL_LINKS.length - 1
+                  i < legal.length - 1
                     ? { borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }
                     : undefined
                 }

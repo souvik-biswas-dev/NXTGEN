@@ -14,6 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { theme } from '@/constants/theme';
+import { supabase } from '@/lib/supabase';
+import { FaqCategory, SupportInfo } from '@/types';
 
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -21,7 +23,8 @@ if (Platform.OS === 'android') {
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
-const FAQ_DATA = [
+// Fallback content — used only if the platform_data fetch fails (offline).
+const FAQ_FALLBACK: FaqCategory[] = [
   {
     category: 'Listings & Search',
     items: [
@@ -79,47 +82,79 @@ const FAQ_DATA = [
   },
 ];
 
-const CONTACT_CHANNELS: {
+const DEFAULT_SUPPORT: SupportInfo = {
+  email: 'support@nxtgenproperties.com',
+  bugs_email: 'bugs@nxtgenproperties.com',
+  whatsapp: '+911234567890',
+  phone: '+911234567890',
+  hours: 'Mon–Sat, 9 AM–7 PM',
+};
+
+function buildContactChannels(support: SupportInfo): {
   icon: IoniconsName;
   title: string;
   subtitle: string;
   action: () => void;
   color: string;
-}[] = [
-  {
-    icon: 'mail-outline',
-    title: 'Email Support',
-    subtitle: 'support@nxtgenproperties.com',
-    action: () => Linking.openURL('mailto:support@nxtgenproperties.com?subject=Help%20Request'),
-    color: '#3B82F6',
-  },
-  {
-    icon: 'logo-whatsapp',
-    title: 'WhatsApp',
-    subtitle: 'Chat with us on WhatsApp',
-    action: () => Linking.openURL('https://wa.me/911234567890'),
-    color: '#25D366',
-  },
-  {
-    icon: 'call-outline',
-    title: 'Call Us',
-    subtitle: '+91 12345 67890  •  Mon–Sat, 9 AM–7 PM',
-    action: () => Linking.openURL('tel:+911234567890'),
-    color: theme.colors.primary,
-  },
-  {
-    icon: 'bug-outline',
-    title: 'Report a Bug',
-    subtitle: 'bugs@nxtgenproperties.com',
-    action: () => Linking.openURL('mailto:bugs@nxtgenproperties.com?subject=Bug%20Report'),
-    color: theme.colors.error,
-  },
-];
+}[] {
+  const digits = (s: string) => s.replace(/[^0-9]/g, '');
+  return [
+    {
+      icon: 'mail-outline',
+      title: 'Email Support',
+      subtitle: support.email,
+      action: () => Linking.openURL(`mailto:${support.email}?subject=Help%20Request`),
+      color: '#3B82F6',
+    },
+    {
+      icon: 'logo-whatsapp',
+      title: 'WhatsApp',
+      subtitle: 'Chat with us on WhatsApp',
+      action: () => Linking.openURL(`https://wa.me/${digits(support.whatsapp)}`),
+      color: '#25D366',
+    },
+    {
+      icon: 'call-outline',
+      title: 'Call Us',
+      subtitle: `${support.phone}  •  ${support.hours}`,
+      action: () => Linking.openURL(`tel:${support.phone}`),
+      color: theme.colors.primary,
+    },
+    {
+      icon: 'bug-outline',
+      title: 'Report a Bug',
+      subtitle: support.bugs_email,
+      action: () => Linking.openURL(`mailto:${support.bugs_email}?subject=Bug%20Report`),
+      color: theme.colors.error,
+    },
+  ];
+}
 
 export default function HelpSupportScreen() {
   const router = useRouter();
   const [query, setQuery] = React.useState('');
   const [expanded, setExpanded] = React.useState<string | null>(null);
+  const [faq, setFaq] = React.useState<FaqCategory[]>(FAQ_FALLBACK);
+  const [support, setSupport] = React.useState<SupportInfo>(DEFAULT_SUPPORT);
+
+  React.useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('platform_data')
+        .select('key, data')
+        .in('key', ['faqs', 'support']);
+      data?.forEach((row: { key: string; data: unknown }) => {
+        if (row.key === 'faqs' && Array.isArray(row.data)) {
+          setFaq(row.data as FaqCategory[]);
+        }
+        if (row.key === 'support' && row.data && typeof row.data === 'object') {
+          setSupport({ ...DEFAULT_SUPPORT, ...(row.data as SupportInfo) });
+        }
+      });
+    })();
+  }, []);
+
+  const contactChannels = React.useMemo(() => buildContactChannels(support), [support]);
 
   const toggle = (key: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -128,15 +163,17 @@ export default function HelpSupportScreen() {
 
   const filtered =
     query.trim().length > 1
-      ? FAQ_DATA.map((cat) => ({
-          ...cat,
-          items: cat.items.filter(
-            (it) =>
-              it.q.toLowerCase().includes(query.toLowerCase()) ||
-              it.a.toLowerCase().includes(query.toLowerCase())
-          ),
-        })).filter((cat) => cat.items.length > 0)
-      : FAQ_DATA;
+      ? faq
+          .map((cat) => ({
+            ...cat,
+            items: cat.items.filter(
+              (it) =>
+                it.q.toLowerCase().includes(query.toLowerCase()) ||
+                it.a.toLowerCase().includes(query.toLowerCase())
+            ),
+          }))
+          .filter((cat) => cat.items.length > 0)
+      : faq;
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.surface }}>
@@ -186,7 +223,7 @@ export default function HelpSupportScreen() {
             Contact Us
           </Text>
           <View className="flex-row flex-wrap" style={{ gap: 10 }}>
-            {CONTACT_CHANNELS.map((ch) => (
+            {contactChannels.map((ch) => (
               <TouchableOpacity
                 key={ch.title}
                 onPress={ch.action}
