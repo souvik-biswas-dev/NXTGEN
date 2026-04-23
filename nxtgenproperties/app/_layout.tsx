@@ -48,9 +48,7 @@ export default function RootLayout() {
         <Stack.Screen name="site-visits/index" options={{ headerShown: false }} />
         <Stack.Screen name="report/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="reviews/locality" options={{ headerShown: false }} />
-        <Stack.Screen name="tools/area-converter" options={{ headerShown: false }} />
-        <Stack.Screen name="tools/home-loan" options={{ headerShown: false }} />
-        <Stack.Screen name="tools/valuation" options={{ headerShown: false }} />
+        <Stack.Screen name="tools" options={{ headerShown: false }} />
         <Stack.Screen name="admin/index" options={{ headerShown: false }} />
       </Stack>
     </>
