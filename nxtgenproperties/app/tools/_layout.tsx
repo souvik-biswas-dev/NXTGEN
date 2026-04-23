@@ -9,6 +9,9 @@ export default function ToolsLayout() {
     >
       <Stack.Screen name="emi-calculator" />
       <Stack.Screen name="budget-calculator" />
+      <Stack.Screen name="area-converter" />
+      <Stack.Screen name="home-loan" />
+      <Stack.Screen name="valuation" />
     </Stack>
   );
 }
