@@ -14,6 +14,7 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
+import { signupSchema, firstError } from '@/lib/validation';
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -26,26 +27,23 @@ export default function SignupScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleSignup = async () => {
-    if (!formData.email || !formData.password || !formData.username) {
-      Alert.alert('Error', 'Please fill in all fields');
+    const parsed = signupSchema.safeParse(formData);
+    if (!parsed.success) {
+      Alert.alert('Check your details', firstError(parsed.error));
       return;
     }
-
-    if (formData.password !== formData.confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
-    }
+    const { email, password, username } = parsed.data;
 
     setLoading(true);
     try {
-      // 1. Sign up the user
-      // We pass 'name' in user_metadata so the SQL Trigger can find it
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
+      // 1. Sign up the user. The `handle_new_user` trigger (migration 006)
+      //    populates users_profiles from the email + raw_user_meta_data.name.
+      const { error: authError } = await supabase.auth.signUp({
+        email,
+        password,
         options: {
           data: {
-            name: formData.username, 
+            name: username,
           },
         },
       });

@@ -1,7 +1,8 @@
 'use server';
 
 import { createAnonClient, createAdminClient } from '@/lib/supabase/server';
-import { createSession, deleteSession } from '@/lib/auth';
+import { createSession, deleteSession, getSession } from '@/lib/auth';
+import { auditLog } from '@/lib/audit';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
@@ -53,17 +54,31 @@ export async function loginAction(_prevState: LoginState, formData: FormData): P
   }
 
   // Create JWT session
-  await createSession({
+  const newSession = {
     userId: profile.user_id,
     email: profile.email,
     name: profile.name,
     role: profile.role,
+  };
+  await createSession(newSession);
+  await auditLog(newSession, {
+    action: 'admin.login',
+    subject_type: 'user',
+    subject_id: profile.user_id,
   });
 
   redirect('/');
 }
 
 export async function logoutAction() {
+  const session = await getSession();
+  if (session) {
+    await auditLog(session, {
+      action: 'admin.logout',
+      subject_type: 'user',
+      subject_id: session.userId,
+    });
+  }
   await deleteSession();
   redirect('/login');
 }

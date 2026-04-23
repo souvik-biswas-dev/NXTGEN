@@ -31,8 +31,8 @@ export default function ShortlistScreen() {
           *,
           property:properties(
             *,
-            owner:users_profiles!properties_owner_id_fkey(*),
-            broker:users_profiles!properties_broker_id_fkey(*)
+            owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
+            broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
           )
         `)
         .eq('user_id', user.id);

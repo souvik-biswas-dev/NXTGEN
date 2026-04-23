@@ -1,4 +1,9 @@
-export type UserRole = 'buyer' | 'owner' | 'broker';
+export type UserRole = 'buyer' | 'owner' | 'broker' | 'admin';
+
+// Columns safe to expose to any authenticated user.
+// Used when joining on properties (owner/broker), chat counterparty, etc.
+export const PUBLIC_PROFILE_COLUMNS =
+  'id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at';
 
 export type PropertyType = 'buy' | 'rent';
 
@@ -15,8 +20,10 @@ export type PossessionType = 'ready' | 'under-construction';
 export interface User {
   id: string;
   user_id: string;
-  email: string;
-  phone: string;
+  // email/phone are restricted by column-level GRANT — populated only for
+  // the authenticated user's own profile (via get_my_contact RPC) or admin.
+  email?: string;
+  phone?: string;
   role: UserRole;
   name: string;
   avatar_url?: string;

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
-import { Conversation, Message, User } from '@/types';
+import { Conversation, Message, User, PUBLIC_PROFILE_COLUMNS } from '@/types';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface ChatState {
@@ -63,7 +63,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const convIds = data.map((conv) => conv.id);
 
       const [{ data: profiles }, { data: unreadRows }] = await Promise.all([
-        supabase.from('users_profiles').select('*').in('user_id', otherUserIds),
+        supabase.from('users_profiles').select(PUBLIC_PROFILE_COLUMNS).in('user_id', otherUserIds),
         supabase
           .from('messages')
           .select('conversation_id')
