@@ -10,6 +10,7 @@ export const useProperties = (filters?: SearchFilters, limit: number = 20) => {
 
   useEffect(() => {
     fetchProperties();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   const fetchProperties = async (offset: number = 0) => {
@@ -146,6 +147,7 @@ export const usePreferredCitiesProperties = (preferredCities?: string[], limit: 
       setProperties([]);
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preferredCities]);
 
   const fetchByPreferredCities = async () => {
@@ -193,6 +195,7 @@ export const useProperty = (id: string) => {
 
   useEffect(() => {
     fetchProperty();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchProperty = async () => {

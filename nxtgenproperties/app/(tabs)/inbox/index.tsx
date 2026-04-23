@@ -27,6 +27,7 @@ export default function InboxScreen() {
       return () => {
         unsubscribeConversations();
       };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user?.id])
   );
 

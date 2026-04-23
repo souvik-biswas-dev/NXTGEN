@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
-
-const { width } = Dimensions.get('window');
 
 type TimeRange = '1M' | '3M' | '6M' | '1Y';
 type PropertyType = 'residential' | 'commercial';

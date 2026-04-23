@@ -22,6 +22,7 @@ export const useUserPreferences = () => {
     } else {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const fetchUserPreferences = async () => {

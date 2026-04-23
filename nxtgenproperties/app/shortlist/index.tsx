@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { PropertyCard } from '@/components/PropertyCard';
 import { useAuthStore } from '@/stores/authStore';
@@ -9,16 +9,16 @@ import { supabase } from '@/lib/supabase';
 import { Property } from '@/types';
 
 export default function ShortlistScreen() {
-  const router = useRouter();
   const { user } = useAuthStore();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchFavorites();
-    }
-  }, [user]);
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user) fetchFavorites();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id])
+  );
 
   const fetchFavorites = async () => {
     if (!user) return;

@@ -1,11 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Slider from '@react-native-community/slider';
-
-const { width } = Dimensions.get('window');
 
 export default function EMICalculatorScreen() {
   const router = useRouter();

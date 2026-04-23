@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform, Animated, View, Text } from 'react-native';
+import { Platform, Animated, View } from 'react-native';
 import { useRef, useEffect } from 'react';
 import { theme } from '@/constants/theme';
 
@@ -29,7 +29,7 @@ function Pill({
       tension: 120,
       useNativeDriver: false,
     }).start();
-  }, [focused]);
+  }, [focused, widthAnim]);
 
   const extraWidth = widthAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 72] });
   const labelOpacity = widthAnim.interpolate({
@@ -92,7 +92,7 @@ function PostButton({ focused }: { focused: boolean }) {
       tension: 160,
       useNativeDriver: true,
     }).start();
-  }, [focused]);
+  }, [focused, scale]);
 
   return (
     <View

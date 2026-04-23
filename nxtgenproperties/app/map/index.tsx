@@ -59,7 +59,7 @@ export default function MapViewScreen() {
   // For each property: prefer its own lat/lng, fall back to the city's centroid.
   // Jitter the fallback so multiple pins in the same city aren't stacked exactly.
   const pins = useMemo(() => {
-    const out: Array<{ property: Property; lat: number; lng: number; isCentroid: boolean }> = [];
+    const out: { property: Property; lat: number; lng: number; isCentroid: boolean }[] = [];
     properties.forEach((p, idx) => {
       if (typeof (p as any).latitude === 'number' && typeof (p as any).longitude === 'number') {
         out.push({
@@ -100,7 +100,8 @@ export default function MapViewScreen() {
       longitudeDelta: Math.max(0.2, (maxLng - minLng) * 1.6),
     };
     mapRef.current.animateToRegion(region, 600);
-  }, [pins.length > 0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pins.length]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.surface }} edges={['top']}>

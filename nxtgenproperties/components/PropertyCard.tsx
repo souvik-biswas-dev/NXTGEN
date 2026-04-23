@@ -26,112 +26,109 @@ interface PropertyCardProps {
 //   • verified broker shown as a vertical ribbon on the image
 // Deliberately different from the flat, symmetric cards on 99acres/Housing.
 
-export const PropertyCard: React.FC<PropertyCardProps> = React.memo(
-  ({ property, variant = 'default' }) => {
-    const router = useRouter();
-    const { isFavorite, toggleFavorite } = useFavoritesStore();
-    const isLiked = isFavorite(property.id);
+const PropertyCardInner: React.FC<PropertyCardProps> = ({ property, variant = 'default' }) => {
+  const router = useRouter();
+  const { isFavorite, toggleFavorite } = useFavoritesStore();
+  const isLiked = isFavorite(property.id);
 
-    const handleFavorite = async (e: GestureResponderEvent) => {
-      e.stopPropagation();
-      try {
-        await toggleFavorite(property.id);
-      } catch (error) {
-        console.error('Error toggling favorite:', error);
-      }
-    };
+  const handleFavorite = async (e: GestureResponderEvent) => {
+    e.stopPropagation();
+    try {
+      await toggleFavorite(property.id);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  };
 
-    const formatPrice = (price: number) => {
-      if (price >= 1_00_00_000) return `₹${(price / 1_00_00_000).toFixed(2)} Cr`;
-      if (price >= 1_00_000) return `₹${(price / 1_00_000).toFixed(1)} L`;
-      return `₹${price.toLocaleString('en-IN')}`;
-    };
+  const formatPrice = (price: number) => {
+    if (price >= 1_00_00_000) return `₹${(price / 1_00_00_000).toFixed(2)} Cr`;
+    if (price >= 1_00_000) return `₹${(price / 1_00_000).toFixed(1)} L`;
+    return `₹${price.toLocaleString('en-IN')}`;
+  };
 
-    const isFeatured = variant === 'featured';
-    const isRent = property.type === 'rent';
+  const isFeatured = variant === 'featured';
+  const isRent = property.type === 'rent';
 
-    return (
-      <TouchableOpacity
-        onPress={() => router.push(`/(tabs)/search/${property.id}`)}
-        activeOpacity={0.85}
-        style={[styles.card, isFeatured ? styles.cardFeatured : styles.cardDefault]}
-      >
-        {/* Image with asymmetric corner */}
-        <View style={[styles.imageWrap, isFeatured ? { height: 200 } : { height: 150 }]}>
-          <Image
-            source={{ uri: property.photos[0] || 'https://via.placeholder.com/400x300' }}
-            style={styles.image}
-            resizeMode="cover"
-            fadeDuration={0}
+  return (
+    <TouchableOpacity
+      onPress={() => router.push(`/(tabs)/search/${property.id}`)}
+      activeOpacity={0.85}
+      style={[styles.card, isFeatured ? styles.cardFeatured : styles.cardDefault]}
+    >
+      {/* Image with asymmetric corner */}
+      <View style={[styles.imageWrap, isFeatured ? { height: 200 } : { height: 150 }]}>
+        <Image
+          source={{ uri: property.photos[0] || 'https://via.placeholder.com/400x300' }}
+          style={styles.image}
+          resizeMode="cover"
+          fadeDuration={0}
+        />
+
+        {/* Top-left "verified broker" strap */}
+        {property.broker?.verified_broker && (
+          <View style={styles.verifiedStrap}>
+            <Ionicons name="shield-checkmark" size={11} color="#fff" />
+            <Text style={styles.verifiedText}>VERIFIED</Text>
+          </View>
+        )}
+
+        {/* Top-right favorite button */}
+        <Pressable onPress={handleFavorite} style={styles.favoriteBtn} hitSlop={8}>
+          <Ionicons
+            name={isLiked ? 'heart' : 'heart-outline'}
+            size={18}
+            color={isLiked ? theme.colors.primary : '#1B2838'}
           />
+        </Pressable>
 
-          {/* Top-left "verified broker" strap */}
-          {property.broker?.verified_broker && (
-            <View style={styles.verifiedStrap}>
-              <Ionicons name="shield-checkmark" size={11} color="#fff" />
-              <Text style={styles.verifiedText}>VERIFIED</Text>
-            </View>
-          )}
+        {/* Featured gold ribbon (corner) */}
+        {property.featured && (
+          <View style={styles.featuredRibbon}>
+            <Ionicons name="star" size={10} color="#1B2838" />
+            <Text style={styles.featuredRibbonText}>FEATURED</Text>
+          </View>
+        )}
+      </View>
 
-          {/* Top-right favorite button */}
-          <Pressable onPress={handleFavorite} style={styles.favoriteBtn} hitSlop={8}>
-            <Ionicons
-              name={isLiked ? 'heart' : 'heart-outline'}
-              size={18}
-              color={isLiked ? theme.colors.primary : '#1B2838'}
-            />
-          </Pressable>
-
-          {/* Featured gold ribbon (corner) */}
-          {property.featured && (
-            <View style={styles.featuredRibbon}>
-              <Ionicons name="star" size={10} color="#1B2838" />
-              <Text style={styles.featuredRibbonText}>FEATURED</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Floating price tag — sits over the image/body boundary.
+      {/* Floating price tag — sits over the image/body boundary.
             Using a negative top-margin on the body would clip the tag under
             `overflow: hidden`, so we render it as an absolute overlay with a
             per-variant top offset matched to the image height. */}
-        <View
-          style={[styles.priceTag, { top: (isFeatured ? 200 : 150) - 18 }]}
-          pointerEvents="none"
-        >
-          <Text style={styles.priceText}>{formatPrice(property.price)}</Text>
-          {isRent && <Text style={styles.priceUnit}>/mo</Text>}
-        </View>
+      <View style={[styles.priceTag, { top: (isFeatured ? 200 : 150) - 18 }]} pointerEvents="none">
+        <Text style={styles.priceText}>{formatPrice(property.price)}</Text>
+        {isRent && <Text style={styles.priceUnit}>/mo</Text>}
+      </View>
 
-        {/* Body */}
-        <View style={styles.body}>
-          <Text style={styles.title} numberOfLines={isFeatured ? 2 : 1}>
-            {property.title}
+      {/* Body */}
+      <View style={styles.body}>
+        <Text style={styles.title} numberOfLines={isFeatured ? 2 : 1}>
+          {property.title}
+        </Text>
+
+        <View style={styles.localityChip}>
+          <Ionicons name="location" size={11} color={theme.colors.primary} />
+          <Text style={styles.localityText} numberOfLines={1}>
+            {property.locality}, {property.city}
           </Text>
-
-          <View style={styles.localityChip}>
-            <Ionicons name="location" size={11} color={theme.colors.primary} />
-            <Text style={styles.localityText} numberOfLines={1}>
-              {property.locality}, {property.city}
-            </Text>
-          </View>
-
-          {/* Info pills — compact two-column grid on default, row on featured */}
-          <View style={[styles.pillsRow, !isFeatured && { flexWrap: 'wrap' }]}>
-            <InfoPill icon="bed-outline" label={`${property.bedrooms}`} suffix="BHK" />
-            <InfoPill icon="resize-outline" label={`${property.area_sqft}`} suffix="sqft" />
-            {isFeatured && (
-              <InfoPill icon="water-outline" label={`${property.bathrooms}`} suffix="Bath" />
-            )}
-            {isFeatured && (
-              <InfoPill icon="car-outline" label={`${property.parkings}`} suffix="Park" />
-            )}
-          </View>
         </View>
-      </TouchableOpacity>
-    );
-  }
-);
+
+        {/* Info pills — compact two-column grid on default, row on featured */}
+        <View style={[styles.pillsRow, !isFeatured && { flexWrap: 'wrap' }]}>
+          <InfoPill icon="bed-outline" label={`${property.bedrooms}`} suffix="BHK" />
+          <InfoPill icon="resize-outline" label={`${property.area_sqft}`} suffix="sqft" />
+          {isFeatured && (
+            <InfoPill icon="water-outline" label={`${property.bathrooms}`} suffix="Bath" />
+          )}
+          {isFeatured && (
+            <InfoPill icon="car-outline" label={`${property.parkings}`} suffix="Park" />
+          )}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+export const PropertyCard = React.memo(PropertyCardInner);
 
 function InfoPill({
   icon,

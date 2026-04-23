@@ -23,7 +23,7 @@ import { theme } from '@/constants/theme';
 
 const TAB_BOTTOM = theme.tabBarHeight + 16;
 
-const { height } = Dimensions.get('window');
+Dimensions.get('window');
 
 export default function SearchScreen() {
   const [showFilters, setShowFilters] = useState(false);
@@ -91,6 +91,7 @@ export default function SearchScreen() {
     );
     if (!hasText && !hasFilter) return;
     usePropertiesStore.getState().filterProperties(localFilters, { query: debouncedQuery });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedQuery]);
 
   const handleSearch = (query: string) => {

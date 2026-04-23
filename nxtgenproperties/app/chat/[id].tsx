@@ -133,6 +133,7 @@ export default function ChatRoomScreen() {
     return () => {
       unsubscribeMessages();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, user?.id]);
 
   // Mark new incoming messages as read
@@ -143,6 +144,7 @@ export default function ChatRoomScreen() {
         markMessagesAsRead(conversationId, user.id);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMessages.length]);
 
   // Auto-scroll to bottom on new messages

@@ -8,7 +8,7 @@ interface ImageGalleryProps {
 
 const { width, height } = Dimensions.get('window');
 
-export const ImageGallery: React.FC<ImageGalleryProps> = React.memo(({ images }) => {
+const ImageGalleryInner: React.FC<ImageGalleryProps> = ({ images }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -80,4 +80,6 @@ export const ImageGallery: React.FC<ImageGalleryProps> = React.memo(({ images })
       </Modal>
     </View>
   );
-});
+};
+
+export const ImageGallery = React.memo(ImageGalleryInner);

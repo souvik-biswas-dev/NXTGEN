@@ -33,11 +33,9 @@ export const uploadPropertyImage = async (
     const fileExt = uri.split('.').pop();
     const fileName = `${propertyId}/${Date.now()}.${fileExt}`;
 
-    const { data, error } = await supabase.storage
-      .from('property-images')
-      .upload(fileName, arrayBuffer, {
-        contentType: `image/${fileExt}`,
-      });
+    const { error } = await supabase.storage.from('property-images').upload(fileName, arrayBuffer, {
+      contentType: `image/${fileExt}`,
+    });
 
     if (error) throw error;
 
@@ -60,12 +58,10 @@ export const uploadAvatar = async (uri: string, userId: string): Promise<string 
     const fileExt = uri.split('.').pop();
     const fileName = `${userId}.${fileExt}`;
 
-    const { data, error } = await supabase.storage
-      .from('profile-avatars')
-      .upload(fileName, arrayBuffer, {
-        contentType: `image/${fileExt}`,
-        upsert: true,
-      });
+    const { error } = await supabase.storage.from('profile-avatars').upload(fileName, arrayBuffer, {
+      contentType: `image/${fileExt}`,
+      upsert: true,
+    });
 
     if (error) throw error;
 

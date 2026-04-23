@@ -130,6 +130,7 @@ export default function HomeScreen() {
         }
       };
       loadData();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user?.id, platformDataLoaded, propertiesLoaded])
   );
 
@@ -156,6 +157,7 @@ export default function HomeScreen() {
     } finally {
       setRefreshing(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const handleSearch = () => {

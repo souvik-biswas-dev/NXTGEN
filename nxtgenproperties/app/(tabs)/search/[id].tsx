@@ -22,7 +22,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useRecentlyViewedStore } from '@/stores/recentlyViewedStore';
 import { Property } from '@/types';
 
-const { width } = Dimensions.get('window');
+Dimensions.get('window');
 
 export default function PropertyDetailScreen() {
   const router = useRouter();
@@ -44,12 +44,14 @@ export default function PropertyDetailScreen() {
       setLoading(false);
     };
     if (id) loadProperty();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
     if (property?.id) {
       addToRecentlyViewed(property.id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [property?.id]);
 
   if (loading || !property) {

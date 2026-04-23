@@ -10,7 +10,7 @@ export const DOC_MAX_BYTES = 10 * 1024 * 1024; // 10 MB — broker-documents buc
 
 // Magic-byte signatures (first few bytes of the file). Extensions lie; magic
 // bytes don't. We still reject unless BOTH the extension and the magic match.
-const SIGNATURES: Array<{ mime: string; ext: string[]; bytes: number[]; offset?: number }> = [
+const SIGNATURES: { mime: string; ext: string[]; bytes: number[]; offset?: number }[] = [
   { mime: 'image/jpeg', ext: ['jpg', 'jpeg'], bytes: [0xff, 0xd8, 0xff] },
   { mime: 'image/png', ext: ['png'], bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] },
   { mime: 'image/webp', ext: ['webp'], bytes: [0x52, 0x49, 0x46, 0x46] }, // RIFF — followed by WEBP at +8
