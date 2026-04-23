@@ -15,7 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useChatStore } from '@/stores/chatStore';
 import { useAuthStore } from '@/stores/authStore';
-import { Conversation, Message } from '@/types';
+import { Conversation, Message, PUBLIC_PROFILE_COLUMNS } from '@/types';
+import { chatMessageSchema } from '@/lib/validation';
 import { format, isToday, isYesterday } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 
@@ -98,7 +99,7 @@ export default function ChatRoomScreen() {
 
         const { data: profile } = await supabase
           .from('users_profiles')
-          .select('*')
+          .select(PUBLIC_PROFILE_COLUMNS)
           .eq('user_id', otherUserId)
           .single();
 
@@ -161,8 +162,10 @@ export default function ChatRoomScreen() {
   }, [currentMessages.length]);
 
   const handleSendMessage = useCallback(async () => {
-    if (!messageText.trim() || !user?.id || !conversationId) return;
-    const text = messageText;
+    if (!user?.id || !conversationId) return;
+    const parsed = chatMessageSchema.safeParse({ content: messageText });
+    if (!parsed.success) return; // silently drop empty / oversized
+    const text = parsed.data.content;
     setMessageText('');
     setIsSending(true);
     try {

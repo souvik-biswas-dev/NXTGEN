@@ -44,10 +44,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!user) return;
 
     try {
+      // Only send columns granted to the 'authenticated' role (see migration 006).
+      // `updated_at` is maintained by a DB trigger.
+      const { id: _ignoreId, user_id: _ignoreUid, created_at: _ignoreCreated, updated_at: _ignoreUpdated, rating: _ignoreRating, verified_broker: _ignoreVerified, ...safeUpdates } = updates as any;
       const { error } = await supabase
         .from('users_profiles')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('user_id', user.user_id)
+        .update(safeUpdates)
+        .eq('user_id', user.user_id);
       if (error) throw error;
 
       set({ user: { ...user, ...updates } });

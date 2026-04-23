@@ -15,6 +15,7 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
+import { loginSchema, phoneSchema, firstError } from '@/lib/validation';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -26,14 +27,17 @@ export default function LoginScreen() {
   const [emailLoading, setEmailLoading] = useState(false);
 
   const handlePhoneAuth = async () => {
-    if (!phoneNumber) {
-      Alert.alert('Error', 'Please enter your phone number');
+    // Accept 10-digit national or +91-prefixed. Normalise to E.164 for Supabase.
+    const raw = phoneNumber.trim();
+    const parsed = phoneSchema.safeParse(raw);
+    if (!parsed.success) {
+      Alert.alert('Invalid number', firstError(parsed.error));
       return;
     }
+    const fullPhone = raw.startsWith('+') ? raw.slice(1) : `91${raw.replace(/^91/, '')}`;
 
     setLoading(true);
     try {
-      const fullPhone = `91${phoneNumber}`;
       const { error } = await supabase.auth.signInWithOtp({
         phone: fullPhone,
       });
@@ -42,7 +46,7 @@ export default function LoginScreen() {
 
       router.push({
         pathname: '/(auth)/verify',
-        params: { phone: fullPhone },
+        params: { phone: `+${fullPhone}` },
       });
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Something went wrong');
@@ -52,16 +56,17 @@ export default function LoginScreen() {
   };
 
   const handleEmailLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter email and password');
+    const parsed = loginSchema.safeParse({ email, password });
+    if (!parsed.success) {
+      Alert.alert('Check your details', firstError(parsed.error));
       return;
     }
 
     setEmailLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: parsed.data.email,
+        password: parsed.data.password,
       });
 
       if (error) throw error;

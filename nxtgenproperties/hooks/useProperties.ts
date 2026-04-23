@@ -19,8 +19,8 @@ export const useProperties = (filters?: SearchFilters, limit: number = 20) => {
         .from('properties')
         .select(`
           *,
-          owner:users_profiles!properties_owner_id_fkey(*),
-          broker:users_profiles!properties_broker_id_fkey(*)
+          owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
+          broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
         `)
         .range(offset, offset + limit - 1)
         .order('created_at', { ascending: false });
@@ -111,8 +111,8 @@ export const useFeaturedProperties = () => {
         .from('properties')
         .select(`
           *,
-          owner:users_profiles!properties_owner_id_fkey(*),
-          broker:users_profiles!properties_broker_id_fkey(*)
+          owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
+          broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
         `)
         .eq('featured', true)
         .order('created_at', { ascending: false })
@@ -153,8 +153,8 @@ export const usePreferredCitiesProperties = (preferredCities?: string[], limit: 
         .from('properties')
         .select(`
           *,
-          owner:users_profiles!properties_owner_id_fkey(*),
-          broker:users_profiles!properties_broker_id_fkey(*)
+          owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
+          broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
         `)
         .in('city', preferredCities || [])
         .limit(limit)
@@ -196,8 +196,8 @@ export const useProperty = (id: string) => {
         .from('properties')
         .select(`
           *,
-          owner:users_profiles!properties_owner_id_fkey(*),
-          broker:users_profiles!properties_broker_id_fkey(*)
+          owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
+          broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
         `)
         .eq('id', id)
         .single();
