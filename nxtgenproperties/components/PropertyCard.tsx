@@ -12,6 +12,7 @@ import { Property } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFavoritesStore } from '@/stores/favoritesStore';
+import { useCompareStore } from '@/stores/compareStore';
 import { theme } from '@/constants/theme';
 
 interface PropertyCardProps {
@@ -29,7 +30,9 @@ interface PropertyCardProps {
 const PropertyCardInner: React.FC<PropertyCardProps> = ({ property, variant = 'default' }) => {
   const router = useRouter();
   const { isFavorite, toggleFavorite } = useFavoritesStore();
+  const { has: hasCompare, toggle: toggleCompare } = useCompareStore();
   const isLiked = isFavorite(property.id);
+  const inCompare = hasCompare(property.id);
 
   const handleFavorite = async (e: GestureResponderEvent) => {
     e.stopPropagation();
@@ -38,6 +41,11 @@ const PropertyCardInner: React.FC<PropertyCardProps> = ({ property, variant = 'd
     } catch (error) {
       console.error('Error toggling favorite:', error);
     }
+  };
+
+  const handleCompare = (e: GestureResponderEvent) => {
+    e.stopPropagation();
+    toggleCompare(property.id);
   };
 
   const formatPrice = (price: number) => {
@@ -79,6 +87,15 @@ const PropertyCardInner: React.FC<PropertyCardProps> = ({ property, variant = 'd
             size={18}
             color={isLiked ? theme.colors.primary : '#1B2838'}
           />
+        </Pressable>
+
+        {/* Compare toggle — sits just below the favorite button */}
+        <Pressable
+          onPress={handleCompare}
+          style={[styles.compareBtn, inCompare && { backgroundColor: theme.colors.primary }]}
+          hitSlop={8}
+        >
+          <Ionicons name="git-compare" size={14} color={inCompare ? '#fff' : '#1B2838'} />
         </Pressable>
 
         {/* Featured gold ribbon (corner) */}
@@ -219,6 +236,22 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  compareBtn: {
+    position: 'absolute',
+    top: 50,
+    right: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 251, 255, 0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
     shadowRadius: 3,
     elevation: 3,
   },

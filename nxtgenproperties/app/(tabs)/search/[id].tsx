@@ -9,6 +9,9 @@ import {
   Share,
   Dimensions,
   Image,
+  Modal,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -20,21 +23,29 @@ import { usePropertiesStore } from '@/stores/propertiesStore';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useRecentlyViewedStore } from '@/stores/recentlyViewedStore';
+import { useCompareStore, MAX_COMPARE_SIZE } from '@/stores/compareStore';
+import { PropertyCard } from '@/components/PropertyCard';
 import { Property } from '@/types';
+import { supabase } from '@/lib/supabase';
 
 Dimensions.get('window');
 
 export default function PropertyDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getPropertyById } = usePropertiesStore();
+  const { getPropertyById, getSimilarProperties } = usePropertiesStore();
   const { user } = useAuthStore();
   const { isFavorite, toggleFavorite } = useFavoritesStore();
   const { addToRecentlyViewed } = useRecentlyViewedStore();
+  const compare = useCompareStore();
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'amenities' | 'details'>('overview');
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
+  const [similar, setSimilar] = useState<Property[]>([]);
+  const [showInquiry, setShowInquiry] = useState(false);
+  const [inquiryMsg, setInquiryMsg] = useState('');
+  const [sendingInquiry, setSendingInquiry] = useState(false);
 
   useEffect(() => {
     const loadProperty = async () => {
@@ -42,6 +53,9 @@ export default function PropertyDetailScreen() {
       const data = await getPropertyById(id);
       setProperty(data || null);
       setLoading(false);
+      if (data) {
+        getSimilarProperties(data).then(setSimilar);
+      }
     };
     if (id) loadProperty();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -50,6 +64,11 @@ export default function PropertyDetailScreen() {
   useEffect(() => {
     if (property?.id) {
       addToRecentlyViewed(property.id);
+      // Record view for seller analytics (fire-and-forget)
+      supabase.from('property_views').insert({
+        property_id: property.id,
+        viewer_id: user?.user_id ?? null,
+      }).then(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [property?.id]);
@@ -110,6 +129,39 @@ export default function PropertyDetailScreen() {
       } catch (error) {
         console.error('Error toggling favorite:', error);
       }
+    }
+  };
+
+  const handleSendInquiry = async () => {
+    if (!user) {
+      Alert.alert('Sign in required', 'Please sign in to send an inquiry.');
+      return;
+    }
+    if (!inquiryMsg.trim()) {
+      Alert.alert('Message required', 'Please enter your message before sending.');
+      return;
+    }
+    const toUserId = property.broker?.user_id ?? property.owner?.user_id;
+    if (!toUserId) {
+      Alert.alert('Not available', 'Contact information is not available for this property.');
+      return;
+    }
+    setSendingInquiry(true);
+    try {
+      const { error } = await supabase.from('inquiries').insert({
+        from_user_id: user.user_id,
+        to_user_id: toUserId,
+        property_id: property.id,
+        message: inquiryMsg.trim(),
+      });
+      if (error) throw error;
+      Alert.alert('Inquiry sent!', 'The owner/broker will get back to you shortly.');
+      setShowInquiry(false);
+      setInquiryMsg('');
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Could not send inquiry');
+    } finally {
+      setSendingInquiry(false);
     }
   };
 
@@ -533,6 +585,152 @@ export default function PropertyDetailScreen() {
           </View>
         )}
 
+        {/* Action Row — Site Visit / Compare / Report / Locality reviews */}
+        <View style={{ paddingHorizontal: 20, marginTop: 4, marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <TouchableOpacity
+              onPress={() => router.push(`/site-visit/${property.id}` as never)}
+              style={{
+                flex: 1,
+                backgroundColor: '#1B2838',
+                paddingVertical: 12,
+                borderRadius: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+              }}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="calendar" size={16} color="#FF6B35" />
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Site visit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                const ok = compare.toggle(property.id);
+                if (!ok && !compare.has(property.id)) {
+                  // max reached; guide user
+                  router.push('/compare' as never);
+                }
+              }}
+              style={{
+                flex: 1,
+                backgroundColor: compare.has(property.id) ? '#FF6B35' : '#FFF3EC',
+                paddingVertical: 12,
+                borderRadius: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                borderWidth: 1,
+                borderColor: '#FF6B35',
+              }}
+              activeOpacity={0.85}
+            >
+              <Ionicons
+                name="git-compare"
+                size={16}
+                color={compare.has(property.id) ? '#fff' : '#FF6B35'}
+              />
+              <Text
+                style={{
+                  color: compare.has(property.id) ? '#fff' : '#FF6B35',
+                  fontWeight: '700',
+                  fontSize: 13,
+                }}
+              >
+                {compare.has(property.id) ? 'Added' : 'Compare'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+            <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: '/reviews/locality',
+                  params: { locality: property.locality, city: property.city },
+                } as never)
+              }
+              style={{
+                flex: 1,
+                backgroundColor: '#FFF3EC',
+                paddingVertical: 12,
+                borderRadius: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                borderWidth: 1,
+                borderColor: '#D7C3B8',
+              }}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="star-outline" size={16} color="#1B2838" />
+              <Text style={{ color: '#1B2838', fontWeight: '700', fontSize: 13 }}>
+                Locality reviews
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push(`/report/${property.id}` as never)}
+              style={{
+                flex: 1,
+                backgroundColor: '#FFF3EC',
+                paddingVertical: 12,
+                borderRadius: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                borderWidth: 1,
+                borderColor: '#D7C3B8',
+              }}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="flag-outline" size={16} color="#BA1A1A" />
+              <Text style={{ color: '#BA1A1A', fontWeight: '700', fontSize: 13 }}>Report</Text>
+            </TouchableOpacity>
+          </View>
+          {compare.propertyIds.length > 1 && (
+            <TouchableOpacity
+              onPress={() => router.push('/compare' as never)}
+              style={{
+                marginTop: 10,
+                backgroundColor: '#1B2838',
+                paddingVertical: 10,
+                borderRadius: 12,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>
+                Compare {compare.propertyIds.length} / {MAX_COMPARE_SIZE}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Similar Properties */}
+        {similar.length > 0 && (
+          <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
+            <Text
+              style={{
+                color: '#1B2838',
+                fontSize: 18,
+                fontWeight: '700',
+                marginBottom: 10,
+              }}
+            >
+              Similar properties
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {similar.map((sp) => (
+                <View key={sp.id} style={{ width: 240, marginRight: 12 }}>
+                  <PropertyCard property={sp} variant="featured" />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         {/* EMI Calculator Banner */}
         <TouchableOpacity
           onPress={() => router.push('/tools/emi-calculator' as any)}
@@ -629,6 +827,20 @@ export default function PropertyDetailScreen() {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
+            onPress={() => setShowInquiry(true)}
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+              backgroundColor: '#1B2838',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="mail-outline" size={20} color="#FF6B35" />
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={handleWhatsApp}
             style={{
               width: 48,
@@ -644,6 +856,81 @@ export default function PropertyDetailScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Inquiry Modal */}
+      <Modal visible={showInquiry} animationType="slide" transparent presentationStyle="overFullScreen">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: '#FFFBFF',
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              padding: 20,
+              paddingBottom: 36,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={{ flex: 1, fontSize: 18, fontWeight: '700', color: '#1B2838' }}>
+                Send Inquiry
+              </Text>
+              <TouchableOpacity onPress={() => setShowInquiry(false)}>
+                <Ionicons name="close" size={24} color="#1B2838" />
+              </TouchableOpacity>
+            </View>
+            <Text style={{ color: '#84746A', fontSize: 13, marginBottom: 12 }}>
+              Your message will be sent directly to the {contact?.role ?? 'owner'}.
+            </Text>
+            <TextInput
+              value={inquiryMsg}
+              onChangeText={setInquiryMsg}
+              multiline
+              numberOfLines={4}
+              placeholder={`Hi, I'm interested in ${property?.title ?? 'this property'}. Please share more details.`}
+              placeholderTextColor="#B0A09A"
+              style={{
+                backgroundColor: '#F5DED1',
+                borderRadius: 14,
+                padding: 14,
+                minHeight: 110,
+                textAlignVertical: 'top',
+                color: '#1B2838',
+                fontSize: 14,
+                marginBottom: 16,
+              }}
+            />
+            <TouchableOpacity
+              onPress={handleSendInquiry}
+              disabled={sendingInquiry}
+              style={{
+                backgroundColor: '#FF6B35',
+                borderRadius: 24,
+                paddingVertical: 14,
+                alignItems: 'center',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+            >
+              {sendingInquiry ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="send" size={18} color="#fff" />
+                  <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>
+                    Send Inquiry
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
