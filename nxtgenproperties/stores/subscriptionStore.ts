@@ -15,11 +15,12 @@ interface SubscriptionState {
   loading: boolean;
   plans: PlanDefinition[];
   fetchSubscription: () => Promise<void>;
+  fetchPlans: () => Promise<void>;
   subscribe: (plan: SubscriptionPlan) => Promise<void>;
   cancelSubscription: () => Promise<void>;
 }
 
-const PLANS: PlanDefinition[] = [
+const DEFAULT_PLANS: PlanDefinition[] = [
   {
     plan: 'free',
     name: 'Free',
@@ -52,7 +53,22 @@ const PLANS: PlanDefinition[] = [
 export const useSubscriptionStore = create<SubscriptionState>((set) => ({
   subscription: null,
   loading: false,
-  plans: PLANS,
+  plans: DEFAULT_PLANS,
+
+  fetchPlans: async () => {
+    try {
+      const { data } = await supabase
+        .from('platform_data')
+        .select('data')
+        .eq('key', 'subscription_plans')
+        .maybeSingle();
+      if (data?.data && Array.isArray(data.data)) {
+        set({ plans: data.data as PlanDefinition[] });
+      }
+    } catch {
+      // Keep DEFAULT_PLANS on error
+    }
+  },
 
   fetchSubscription: async () => {
     set({ loading: true });
