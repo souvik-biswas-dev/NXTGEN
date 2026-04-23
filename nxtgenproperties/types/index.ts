@@ -190,3 +190,187 @@ export interface PropertyAlert {
   last_notified_at?: string;
   created_at: string;
 }
+
+export type SortOrder =
+  | 'newest'
+  | 'price_low_high'
+  | 'price_high_low'
+  | 'area_low_high'
+  | 'area_high_low'
+  | 'relevance';
+
+export interface FloorPlan {
+  name: string;
+  area: number;
+  price: number;
+  image?: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  developer: string;
+  location: string;
+  city: string;
+  locality?: string;
+  description?: string;
+  price_min?: number;
+  price_max?: number;
+  launch_date?: string;
+  possession_date?: string;
+  rera_id?: string;
+  cover_image?: string;
+  gallery: string[];
+  floor_plans: FloorPlan[];
+  amenities: string[];
+  total_units?: number;
+  available_units?: number;
+  tower_count?: number;
+  featured: boolean;
+  verified: boolean;
+  created_at: string;
+}
+
+export type SiteVisitStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+
+export interface SiteVisitRequest {
+  id: string;
+  property_id: string;
+  user_id: string;
+  contact_user_id?: string;
+  preferred_date: string;
+  slot?: string;
+  name: string;
+  phone: string;
+  notes?: string;
+  status: SiteVisitStatus;
+  created_at: string;
+  property?: Property;
+}
+
+export type ReportReason =
+  | 'spam'
+  | 'duplicate'
+  | 'misleading'
+  | 'sold_or_rented'
+  | 'inappropriate'
+  | 'fraud'
+  | 'other';
+
+export interface PropertyReport {
+  id: string;
+  property_id: string;
+  reported_by: string;
+  reason: ReportReason;
+  details?: string;
+  status: 'open' | 'reviewing' | 'resolved' | 'dismissed';
+  created_at: string;
+}
+
+export interface BrokerReview {
+  id: string;
+  broker_id: string;
+  reviewer_id: string;
+  rating: number;
+  title?: string;
+  comment?: string;
+  created_at: string;
+  reviewer?: User;
+}
+
+export interface LocalityReviewDetailed {
+  id: string;
+  locality: string;
+  city: string;
+  reviewer_id: string;
+  rating: number;
+  safety?: number;
+  connectivity?: number;
+  amenities_rating?: number;
+  cleanliness?: number;
+  title?: string;
+  comment?: string;
+  created_at: string;
+  reviewer?: User;
+}
+
+export type NotificationType =
+  | 'match'
+  | 'price_drop'
+  | 'message'
+  | 'inquiry'
+  | 'site_visit'
+  | 'subscription'
+  | 'system';
+
+export interface InAppNotification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  body?: string;
+  data?: Record<string, unknown>;
+  read: boolean;
+  created_at: string;
+}
+
+export interface HomeLoanPartner {
+  id: string;
+  name: string;
+  interest: string;
+  processingFee: string;
+  maxTenure: number;
+  logo?: string;
+}
+
+export interface HomeLoanLead {
+  id?: string;
+  user_id?: string;
+  name: string;
+  phone: string;
+  email?: string;
+  city?: string;
+  loan_amount?: number;
+  employment_type?: 'salaried' | 'self-employed' | 'business' | 'other';
+  monthly_income?: number;
+  property_id?: string;
+  partner?: string;
+  status?: 'new' | 'contacted' | 'converted' | 'lost';
+  created_at?: string;
+}
+
+export interface FaqCategory {
+  category: string;
+  items: { q: string; a: string }[];
+}
+
+export interface SupportInfo {
+  email: string;
+  bugs_email: string;
+  whatsapp: string;
+  phone: string;
+  hours: string;
+}
+
+export interface AboutFeature {
+  icon: string;
+  title: string;
+  description: string;
+}
+
+export interface LinkItem {
+  label: string;
+  url: string;
+}
+
+export interface SocialLink {
+  icon: string;
+  label: string;
+  url: string;
+  color: string;
+}
+
+export interface ReportReasonItem {
+  id: ReportReason;
+  label: string;
+}

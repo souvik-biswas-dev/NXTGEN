@@ -69,6 +69,12 @@ interface PropertiesState {
   getNearbyProperties: (type: 'buy' | 'rent') => Property[];
   getPropertiesByCity: (city: string) => Property[];
   getPropertiesByCategory: (category: 'residential' | 'commercial') => Property[];
+  getMyListings: () => Promise<Property[]>;
+  updateProperty: (id: string, patch: Partial<Property>) => Promise<void>;
+  deleteProperty: (id: string) => Promise<void>;
+  getSimilarProperties: (property: Property, limit?: number) => Promise<Property[]>;
+  sort?: import('@/types').SortOrder;
+  setSort: (order: import('@/types').SortOrder) => void;
   // Cache of the last filter+query used, so load-more keeps parity.
   _lastFilters?: SearchFilters;
   _lastQuery?: string;
@@ -241,12 +247,25 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
     });
 
     try {
-      let query = supabase
-        .from('properties')
-        .select('*')
-        .order('featured', { ascending: false })
-        .order('created_at', { ascending: false })
-        .range(offset, offset + PAGE_SIZE - 1);
+      let query = supabase.from('properties').select('*');
+
+      const sort = get().sort;
+      if (sort === 'price_low_high') {
+        query = query.order('price', { ascending: true });
+      } else if (sort === 'price_high_low') {
+        query = query.order('price', { ascending: false });
+      } else if (sort === 'area_low_high') {
+        query = query.order('area_sqft', { ascending: true });
+      } else if (sort === 'area_high_low') {
+        query = query.order('area_sqft', { ascending: false });
+      } else {
+        // newest / relevance / undefined — keep featured first, then recency.
+        query = query
+          .order('featured', { ascending: false })
+          .order('created_at', { ascending: false });
+      }
+
+      query = query.range(offset, offset + PAGE_SIZE - 1);
 
       if (textQuery.length > 0) {
         // Escape PostgREST-significant characters (comma, parens) and
@@ -282,6 +301,15 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
       }
       if (filters.furnishing && filters.furnishing.length > 0) {
         query = query.in('furnishing', filters.furnishing);
+      }
+      if (filters.minArea !== undefined) {
+        query = query.gte('area_sqft', filters.minArea);
+      }
+      if (filters.maxArea !== undefined) {
+        query = query.lte('area_sqft', filters.maxArea);
+      }
+      if (filters.facing && filters.facing.length > 0) {
+        query = query.in('facing', filters.facing);
       }
       if (filters.possession) {
         query = query.eq('possession', filters.possession);
@@ -366,5 +394,76 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
 
   getPropertiesByCategory: (category) => {
     return get().properties.filter((p) => p.category === category);
+  },
+
+  getMyListings: async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .or(`owner_id.eq.${user.id},broker_id.eq.${user.id}`)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data as Property[]) ?? [];
+    } catch (error) {
+      console.error('Error fetching my listings:', error);
+      return [];
+    }
+  },
+
+  updateProperty: async (id, patch) => {
+    const { error } = await supabase.from('properties').update(patch).eq('id', id);
+    if (error) throw error;
+    // Keep local caches in sync.
+    set({
+      properties: get().properties.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+      filteredProperties: get().filteredProperties.map((p) =>
+        p.id === id ? { ...p, ...patch } : p
+      ),
+    });
+  },
+
+  deleteProperty: async (id) => {
+    const { error } = await supabase.from('properties').delete().eq('id', id);
+    if (error) throw error;
+    set({
+      properties: get().properties.filter((p) => p.id !== id),
+      filteredProperties: get().filteredProperties.filter((p) => p.id !== id),
+    });
+  },
+
+  getSimilarProperties: async (property, limit = 6) => {
+    try {
+      // Similar = same city, same type, within ±30% price band, exclude self.
+      const min = Math.floor(property.price * 0.7);
+      const max = Math.ceil(property.price * 1.3);
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .neq('id', property.id)
+        .eq('city', property.city)
+        .eq('type', property.type)
+        .gte('price', min)
+        .lte('price', max)
+        .order('featured', { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data as Property[]) ?? [];
+    } catch (error) {
+      console.error('Error fetching similar properties:', error);
+      return [];
+    }
+  },
+
+  sort: 'relevance',
+  setSort: (order) => {
+    set({ sort: order });
+    const state = get();
+    // Re-apply the last filter set so the new order kicks in immediately.
+    get().filterProperties(state._lastFilters ?? {}, { query: state._lastQuery });
   },
 }));
