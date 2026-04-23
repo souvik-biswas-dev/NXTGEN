@@ -22,6 +22,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useRecentlyViewedStore } from '@/stores/recentlyViewedStore';
 import { useSearchStore } from '@/stores/searchStore';
+import { useNotificationsStore } from '@/stores/notificationsStore';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { Property, PropertyType } from '@/types';
 import { theme } from '@/constants/theme';
@@ -92,6 +93,7 @@ export default function HomeScreen() {
   const { fetchFavorites } = useFavoritesStore();
   const { recentItems, fetchRecentlyViewed } = useRecentlyViewedStore();
   const searchStore = useSearchStore();
+  const { unreadCount, fetch: fetchNotifications } = useNotificationsStore();
 
   const {
     getFeaturedProperties,
@@ -123,6 +125,7 @@ export default function HomeScreen() {
           if (user?.id && !propertiesLoaded) {
             promises.push(fetchFavorites());
             promises.push(fetchRecentlyViewed());
+            promises.push(fetchNotifications());
           }
           await Promise.all(promises);
         } catch (error) {
@@ -210,7 +213,39 @@ export default function HomeScreen() {
       label: 'My Listings',
       onPress: () => {
         setMenuVisible(false);
-        router.push('/(tabs)/post');
+        router.push('/my-listings' as any);
+      },
+    },
+    {
+      icon: 'git-compare-outline' as const,
+      label: 'Compare Properties',
+      onPress: () => {
+        setMenuVisible(false);
+        router.push('/compare' as any);
+      },
+    },
+    {
+      icon: 'bookmark-outline' as const,
+      label: 'Saved Searches',
+      onPress: () => {
+        setMenuVisible(false);
+        router.push('/saved-searches' as any);
+      },
+    },
+    {
+      icon: 'calendar-outline' as const,
+      label: 'Site Visits',
+      onPress: () => {
+        setMenuVisible(false);
+        router.push('/site-visits' as any);
+      },
+    },
+    {
+      icon: 'notifications-outline' as const,
+      label: 'Notifications',
+      onPress: () => {
+        setMenuVisible(false);
+        router.push('/notifications' as any);
       },
     },
     {
@@ -227,6 +262,30 @@ export default function HomeScreen() {
       onPress: () => {
         setMenuVisible(false);
         router.push('/tools/budget-calculator' as any);
+      },
+    },
+    {
+      icon: 'resize-outline' as const,
+      label: 'Area Converter',
+      onPress: () => {
+        setMenuVisible(false);
+        router.push('/tools/area-converter' as any);
+      },
+    },
+    {
+      icon: 'cash-outline' as const,
+      label: 'Home Loan Offers',
+      onPress: () => {
+        setMenuVisible(false);
+        router.push('/tools/home-loan' as any);
+      },
+    },
+    {
+      icon: 'pricetag-outline' as const,
+      label: 'Property Valuation',
+      onPress: () => {
+        setMenuVisible(false);
+        router.push('/tools/valuation' as any);
       },
     },
     {
@@ -369,6 +428,41 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               ))}
 
+              {user?.role === 'admin' && (
+                <TouchableOpacity
+                  onPress={() => {
+                    setMenuVisible(false);
+                    router.push('/admin' as any);
+                  }}
+                  style={[styles.drawerItem, { marginTop: 8 }]}
+                >
+                  <View
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: theme.roundness.full,
+                      backgroundColor: theme.colors.error + '22',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Ionicons name="shield-outline" size={22} color={theme.colors.error} />
+                  </View>
+                  <Text
+                    style={{
+                      color: theme.colors.error,
+                      fontSize: 16,
+                      fontWeight: '600',
+                      marginLeft: 16,
+                      flex: 1,
+                    }}
+                  >
+                    Admin Dashboard
+                  </Text>
+                  <Ionicons name="chevron-forward" size={18} color={theme.colors.outlineVariant} />
+                </TouchableOpacity>
+              )}
+
               {user && (
                 <TouchableOpacity
                   onPress={async () => {
@@ -443,6 +537,33 @@ export default function HomeScreen() {
               </Text>
               <Text style={styles.heroTagline}>Find a home that fits your life</Text>
             </View>
+            <TouchableOpacity
+              onPress={() => router.push('/notifications' as any)}
+              style={[styles.heroIconBtn, { marginRight: 8, position: 'relative' }]}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="notifications-outline" size={20} color="#fff" />
+              {unreadCount > 0 && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 4,
+                    right: 4,
+                    minWidth: 16,
+                    height: 16,
+                    paddingHorizontal: 4,
+                    borderRadius: 8,
+                    backgroundColor: theme.colors.primary,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
             <TouchableOpacity
               onPress={() => router.push('/(tabs)/profile')}
               style={styles.heroAvatar}
@@ -675,7 +796,12 @@ export default function HomeScreen() {
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {newLaunches.map((project) => (
-              <TouchableOpacity key={project.id} style={styles.launchCard}>
+              <TouchableOpacity
+                key={project.id}
+                style={styles.launchCard}
+                onPress={() => router.push(`/projects/${project.id}` as never)}
+                activeOpacity={0.85}
+              >
                 <Image
                   source={{ uri: project.image }}
                   className="w-full h-32"
