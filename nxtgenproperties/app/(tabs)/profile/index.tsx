@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import Constants from 'expo-constants';
 import { useAuthStore } from '@/stores/authStore';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
@@ -306,7 +307,7 @@ export default function ProfileScreen() {
               <MenuItem
                 icon="home-outline"
                 label="My Listings"
-                onPress={() => router.push('/(tabs)/post')}
+                onPress={() => router.push('/my-listings' as any)}
                 showBorder
               />
               <MenuItem
@@ -317,9 +318,9 @@ export default function ProfileScreen() {
                 showBorder
               />
               <MenuItem
-                icon="time-outline"
-                label="Recent Activity"
-                onPress={() => router.push('/(tabs)/search')}
+                icon="calendar-outline"
+                label="Site Visits"
+                onPress={() => router.push('/site-visits' as any)}
               />
             </View>
           </View>
@@ -339,19 +340,61 @@ export default function ProfileScreen() {
             <MenuItem
               icon="bookmark-outline"
               label="Saved Searches"
-              onPress={() => router.push('/(tabs)/search')}
+              onPress={() => router.push('/saved-searches' as any)}
               showBorder
             />
             <MenuItem
-              icon="eye-outline"
-              label="Recently Viewed"
-              onPress={() => router.push('/(tabs)/search')}
+              icon="git-compare-outline"
+              label="Compare Properties"
+              onPress={() => router.push('/compare' as any)}
+              showBorder
+            />
+            <MenuItem
+              icon="notifications-outline"
+              label="Notifications"
+              onPress={() => router.push('/notifications' as any)}
+              showBorder
+            />
+            <MenuItem
+              icon="calendar-outline"
+              label="Site Visits"
+              onPress={() => router.push('/site-visits' as any)}
               showBorder
             />
             <MenuItem
               icon="ribbon-outline"
               label="View Plans"
               onPress={() => router.push('/membership' as any)}
+            />
+          </View>
+        </View>
+
+        {/* Financial Tools */}
+        <View className="px-6 mt-6">
+          <Text className="text-gray-900 text-lg font-bold mb-3">Tools</Text>
+          <View className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <MenuItem
+              icon="calculator-outline"
+              label="EMI Calculator"
+              onPress={() => router.push('/tools/emi-calculator' as any)}
+              showBorder
+            />
+            <MenuItem
+              icon="wallet-outline"
+              label="Budget Calculator"
+              onPress={() => router.push('/tools/budget-calculator' as any)}
+              showBorder
+            />
+            <MenuItem
+              icon="resize-outline"
+              label="Area Converter"
+              onPress={() => router.push('/tools/area-converter' as any)}
+              showBorder
+            />
+            <MenuItem
+              icon="cash-outline"
+              label="Home Loan Offers"
+              onPress={() => router.push('/tools/home-loan' as any)}
             />
           </View>
         </View>
@@ -416,7 +459,11 @@ export default function ProfileScreen() {
               }
               showBorder
             />
-            <MenuItem icon="information-circle-outline" label="App Version" rightText="1.0.0" />
+            <MenuItem
+              icon="information-circle-outline"
+              label="App Version"
+              rightText={Constants.expoConfig?.version ?? '1.0.0'}
+            />
           </View>
         </View>
 

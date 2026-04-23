@@ -37,6 +37,21 @@ export default function RootLayout() {
         <Stack.Screen name="about/index" options={{ headerShown: false }} />
         <Stack.Screen name="broker-verification/index" options={{ headerShown: false }} />
         <Stack.Screen name="membership/checkout" options={{ headerShown: false }} />
+        <Stack.Screen name="projects/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="my-listings/index" options={{ headerShown: false }} />
+        <Stack.Screen name="my-listings/edit/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="my-listings/analytics/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="compare/index" options={{ headerShown: false }} />
+        <Stack.Screen name="saved-searches/index" options={{ headerShown: false }} />
+        <Stack.Screen name="notifications/index" options={{ headerShown: false }} />
+        <Stack.Screen name="site-visit/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="site-visits/index" options={{ headerShown: false }} />
+        <Stack.Screen name="report/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="reviews/locality" options={{ headerShown: false }} />
+        <Stack.Screen name="tools/area-converter" options={{ headerShown: false }} />
+        <Stack.Screen name="tools/home-loan" options={{ headerShown: false }} />
+        <Stack.Screen name="tools/valuation" options={{ headerShown: false }} />
+        <Stack.Screen name="admin/index" options={{ headerShown: false }} />
       </Stack>
     </>
   );

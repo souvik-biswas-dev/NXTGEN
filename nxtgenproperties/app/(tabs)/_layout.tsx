@@ -186,7 +186,6 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="favorite"
         options={{
-          href: null,
           tabBarIcon: ({ focused }) => (
             <Pill focused={focused} name="heart" outlineName="heart-outline" label="Saved" />
           ),
