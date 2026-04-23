@@ -76,7 +76,8 @@ export async function registerForPushNotifications({
 
     return token;
   } catch (err) {
-    console.warn('[push] getExpoPushTokenAsync failed:', err);
+    // FCM fails in dev builds without google-services.json — non-fatal in dev.
+    if (!__DEV__) console.warn('[push] getExpoPushTokenAsync failed:', err);
     return null;
   }
 }
