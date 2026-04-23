@@ -14,13 +14,14 @@ const PLAN_ORDER: SubscriptionPlan[] = ['free', 'silver', 'gold'];
 export default function MembershipScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { subscription, plans, loading, fetchSubscription, subscribe } = useSubscriptionStore();
+  const { subscription, plans, loading, fetchSubscription, fetchPlans, subscribe } = useSubscriptionStore();
 
   const currentPlan: SubscriptionPlan = subscription?.plan ?? 'free';
 
   useFocusEffect(
     useCallback(() => {
       fetchSubscription();
+      fetchPlans();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
   );

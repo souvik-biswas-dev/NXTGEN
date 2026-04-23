@@ -12,16 +12,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { Project } from '@/types';
 import { theme } from '@/constants/theme';
 
-interface Project {
-  id: string;
-  name: string;
-  developer: string;
-  location: string;
-  priceRange: string;
-  image: string;
-  launchDate: string;
+function formatPrice(price: number): string {
+  if (price >= 1_00_00_000) return `₹${(price / 1_00_00_000).toFixed(2)} Cr`;
+  if (price >= 1_00_000) return `₹${(price / 1_00_000).toFixed(1)} L`;
+  return `₹${price.toLocaleString('en-IN')}`;
 }
 
 export default function ProjectsScreen() {
@@ -33,13 +30,13 @@ export default function ProjectsScreen() {
   const fetchProjects = async () => {
     try {
       const { data, error } = await supabase
-        .from('platform_data')
-        .select('data')
-        .eq('key', 'new_launches')
-        .single();
+        .from('projects')
+        .select('*')
+        .order('featured', { ascending: false })
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setProjects(data?.data || []);
+      setProjects((data as Project[]) ?? []);
     } catch {
       setProjects([]);
     } finally {
@@ -52,14 +49,8 @@ export default function ProjectsScreen() {
     fetchProjects();
   }, []);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchProjects();
-  };
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.surface }} edges={['top']}>
-      {/* Header */}
       <View
         style={{
           flexDirection: 'row',
@@ -83,7 +74,6 @@ export default function ProjectsScreen() {
           <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
       ) : projects.length === 0 ? (
-        /* ── Coming Soon ── */
         <View
           style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}
         >
@@ -108,7 +98,7 @@ export default function ProjectsScreen() {
               marginBottom: 10,
             }}
           >
-            Projects Coming Soon
+            No projects yet
           </Text>
           <Text
             style={{
@@ -118,22 +108,8 @@ export default function ProjectsScreen() {
               lineHeight: 22,
             }}
           >
-            We're onboarding top developers. New project launches will appear here soon. Stay tuned!
+            New launches from top developers will appear here.
           </Text>
-          <TouchableOpacity
-            onPress={() => router.push('/(tabs)/search')}
-            style={{
-              marginTop: 28,
-              backgroundColor: theme.colors.primary,
-              paddingHorizontal: 28,
-              paddingVertical: 14,
-              borderRadius: theme.roundness.xl,
-            }}
-          >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
-              Browse All Properties
-            </Text>
-          </TouchableOpacity>
         </View>
       ) : (
         <ScrollView
@@ -142,30 +118,81 @@ export default function ProjectsScreen() {
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={onRefresh}
+              onRefresh={() => {
+                setRefreshing(true);
+                fetchProjects();
+              }}
               colors={[theme.colors.primary]}
               tintColor={theme.colors.primary}
             />
           }
         >
           {projects.map((project) => (
-            <View
+            <TouchableOpacity
               key={project.id}
+              onPress={() => router.push(`/projects/${project.id}` as never)}
+              activeOpacity={0.85}
               style={{
-                backgroundColor: '#FFFFFF',
+                backgroundColor: '#fff',
                 borderRadius: theme.roundness.lg,
                 overflow: 'hidden',
                 marginBottom: 16,
+                borderWidth: 1,
+                borderColor: theme.colors.outlineVariant,
               }}
             >
               <Image
-                source={{ uri: project.image }}
-                style={{ width: '100%', height: 180, backgroundColor: theme.colors.surfaceVariant }}
+                source={{ uri: project.cover_image || project.gallery?.[0] }}
+                style={{
+                  width: '100%',
+                  height: 180,
+                  backgroundColor: theme.colors.surfaceVariant,
+                }}
                 resizeMode="cover"
               />
+              {project.featured && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 12,
+                    left: 12,
+                    backgroundColor: theme.colors.gold,
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: theme.roundness.sm,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <Ionicons name="star" size={12} color="#1B2838" />
+                  <Text style={{ color: '#1B2838', fontSize: 11, fontWeight: '800' }}>
+                    FEATURED
+                  </Text>
+                </View>
+              )}
+              {project.verified && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 12,
+                    right: 12,
+                    backgroundColor: theme.colors.success,
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: theme.roundness.sm,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <Ionicons name="shield-checkmark" size={12} color="#fff" />
+                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>RERA</Text>
+                </View>
+              )}
               <View style={{ padding: 14 }}>
                 <Text
-                  style={{ fontSize: 16, fontWeight: '700', color: theme.colors.secondary }}
+                  style={{ fontSize: 17, fontWeight: '700', color: theme.colors.secondary }}
                   numberOfLines={1}
                 >
                   {project.name}
@@ -190,24 +217,28 @@ export default function ProjectsScreen() {
                     marginTop: 10,
                   }}
                 >
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: theme.colors.primary }}>
-                    {project.priceRange}
+                  <Text style={{ fontSize: 15, fontWeight: '800', color: theme.colors.primary }}>
+                    {project.price_min && project.price_max
+                      ? `${formatPrice(project.price_min)} – ${formatPrice(project.price_max)}`
+                      : 'Contact for price'}
                   </Text>
-                  <View
-                    style={{
-                      backgroundColor: '#D1FAE5',
-                      paddingHorizontal: 10,
-                      paddingVertical: 4,
-                      borderRadius: theme.roundness.sm,
-                    }}
-                  >
-                    <Text style={{ fontSize: 12, color: '#047857', fontWeight: '600' }}>
-                      {project.launchDate}
-                    </Text>
-                  </View>
+                  {project.launch_date && (
+                    <View
+                      style={{
+                        backgroundColor: '#D1FAE5',
+                        paddingHorizontal: 10,
+                        paddingVertical: 4,
+                        borderRadius: theme.roundness.sm,
+                      }}
+                    >
+                      <Text style={{ fontSize: 12, color: '#047857', fontWeight: '600' }}>
+                        {project.launch_date}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </ScrollView>
       )}
