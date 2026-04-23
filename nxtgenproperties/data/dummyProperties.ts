@@ -7,20 +7,20 @@ import { Property } from '@/types';
 export interface MarketTrend {
   city: string;
   trend: 'up' | 'down';
-  change: string;  // e.g. '+12.5%'
+  change: string; // e.g. '+12.5%'
   avgPrice: string; // avg price per sqft, e.g. '25,000'
   period: string;
 }
 
 export const marketTrends: MarketTrend[] = [
-  { city: 'Mumbai',    trend: 'up',   change: '+12.5%', avgPrice: '28,500', period: 'YoY' },
-  { city: 'Bangalore', trend: 'up',   change: '+15.2%', avgPrice: '22,000', period: 'YoY' },
-  { city: 'Delhi',     trend: 'up',   change: '+9.8%',  avgPrice: '18,500', period: 'YoY' },
-  { city: 'Hyderabad', trend: 'up',   change: '+18.3%', avgPrice: '16,000', period: 'YoY' },
-  { city: 'Chennai',   trend: 'up',   change: '+7.4%',  avgPrice: '12,500', period: 'YoY' },
-  { city: 'Pune',      trend: 'up',   change: '+11.1%', avgPrice: '14,000', period: 'YoY' },
-  { city: 'Kolkata',   trend: 'down', change: '-2.3%',  avgPrice: '9,500',  period: 'YoY' },
-  { city: 'Ahmedabad', trend: 'up',   change: '+6.9%',  avgPrice: '8,200',  period: 'YoY' },
+  { city: 'Mumbai', trend: 'up', change: '+12.5%', avgPrice: '28,500', period: 'YoY' },
+  { city: 'Bangalore', trend: 'up', change: '+15.2%', avgPrice: '22,000', period: 'YoY' },
+  { city: 'Delhi', trend: 'up', change: '+9.8%', avgPrice: '18,500', period: 'YoY' },
+  { city: 'Hyderabad', trend: 'up', change: '+18.3%', avgPrice: '16,000', period: 'YoY' },
+  { city: 'Chennai', trend: 'up', change: '+7.4%', avgPrice: '12,500', period: 'YoY' },
+  { city: 'Pune', trend: 'up', change: '+11.1%', avgPrice: '14,000', period: 'YoY' },
+  { city: 'Kolkata', trend: 'down', change: '-2.3%', avgPrice: '9,500', period: 'YoY' },
+  { city: 'Ahmedabad', trend: 'up', change: '+6.9%', avgPrice: '8,200', period: 'YoY' },
 ];
 
 // ─── Popular Cities ───────────────────────────────────────────────────────────
@@ -34,14 +34,14 @@ export interface PopularCity {
 }
 
 export const popularCities: PopularCity[] = [
-  { id: 'c1', name: 'Mumbai',    properties: 1240 },
-  { id: 'c2', name: 'Bangalore', properties: 980  },
-  { id: 'c3', name: 'Delhi',     properties: 860  },
-  { id: 'c4', name: 'Hyderabad', properties: 740  },
-  { id: 'c5', name: 'Chennai',   properties: 560  },
-  { id: 'c6', name: 'Pune',      properties: 620  },
-  { id: 'c7', name: 'Kolkata',   properties: 430  },
-  { id: 'c8', name: 'Ahmedabad', properties: 380  },
+  { id: 'c1', name: 'Mumbai', properties: 1240 },
+  { id: 'c2', name: 'Bangalore', properties: 980 },
+  { id: 'c3', name: 'Delhi', properties: 860 },
+  { id: 'c4', name: 'Hyderabad', properties: 740 },
+  { id: 'c5', name: 'Chennai', properties: 560 },
+  { id: 'c6', name: 'Pune', properties: 620 },
+  { id: 'c7', name: 'Kolkata', properties: 430 },
+  { id: 'c8', name: 'Ahmedabad', properties: 380 },
 ];
 
 // ─── Dummy Properties ─────────────────────────────────────────────────────────
