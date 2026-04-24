@@ -98,7 +98,7 @@ export default function InboxScreen() {
                       item.other_user?.avatar_url ||
                       'https://ui-avatars.com/api/?name=' +
                         (item.other_user?.name || 'User') +
-                        '&size=50&background=FF6B35&color=fff',
+                        '&size=50&background=0F766E&color=fff',
                   }}
                   className="w-12 h-12 rounded-full"
                 />

@@ -8,17 +8,17 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#FF6B35',
-        'primary-container': '#FFDBC9',
+        primary: '#0F766E',
+        'primary-container': '#CCFBF1',
         secondary: '#1B2838',
         'secondary-container': '#D5DDE7',
-        surface: '#FFFBFF',
-        'surface-variant': '#F5DED1',
-        'card-bg': '#FFF3EC',
-        outline: '#84746A',
-        'outline-variant': '#D7C3B8',
+        surface: '#FFFFFF',
+        'surface-variant': '#E0EDEA',
+        'card-bg': '#F4F7F6',
+        outline: '#64766F',
+        'outline-variant': '#CBD5D1',
         success: '#10B981',
-        gold: '#F59E0B',
+        gold: '#D4A24C',
         // Keep a neutral gray scale for utility classes that aren't in theme.ts.
         gray: {
           50: '#F8F9FA',

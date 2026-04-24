@@ -151,7 +151,7 @@ export default function ProfileScreen() {
         {/* Cover Photo with Gradient */}
         <View className="relative">
           <LinearGradient
-            colors={['#FF6B35', '#F7931E']}
+            colors={['#0F766E', '#D4A24C']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             className="h-40"
@@ -178,7 +178,7 @@ export default function ProfileScreen() {
                       user?.avatar_url ||
                       'https://ui-avatars.com/api/?name=' +
                         (user?.name || 'User') +
-                        '&size=200&background=FF6B35&color=fff',
+                        '&size=200&background=0F766E&color=fff',
                   }}
                   className="w-28 h-28 rounded-full shadow-md"
                   style={{
@@ -218,8 +218,8 @@ export default function ProfileScreen() {
 
               {/* Broker Verification Badge */}
               {user?.role === 'broker' && (
-                <View className="mt-2 flex-row items-center bg-orange-50 px-3 py-1.5 rounded-full">
-                  <Ionicons name="shield-checkmark" size={16} color="#FF6B35" />
+                <View className="mt-2 flex-row items-center bg-teal-50 px-3 py-1.5 rounded-full">
+                  <Ionicons name="shield-checkmark" size={16} color="#0F766E" />
                   <Text className="text-primary text-xs font-medium ml-1">Verified Broker</Text>
                 </View>
               )}
@@ -522,7 +522,7 @@ export default function ProfileScreen() {
                       user?.avatar_url ||
                       'https://ui-avatars.com/api/?name=' +
                         (user?.name || 'User') +
-                        '&size=200&background=FF6B35&color=fff',
+                        '&size=200&background=0F766E&color=fff',
                   }}
                   className="w-24 h-24 rounded-full"
                   style={{ borderWidth: 4, borderColor: theme.colors.primaryContainer }}

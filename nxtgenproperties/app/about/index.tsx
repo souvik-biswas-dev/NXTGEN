@@ -123,7 +123,7 @@ export default function AboutScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero banner */}
         <LinearGradient
-          colors={['#FF6B35', '#F7931E']}
+          colors={['#0F766E', '#D4A24C']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           className="mx-4 mt-5 rounded-3xl p-6 items-center"

@@ -166,7 +166,7 @@ export default function VerifyScreen() {
               className="rounded-2xl mx-6 p-5 items-center mb-6 border border-white/30"
               style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
             >
-              <ActivityIndicator size="large" color="#FF6B35" />
+              <ActivityIndicator size="large" color="#0F766E" />
               <Text className="text-white/90 mt-3 font-medium text-base">Verifying...</Text>
             </View>
           )}

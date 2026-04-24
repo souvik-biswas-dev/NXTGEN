@@ -101,7 +101,7 @@ export default function EMICalculatorScreen() {
           {/* Progress Bar */}
           <View className="h-6 bg-gray-100 rounded-full overflow-hidden flex-row mb-4">
             <View className="bg-primary h-full" style={{ width: `${principalPercent}%` }} />
-            <View className="bg-orange-400 h-full" style={{ width: `${interestPercent}%` }} />
+            <View className="bg-teal-500 h-full" style={{ width: `${interestPercent}%` }} />
           </View>
 
           <View className="flex-row justify-between">
@@ -118,7 +118,7 @@ export default function EMICalculatorScreen() {
 
           <View className="flex-row justify-between mt-2">
             <View className="flex-row items-center">
-              <View className="w-3 h-3 bg-orange-400 rounded-full mr-2" />
+              <View className="w-3 h-3 bg-teal-500 rounded-full mr-2" />
               <Text className="text-gray-600 text-sm">
                 Interest ({interestPercent.toFixed(0)}%)
               </Text>
@@ -133,7 +133,7 @@ export default function EMICalculatorScreen() {
         <View className="bg-white mx-5 mt-4 rounded-2xl p-5">
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-gray-900 text-base font-semibold">Loan Amount</Text>
-            <View className="bg-orange-50 px-3 py-1 rounded-lg">
+            <View className="bg-teal-50 px-3 py-1 rounded-lg">
               <Text className="text-primary font-bold">{formatCurrency(loanAmount)}</Text>
             </View>
           </View>
@@ -145,9 +145,9 @@ export default function EMICalculatorScreen() {
             step={100000}
             value={loanAmount}
             onValueChange={setLoanAmount}
-            minimumTrackTintColor="#FF6B35"
+            minimumTrackTintColor="#0F766E"
             maximumTrackTintColor="#E5E7EB"
-            thumbTintColor="#FF6B35"
+            thumbTintColor="#0F766E"
           />
 
           <View className="flex-row justify-between">
@@ -160,7 +160,7 @@ export default function EMICalculatorScreen() {
         <View className="bg-white mx-5 mt-4 rounded-2xl p-5">
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-gray-900 text-base font-semibold">Interest Rate (p.a.)</Text>
-            <View className="bg-orange-50 px-3 py-1 rounded-lg">
+            <View className="bg-teal-50 px-3 py-1 rounded-lg">
               <Text className="text-primary font-bold">{interestRate.toFixed(1)}%</Text>
             </View>
           </View>
@@ -172,9 +172,9 @@ export default function EMICalculatorScreen() {
             step={0.1}
             value={interestRate}
             onValueChange={setInterestRate}
-            minimumTrackTintColor="#FF6B35"
+            minimumTrackTintColor="#0F766E"
             maximumTrackTintColor="#E5E7EB"
-            thumbTintColor="#FF6B35"
+            thumbTintColor="#0F766E"
           />
 
           <View className="flex-row justify-between">
@@ -187,7 +187,7 @@ export default function EMICalculatorScreen() {
         <View className="bg-white mx-5 mt-4 rounded-2xl p-5 mb-6">
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-gray-900 text-base font-semibold">Loan Tenure</Text>
-            <View className="bg-orange-50 px-3 py-1 rounded-lg">
+            <View className="bg-teal-50 px-3 py-1 rounded-lg">
               <Text className="text-primary font-bold">{loanTenure} Years</Text>
             </View>
           </View>
@@ -199,9 +199,9 @@ export default function EMICalculatorScreen() {
             step={1}
             value={loanTenure}
             onValueChange={setLoanTenure}
-            minimumTrackTintColor="#FF6B35"
+            minimumTrackTintColor="#0F766E"
             maximumTrackTintColor="#E5E7EB"
-            thumbTintColor="#FF6B35"
+            thumbTintColor="#0F766E"
           />
 
           <View className="flex-row justify-between">
@@ -211,9 +211,9 @@ export default function EMICalculatorScreen() {
         </View>
 
         {/* Quick Tips */}
-        <View className="bg-orange-50 mx-5 rounded-2xl p-5 mb-6">
+        <View className="bg-teal-50 mx-5 rounded-2xl p-5 mb-6">
           <View className="flex-row items-center mb-3">
-            <Ionicons name="bulb" size={20} color="#FF6B35" />
+            <Ionicons name="bulb" size={20} color="#0F766E" />
             <Text className="text-gray-900 font-semibold ml-2">Tips to Reduce EMI</Text>
           </View>
           <View className="space-y-2">

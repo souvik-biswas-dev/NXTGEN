@@ -30,7 +30,7 @@ function formatMessageTime(dateStr: string) {
 function getAvatarUrl(name?: string, url?: string) {
   return (
     url ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&size=80&background=FF6B35&color=fff`
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&size=80&background=0F766E&color=fff`
   );
 }
 
@@ -199,7 +199,7 @@ export default function ChatRoomScreen() {
             <View
               className={`px-4 py-2.5 ${
                 isSender
-                  ? 'bg-[#FF6B35] rounded-2xl rounded-br-sm'
+                  ? 'bg-[#0F766E] rounded-2xl rounded-br-sm'
                   : 'bg-gray-100 rounded-2xl rounded-bl-sm'
               }`}
             >
@@ -232,7 +232,7 @@ export default function ChatRoomScreen() {
     return (
       <SafeAreaView className="flex-1 bg-gray-50">
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#FF6B35" />
+          <ActivityIndicator size="large" color="#0F766E" />
         </View>
       </SafeAreaView>
     );
@@ -278,7 +278,7 @@ export default function ChatRoomScreen() {
         {/* Property context card */}
         {property && (
           <TouchableOpacity
-            className="mx-4 mt-3 mb-1 p-3 bg-orange-50 border border-orange-100 rounded-xl flex-row items-center"
+            className="mx-4 mt-3 mb-1 p-3 bg-teal-50 border border-teal-100 rounded-xl flex-row items-center"
             activeOpacity={0.7}
             onPress={() => router.push(`/(tabs)/search/${property.id}` as any)}
           >
@@ -293,7 +293,7 @@ export default function ChatRoomScreen() {
                 {property.locality}, {property.city}
               </Text>
             </View>
-            <Text className="text-[#FF6B35] text-sm font-bold ml-2">
+            <Text className="text-[#0F766E] text-sm font-bold ml-2">
               {'\u20B9'}
               {formatPrice(property.price)}
               {property.type === 'rent' ? '/mo' : ''}
@@ -340,7 +340,7 @@ export default function ChatRoomScreen() {
             onPress={handleSendMessage}
             disabled={!messageText.trim() || isSending}
             className={`rounded-full p-3 items-center justify-center ${
-              messageText.trim() ? 'bg-[#FF6B35]' : 'bg-gray-200'
+              messageText.trim() ? 'bg-[#0F766E]' : 'bg-gray-200'
             }`}
           >
             {isSending ? (

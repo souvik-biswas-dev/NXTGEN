@@ -53,7 +53,7 @@ export default function ShortlistScreen() {
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-background items-center justify-center">
-        <ActivityIndicator size="large" color="#FF6B35" />
+        <ActivityIndicator size="large" color="#0F766E" />
       </SafeAreaView>
     );
   }

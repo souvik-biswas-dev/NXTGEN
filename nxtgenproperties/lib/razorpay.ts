@@ -78,7 +78,7 @@ export function buildCheckoutHtml(opts: {
     name: "NxtGen Properties",
     description: "${safe(description)}",
     prefill: { name: "${safe(userName)}", email: "${safe(userEmail)}", contact: "${safe(userPhone)}" },
-    theme: { color: "#FF6B35" },
+    theme: { color: "#0F766E" },
     handler: function (res) {
       window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'success', payload: res }));
     },

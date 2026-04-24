@@ -100,7 +100,7 @@ export default function MembershipScreen() {
       return (
         <View
           key={planDef.plan}
-          className="rounded-2xl p-5 mb-4 bg-orange-50 border border-orange-200"
+          className="rounded-2xl p-5 mb-4 bg-teal-50 border border-teal-200"
         >
           <PlanContent
             planDef={planDef}
@@ -160,10 +160,10 @@ export default function MembershipScreen() {
         {user && (
           <View className="items-center mb-5">
             <View className="flex-row items-center bg-white rounded-full px-4 py-2 shadow-sm">
-              <Ionicons name="shield-checkmark" size={18} color="#FF6B35" />
+              <Ionicons name="shield-checkmark" size={18} color="#0F766E" />
               <Text className="ml-2 text-sm font-semibold text-gray-700">
                 Current Plan:{' '}
-                <Text className="text-[#FF6B35]">
+                <Text className="text-[#0F766E]">
                   {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}
                 </Text>
               </Text>
@@ -204,10 +204,10 @@ function PlanContent({
   const nameColor = isLight ? 'text-white' : 'text-gray-900';
   const priceColor = isLight ? 'text-white' : 'text-gray-900';
   const featureColor = isLight ? 'text-white/90' : 'text-gray-600';
-  const checkColor = isLight ? '#ffffff' : '#FF6B35';
+  const checkColor = isLight ? '#ffffff' : '#0F766E';
 
   const buttonBg =
-    variant === 'gold' ? 'bg-white' : variant === 'silver' ? 'bg-[#FF6B35]' : 'bg-gray-800';
+    variant === 'gold' ? 'bg-white' : variant === 'silver' ? 'bg-[#0F766E]' : 'bg-gray-800';
 
   const buttonText =
     variant === 'gold' ? 'text-amber-600' : variant === 'silver' ? 'text-white' : 'text-white';
@@ -230,7 +230,7 @@ function PlanContent({
 
         {isCurrent && (
           <View className="bg-white/20 rounded-full px-3 py-1">
-            <Text className={`text-xs font-semibold ${isLight ? 'text-white' : 'text-[#FF6B35]'}`}>
+            <Text className={`text-xs font-semibold ${isLight ? 'text-white' : 'text-[#0F766E]'}`}>
               ACTIVE
             </Text>
           </View>

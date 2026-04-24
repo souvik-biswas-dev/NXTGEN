@@ -383,7 +383,7 @@ const BasicInfoStep: React.FC<{
             key={type}
             onPress={() => updateFormData('type', type)}
             className={`flex-1 py-4 rounded-xl mr-2 border-2 ${
-              formData.type === type ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
+              formData.type === type ? 'border-primary bg-teal-50' : 'border-gray-200 bg-white'
             }`}
           >
             <Text
@@ -408,7 +408,7 @@ const BasicInfoStep: React.FC<{
             onPress={() => updateFormData('category', category)}
             className={`flex-1 py-4 rounded-xl mr-2 border-2 ${
               formData.category === category
-                ? 'border-primary bg-orange-50'
+                ? 'border-primary bg-teal-50'
                 : 'border-gray-200 bg-white'
             }`}
           >
@@ -467,7 +467,7 @@ const PropertyDetailsStep: React.FC<{
             key={bhk}
             onPress={() => updateFormData('bhk', bhk)}
             className={`px-5 py-3 rounded-xl mr-2 mb-2 border-2 ${
-              formData.bhk === bhk ? 'border-primary bg-orange-50' : 'border-gray-200 bg-white'
+              formData.bhk === bhk ? 'border-primary bg-teal-50' : 'border-gray-200 bg-white'
             }`}
           >
             <Text
@@ -490,7 +490,7 @@ const PropertyDetailsStep: React.FC<{
             onPress={() => updateFormData('furnishing', furnishing)}
             className={`px-5 py-3 rounded-xl mr-2 mb-2 border-2 ${
               formData.furnishing === furnishing
-                ? 'border-primary bg-orange-50'
+                ? 'border-primary bg-teal-50'
                 : 'border-gray-200 bg-white'
             }`}
           >
@@ -600,7 +600,7 @@ const PropertyDetailsStep: React.FC<{
             onPress={() => updateFormData('possession', possession)}
             className={`flex-1 py-4 rounded-xl mr-2 border-2 ${
               formData.possession === possession
-                ? 'border-primary bg-orange-50'
+                ? 'border-primary bg-teal-50'
                 : 'border-gray-200 bg-white'
             }`}
           >
@@ -635,7 +635,7 @@ const LocationStep: React.FC<{
               onPress={() => updateFormData('city', city.name)}
               className={`px-5 py-3 rounded-xl mr-2 mb-2 border-2 ${
                 formData.city === city.name
-                  ? 'border-primary bg-orange-50'
+                  ? 'border-primary bg-teal-50'
                   : 'border-gray-200 bg-white'
               }`}
             >
@@ -660,7 +660,7 @@ const LocationStep: React.FC<{
                 onPress={() => updateFormData('locality', locality)}
                 className={`px-5 py-3 rounded-xl mr-2 mb-2 border-2 ${
                   formData.locality === locality
-                    ? 'border-primary bg-orange-50'
+                    ? 'border-primary bg-teal-50'
                     : 'border-gray-200 bg-white'
                 }`}
               >
@@ -726,14 +726,14 @@ const AmenitiesStep: React.FC<{
             onPress={() => toggleAmenity(amenity)}
             className={`px-4 py-3 rounded-xl mr-2 mb-3 border-2 flex-row items-center ${
               formData.amenities.includes(amenity)
-                ? 'border-primary bg-orange-50'
+                ? 'border-primary bg-teal-50'
                 : 'border-gray-200 bg-white'
             }`}
           >
             <Ionicons
               name={formData.amenities.includes(amenity) ? 'checkbox' : 'square-outline'}
               size={18}
-              color={formData.amenities.includes(amenity) ? '#FF6B35' : '#999'}
+              color={formData.amenities.includes(amenity) ? '#0F766E' : '#999'}
             />
             <Text
               className={`ml-2 font-medium ${
@@ -746,9 +746,9 @@ const AmenitiesStep: React.FC<{
         ))}
       </View>
 
-      <View className="mt-4 p-4 bg-orange-50 rounded-xl flex-row items-center">
-        <Ionicons name="information-circle" size={20} color="#FF6B35" />
-        <Text className="text-orange-800 text-sm ml-2 flex-1">
+      <View className="mt-4 p-4 bg-teal-50 rounded-xl flex-row items-center">
+        <Ionicons name="information-circle" size={20} color="#0F766E" />
+        <Text className="text-teal-800 text-sm ml-2 flex-1">
           Properties with more amenities get 2x more views
         </Text>
       </View>
@@ -833,8 +833,8 @@ const PhotosStep: React.FC<{
         className="bg-white border-2 border-dashed border-gray-300 rounded-2xl h-48 items-center justify-center mb-6"
       >
         <View className="items-center">
-          <View className="w-16 h-16 bg-orange-50 rounded-full items-center justify-center mb-3">
-            <Ionicons name={loading ? 'hourglass' : 'camera'} size={28} color="#FF6B35" />
+          <View className="w-16 h-16 bg-teal-50 rounded-full items-center justify-center mb-3">
+            <Ionicons name={loading ? 'hourglass' : 'camera'} size={28} color="#0F766E" />
           </View>
           <Text className="text-gray-900 font-semibold">
             {loading ? 'Loading...' : 'Upload Photos'}
@@ -967,7 +967,7 @@ const PricingStep: React.FC<{
     </TouchableOpacity>
 
     {/* Summary Card */}
-    <LinearGradient colors={['#FF6B35', '#0F1923']} className="rounded-2xl p-5">
+    <LinearGradient colors={['#0F766E', '#0F1923']} className="rounded-2xl p-5">
       <Text className="text-white/80 text-sm mb-2">Property Summary</Text>
       <Text className="text-white text-2xl font-bold mb-4">
         {formData.title || 'Your Property'}

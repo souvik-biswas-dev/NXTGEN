@@ -76,7 +76,7 @@ export default function PropertyDetailScreen() {
   if (loading || !property) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#FF6B35" />
+        <ActivityIndicator size="large" color="#0F766E" />
       </View>
     );
   }
@@ -206,8 +206,10 @@ export default function PropertyDetailScreen() {
             </View>
           </View>
 
-          {/* Badges */}
-          <View className="absolute bottom-4 left-4 flex-row">
+          {/* Badges — placed above the price rail so they stay visible. */}
+          <View
+            style={{ position: 'absolute', bottom: 56, left: 16, flexDirection: 'row' }}
+          >
             {property.featured && (
               <View className="bg-yellow-400 px-3 py-1 rounded-full mr-2">
                 <Text className="text-xs font-bold">FEATURED</Text>
@@ -262,7 +264,7 @@ export default function PropertyDetailScreen() {
             </View>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
-            <Ionicons name="location" size={14} color="#FF6B35" />
+            <Ionicons name="location" size={14} color="#0F766E" />
             <Text
               style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, marginLeft: 4 }}
               numberOfLines={1}
@@ -291,10 +293,10 @@ export default function PropertyDetailScreen() {
                 flex: 1,
                 alignItems: 'center',
                 paddingVertical: 10,
-                backgroundColor: '#FFF3EC',
+                backgroundColor: '#F4F7F6',
                 borderRadius: 14,
                 borderWidth: 1,
-                borderColor: '#D7C3B8',
+                borderColor: '#CBD5D1',
               }}
             >
               <View
@@ -308,10 +310,10 @@ export default function PropertyDetailScreen() {
                   marginBottom: 4,
                 }}
               >
-                <Ionicons name={s.icon} size={16} color="#FF6B35" />
+                <Ionicons name={s.icon} size={16} color="#0F766E" />
               </View>
               <Text style={{ color: '#1B2838', fontWeight: '800', fontSize: 14 }}>{s.value}</Text>
-              <Text style={{ color: '#84746A', fontSize: 10, fontWeight: '600' }}>{s.label}</Text>
+              <Text style={{ color: '#64766F', fontSize: 10, fontWeight: '600' }}>{s.label}</Text>
             </View>
           ))}
         </View>
@@ -321,7 +323,7 @@ export default function PropertyDetailScreen() {
           style={{
             flexDirection: 'row',
             marginHorizontal: 20,
-            backgroundColor: '#F5DED1',
+            backgroundColor: '#E0EDEA',
             padding: 4,
             borderRadius: 14,
             marginBottom: 8,
@@ -347,7 +349,7 @@ export default function PropertyDetailScreen() {
                     fontSize: 13,
                     fontWeight: '700',
                     textTransform: 'capitalize',
-                    color: active ? '#fff' : '#84746A',
+                    color: active ? '#fff' : '#64766F',
                   }}
                 >
                   {tab}
@@ -384,8 +386,8 @@ export default function PropertyDetailScreen() {
               <Text className="text-gray-900 text-lg font-bold mb-3">Property Highlights</Text>
               <View className="flex-row flex-wrap">
                 <View className="w-1/2 flex-row items-center mb-3">
-                  <View className="w-8 h-8 bg-orange-50 rounded-lg items-center justify-center mr-2">
-                    <Ionicons name="home-outline" size={16} color="#FF6B35" />
+                  <View className="w-8 h-8 bg-teal-50 rounded-lg items-center justify-center mr-2">
+                    <Ionicons name="home-outline" size={16} color="#0F766E" />
                   </View>
                   <View>
                     <Text className="text-gray-500 text-xs">Property Type</Text>
@@ -395,8 +397,8 @@ export default function PropertyDetailScreen() {
                   </View>
                 </View>
                 <View className="w-1/2 flex-row items-center mb-3">
-                  <View className="w-8 h-8 bg-orange-50 rounded-lg items-center justify-center mr-2">
-                    <Ionicons name="layers-outline" size={16} color="#FF6B35" />
+                  <View className="w-8 h-8 bg-teal-50 rounded-lg items-center justify-center mr-2">
+                    <Ionicons name="layers-outline" size={16} color="#0F766E" />
                   </View>
                   <View>
                     <Text className="text-gray-500 text-xs">Floor</Text>
@@ -406,8 +408,8 @@ export default function PropertyDetailScreen() {
                   </View>
                 </View>
                 <View className="w-1/2 flex-row items-center mb-3">
-                  <View className="w-8 h-8 bg-orange-50 rounded-lg items-center justify-center mr-2">
-                    <Ionicons name="compass-outline" size={16} color="#FF6B35" />
+                  <View className="w-8 h-8 bg-teal-50 rounded-lg items-center justify-center mr-2">
+                    <Ionicons name="compass-outline" size={16} color="#0F766E" />
                   </View>
                   <View>
                     <Text className="text-gray-500 text-xs">Facing</Text>
@@ -417,8 +419,8 @@ export default function PropertyDetailScreen() {
                   </View>
                 </View>
                 <View className="w-1/2 flex-row items-center mb-3">
-                  <View className="w-8 h-8 bg-orange-50 rounded-lg items-center justify-center mr-2">
-                    <Ionicons name="construct-outline" size={16} color="#FF6B35" />
+                  <View className="w-8 h-8 bg-teal-50 rounded-lg items-center justify-center mr-2">
+                    <Ionicons name="construct-outline" size={16} color="#0F766E" />
                   </View>
                   <View>
                     <Text className="text-gray-500 text-xs">Furnishing</Text>
@@ -428,8 +430,8 @@ export default function PropertyDetailScreen() {
                   </View>
                 </View>
                 <View className="w-1/2 flex-row items-center mb-3">
-                  <View className="w-8 h-8 bg-orange-50 rounded-lg items-center justify-center mr-2">
-                    <Ionicons name="calendar-outline" size={16} color="#FF6B35" />
+                  <View className="w-8 h-8 bg-teal-50 rounded-lg items-center justify-center mr-2">
+                    <Ionicons name="calendar-outline" size={16} color="#0F766E" />
                   </View>
                   <View>
                     <Text className="text-gray-500 text-xs">Possession</Text>
@@ -439,8 +441,8 @@ export default function PropertyDetailScreen() {
                   </View>
                 </View>
                 <View className="w-1/2 flex-row items-center mb-3">
-                  <View className="w-8 h-8 bg-orange-50 rounded-lg items-center justify-center mr-2">
-                    <Ionicons name="time-outline" size={16} color="#FF6B35" />
+                  <View className="w-8 h-8 bg-teal-50 rounded-lg items-center justify-center mr-2">
+                    <Ionicons name="time-outline" size={16} color="#0F766E" />
                   </View>
                   <View>
                     <Text className="text-gray-500 text-xs">Property Age</Text>
@@ -524,7 +526,7 @@ export default function PropertyDetailScreen() {
             <View className="bg-gray-50 rounded-xl p-4">
               <Text className="text-gray-700 font-semibold mb-3">Location</Text>
               <View className="flex-row items-start">
-                <Ionicons name="location" size={20} color="#FF6B35" />
+                <Ionicons name="location" size={20} color="#0F766E" />
                 <Text className="text-gray-700 ml-2 flex-1">
                   {property.address || `${property.locality}, ${property.city}`}
                 </Text>
@@ -542,7 +544,7 @@ export default function PropertyDetailScreen() {
                   source={{
                     uri:
                       contact.avatar_url ||
-                      `https://ui-avatars.com/api/?name=${contact.name}&size=100&background=FF6B35&color=fff`,
+                      `https://ui-avatars.com/api/?name=${contact.name}&size=100&background=0F766E&color=fff`,
                   }}
                   className="w-14 h-14 rounded-full"
                 />
@@ -602,7 +604,7 @@ export default function PropertyDetailScreen() {
               }}
               activeOpacity={0.85}
             >
-              <Ionicons name="calendar" size={16} color="#FF6B35" />
+              <Ionicons name="calendar" size={16} color="#0F766E" />
               <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Site visit</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -615,7 +617,7 @@ export default function PropertyDetailScreen() {
               }}
               style={{
                 flex: 1,
-                backgroundColor: compare.has(property.id) ? '#FF6B35' : '#FFF3EC',
+                backgroundColor: compare.has(property.id) ? '#0F766E' : '#F4F7F6',
                 paddingVertical: 12,
                 borderRadius: 14,
                 flexDirection: 'row',
@@ -623,18 +625,18 @@ export default function PropertyDetailScreen() {
                 justifyContent: 'center',
                 gap: 6,
                 borderWidth: 1,
-                borderColor: '#FF6B35',
+                borderColor: '#0F766E',
               }}
               activeOpacity={0.85}
             >
               <Ionicons
                 name="git-compare"
                 size={16}
-                color={compare.has(property.id) ? '#fff' : '#FF6B35'}
+                color={compare.has(property.id) ? '#fff' : '#0F766E'}
               />
               <Text
                 style={{
-                  color: compare.has(property.id) ? '#fff' : '#FF6B35',
+                  color: compare.has(property.id) ? '#fff' : '#0F766E',
                   fontWeight: '700',
                   fontSize: 13,
                 }}
@@ -653,7 +655,7 @@ export default function PropertyDetailScreen() {
               }
               style={{
                 flex: 1,
-                backgroundColor: '#FFF3EC',
+                backgroundColor: '#F4F7F6',
                 paddingVertical: 12,
                 borderRadius: 14,
                 flexDirection: 'row',
@@ -661,7 +663,7 @@ export default function PropertyDetailScreen() {
                 justifyContent: 'center',
                 gap: 6,
                 borderWidth: 1,
-                borderColor: '#D7C3B8',
+                borderColor: '#CBD5D1',
               }}
               activeOpacity={0.85}
             >
@@ -674,7 +676,7 @@ export default function PropertyDetailScreen() {
               onPress={() => router.push(`/report/${property.id}` as never)}
               style={{
                 flex: 1,
-                backgroundColor: '#FFF3EC',
+                backgroundColor: '#F4F7F6',
                 paddingVertical: 12,
                 borderRadius: 14,
                 flexDirection: 'row',
@@ -682,7 +684,7 @@ export default function PropertyDetailScreen() {
                 justifyContent: 'center',
                 gap: 6,
                 borderWidth: 1,
-                borderColor: '#D7C3B8',
+                borderColor: '#CBD5D1',
               }}
               activeOpacity={0.85}
             >
@@ -737,7 +739,7 @@ export default function PropertyDetailScreen() {
           className="mx-5 mb-4"
         >
           <LinearGradient
-            colors={['#FF6B35', '#0F1923']}
+            colors={['#0F766E', '#0F1923']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             className="rounded-2xl p-4 flex-row items-center justify-between"
@@ -776,13 +778,13 @@ export default function PropertyDetailScreen() {
           paddingBottom: 16,
           backgroundColor: '#FFFBFF',
           borderTopWidth: 1,
-          borderTopColor: '#D7C3B8',
+          borderTopColor: '#CBD5D1',
         }}
       >
         <View
           style={{
             flexDirection: 'row',
-            backgroundColor: '#FFF3EC',
+            backgroundColor: '#F4F7F6',
             borderRadius: 32,
             padding: 6,
             gap: 6,
@@ -798,14 +800,14 @@ export default function PropertyDetailScreen() {
               alignItems: 'center',
               justifyContent: 'center',
               borderWidth: 1,
-              borderColor: '#D7C3B8',
+              borderColor: '#CBD5D1',
             }}
             activeOpacity={0.7}
           >
             <Ionicons
               name={isLiked ? 'heart' : 'heart-outline'}
               size={22}
-              color={isLiked ? '#FF6B35' : '#1B2838'}
+              color={isLiked ? '#0F766E' : '#1B2838'}
             />
           </TouchableOpacity>
           <TouchableOpacity
@@ -814,7 +816,7 @@ export default function PropertyDetailScreen() {
               flex: 1,
               height: 48,
               borderRadius: 24,
-              backgroundColor: '#FF6B35',
+              backgroundColor: '#0F766E',
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
@@ -838,7 +840,7 @@ export default function PropertyDetailScreen() {
             }}
             activeOpacity={0.85}
           >
-            <Ionicons name="mail-outline" size={20} color="#FF6B35" />
+            <Ionicons name="mail-outline" size={20} color="#0F766E" />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleWhatsApp}
@@ -883,7 +885,7 @@ export default function PropertyDetailScreen() {
                 <Ionicons name="close" size={24} color="#1B2838" />
               </TouchableOpacity>
             </View>
-            <Text style={{ color: '#84746A', fontSize: 13, marginBottom: 12 }}>
+            <Text style={{ color: '#64766F', fontSize: 13, marginBottom: 12 }}>
               Your message will be sent directly to the {contact?.role ?? 'owner'}.
             </Text>
             <TextInput
@@ -894,7 +896,7 @@ export default function PropertyDetailScreen() {
               placeholder={`Hi, I'm interested in ${property?.title ?? 'this property'}. Please share more details.`}
               placeholderTextColor="#B0A09A"
               style={{
-                backgroundColor: '#F5DED1',
+                backgroundColor: '#E0EDEA',
                 borderRadius: 14,
                 padding: 14,
                 minHeight: 110,
@@ -908,7 +910,7 @@ export default function PropertyDetailScreen() {
               onPress={handleSendInquiry}
               disabled={sendingInquiry}
               style={{
-                backgroundColor: '#FF6B35',
+                backgroundColor: '#0F766E',
                 borderRadius: 24,
                 paddingVertical: 14,
                 alignItems: 'center',

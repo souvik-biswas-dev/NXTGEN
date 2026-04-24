@@ -229,7 +229,7 @@ export default function InsightsScreen() {
             {[65, 72, 68, 78, 82, 75, 85, 88, 92, 95, 90, 98].map((value, index) => (
               <View key={index} className="items-center flex-1 mx-0.5">
                 <LinearGradient
-                  colors={['#FF6B35', '#FF8C5A']}
+                  colors={['#0F766E', '#14B8A6']}
                   className="w-full rounded-t-sm"
                   style={{ height: value * 1.2 }}
                 />
@@ -285,7 +285,7 @@ export default function InsightsScreen() {
           {/* Stats */}
           <View className="flex-row flex-wrap">
             <View className="w-1/2 p-2">
-              <View className="bg-orange-50 rounded-xl p-3">
+              <View className="bg-teal-50 rounded-xl p-3">
                 <Text className="text-primary text-lg font-bold">₹{avgPrices.apartment}L</Text>
                 <Text className="text-gray-600 text-sm">Avg. Apartment Price</Text>
                 <View className="flex-row items-center mt-1">
@@ -311,8 +311,8 @@ export default function InsightsScreen() {
               </View>
             </View>
             <View className="w-1/2 p-2">
-              <View className="bg-orange-50 rounded-xl p-3">
-                <Text className="text-orange-600 text-lg font-bold">18 Days</Text>
+              <View className="bg-teal-50 rounded-xl p-3">
+                <Text className="text-teal-700 text-lg font-bold">18 Days</Text>
                 <Text className="text-gray-600 text-sm">Avg. Time to Sell</Text>
               </View>
             </View>
@@ -333,7 +333,7 @@ export default function InsightsScreen() {
               }`}
             >
               <View className="flex-row items-center">
-                <View className="w-8 h-8 bg-orange-100 rounded-full items-center justify-center">
+                <View className="w-8 h-8 bg-teal-100 rounded-full items-center justify-center">
                   <Text className="text-primary font-bold">{index + 1}</Text>
                 </View>
                 <View className="ml-3">
@@ -408,7 +408,7 @@ export default function InsightsScreen() {
       <View className="px-4 mt-6 mb-8">
         <Text className="text-lg font-bold text-gray-900 mb-4">Investment Tips</Text>
 
-        <View className="bg-gradient-to-br from-primary to-orange-600 rounded-2xl p-5">
+        <View className="bg-gradient-to-br from-primary to-teal-700 rounded-2xl p-5">
           <View className="flex-row items-start mb-4">
             <View className="bg-white/20 rounded-full p-2">
               <Ionicons name="bulb" size={24} color="white" />
