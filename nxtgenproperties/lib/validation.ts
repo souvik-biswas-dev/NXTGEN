@@ -14,11 +14,17 @@ const plainText = (min: number, max: number, field = 'Field') =>
     .max(max, `${field} must be at most ${max} characters`)
     .regex(/^[^\u0000-\u001F\u007F<>]+$/u, `${field} contains invalid characters`);
 
-// Indian mobile format. Accepts +91 prefix or bare 10 digits starting 6-9.
+// Indian mobile format. Accepts +91 prefix (with optional spaces / dashes) or
+// bare 10 digits starting 6-9. We normalise by stripping all non-digits before
+// matching so values stored as "+91 89188 18386" still pass.
 export const phoneSchema = z
   .string()
   .trim()
-  .regex(/^(\+91)?[6-9]\d{9}$/, 'Enter a valid Indian mobile number');
+  .transform((v) => v.replace(/[\s-]/g, ''))
+  .refine((v) => {
+    const digits = v.replace(/^\+?91/, '');
+    return /^[6-9]\d{9}$/.test(digits);
+  }, 'Enter a valid Indian mobile number');
 
 export const emailSchema = z
   .string()

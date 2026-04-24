@@ -15,16 +15,13 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
-import { loginSchema, phoneSchema, firstError } from '@/lib/validation';
+import { phoneSchema, firstError } from '@/lib/validation';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [emailLoading, setEmailLoading] = useState(false);
 
   const handlePhoneAuth = async () => {
     // Accept 10-digit national or +91-prefixed. Normalise to E.164 for Supabase.
@@ -52,33 +49,6 @@ export default function LoginScreen() {
       Alert.alert('Error', error instanceof Error ? error.message : 'Something went wrong');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleEmailLogin = async () => {
-    const parsed = loginSchema.safeParse({ email, password });
-    if (!parsed.success) {
-      Alert.alert('Check your details', firstError(parsed.error));
-      return;
-    }
-
-    setEmailLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: parsed.data.email,
-        password: parsed.data.password,
-      });
-
-      if (error) throw error;
-
-      router.replace('/(tabs)');
-    } catch (error) {
-      Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Email login failed. Please try again.'
-      );
-    } finally {
-      setEmailLoading(false);
     }
   };
 
@@ -134,7 +104,7 @@ export default function LoginScreen() {
             {/* Welcome Text */}
             <View className="mb-8">
               <Text className="text-white text-3xl font-bold mb-2">Welcome back</Text>
-              <Text className="text-white/80 text-base">Login your account</Text>
+              <Text className="text-white/80 text-base">Login to your account</Text>
             </View>
 
             {/* Phone Input - India Only */}
@@ -160,7 +130,7 @@ export default function LoginScreen() {
             <TouchableOpacity
               onPress={handlePhoneAuth}
               disabled={loading}
-              className="bg-primary rounded-2xl py-4 items-center mb-4"
+              className="bg-primary rounded-2xl py-4 items-center mb-3"
               activeOpacity={0.8}
             >
               {loading ? (
@@ -170,55 +140,26 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
-            <Text className="text-white/80 text-center mb-6">We'll send otp for verification</Text>
+            <Text className="text-white/80 text-center mb-6">We'll send an OTP for verification</Text>
 
-            {/* Email/password login */}
-            <View className="mb-6">
-              <Text className="text-white/80 text-center mb-3">Or log in with email</Text>
-              <View className="bg-white/90 rounded-2xl px-4 py-4 mb-3">
-                <TextInput
-                  placeholder="Email"
-                  placeholderTextColor="#9CA3AF"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  className="text-gray-900 text-base"
-                />
-              </View>
-              <View className="bg-white/90 rounded-2xl px-4 py-4 mb-3">
-                <TextInput
-                  placeholder="Password"
-                  placeholderTextColor="#9CA3AF"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  className="text-gray-900 text-base"
-                />
-              </View>
-              <TouchableOpacity
-                onPress={handleEmailLogin}
-                disabled={emailLoading}
-                className="bg-primary rounded-2xl py-4 items-center"
-                activeOpacity={0.8}
-              >
-                {emailLoading ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <Text className="text-white text-lg font-semibold">Log in with Email</Text>
-                )}
-              </TouchableOpacity>
+            {/* Divider */}
+            <View className="flex-row items-center mb-6">
+              <View className="flex-1 h-px bg-white/30" />
+              <Text className="text-white/70 mx-3 text-sm">or</Text>
+              <View className="flex-1 h-px bg-white/30" />
             </View>
 
-            {/* Social Login */}
+            {/* Sign in with Email */}
             <TouchableOpacity
-              className="bg-blue-600 rounded-2xl py-4 flex-row items-center justify-center mb-4"
+              onPress={() => router.push('/(auth)/email-login' as never)}
+              className="bg-white/15 border border-white/40 rounded-2xl py-4 flex-row items-center justify-center mb-4"
               activeOpacity={0.8}
             >
-              <Ionicons name="logo-facebook" size={24} color="white" />
-              <Text className="text-white text-base font-semibold ml-3">Log in with Facebook</Text>
+              <Ionicons name="mail-outline" size={22} color="white" />
+              <Text className="text-white text-base font-semibold ml-3">Sign in with Email</Text>
             </TouchableOpacity>
 
+            {/* Google */}
             <TouchableOpacity
               onPress={handleGoogleLogin}
               disabled={googleLoading}
@@ -231,7 +172,7 @@ export default function LoginScreen() {
                 <>
                   <Ionicons name="logo-google" size={24} color="#EA4335" />
                   <Text className="text-gray-900 text-base font-semibold ml-3">
-                    Log in with Google
+                    Continue with Google
                   </Text>
                 </>
               )}
