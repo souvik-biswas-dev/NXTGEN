@@ -1,12 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -56,7 +49,15 @@ export default function ValuationScreen() {
   const [amenities, setAmenities] = useState<string[]>([]);
   const [showResult, setShowResult] = useState(false);
 
-  const AMENITY_OPTIONS = ['Parking', 'Gym', 'Swimming Pool', 'Security', 'Lift', 'Power Backup', 'Garden'];
+  const AMENITY_OPTIONS = [
+    'Parking',
+    'Gym',
+    'Swimming Pool',
+    'Security',
+    'Lift',
+    'Power Backup',
+    'Garden',
+  ];
 
   const toggleAmenity = (a: string) =>
     setAmenities((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]));
@@ -82,7 +83,8 @@ export default function ValuationScreen() {
     const condMul = CONDITION_MULTIPLIER[condition];
     const posMul = POSSESSION_MULTIPLIER[possession];
 
-    const estimatedPrice = areaNum * baseRate * floorPremium * ageFactor * amenityPremium * condMul * posMul;
+    const estimatedPrice =
+      areaNum * baseRate * floorPremium * ageFactor * amenityPremium * condMul * posMul;
     const low = estimatedPrice * 0.9;
     const high = estimatedPrice * 1.1;
     const pricePerSqft = estimatedPrice / areaNum;
@@ -181,7 +183,13 @@ export default function ValuationScreen() {
               onPress={() => setCondition(c)}
               style={[styles.chip, condition === c && styles.chipActive]}
             >
-              <Text style={[styles.chipText, condition === c && styles.chipTextActive, { textTransform: 'capitalize' }]}>
+              <Text
+                style={[
+                  styles.chipText,
+                  condition === c && styles.chipTextActive,
+                  { textTransform: 'capitalize' },
+                ]}
+              >
                 {c}
               </Text>
             </TouchableOpacity>
@@ -197,7 +205,13 @@ export default function ValuationScreen() {
               onPress={() => setPossession(p)}
               style={[styles.chip, possession === p && styles.chipActive, { flex: 1 }]}
             >
-              <Text style={[styles.chipText, possession === p && styles.chipTextActive, { textAlign: 'center' }]}>
+              <Text
+                style={[
+                  styles.chipText,
+                  possession === p && styles.chipTextActive,
+                  { textAlign: 'center' },
+                ]}
+              >
                 {p === 'ready' ? 'Ready to Move' : 'Under Construction'}
               </Text>
             </TouchableOpacity>
@@ -234,9 +248,7 @@ export default function ValuationScreen() {
             marginBottom: 20,
           }}
         >
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
-            Estimate Value
-          </Text>
+          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Estimate Value</Text>
         </TouchableOpacity>
 
         {/* Result */}
@@ -285,7 +297,14 @@ export default function ValuationScreen() {
                 </Text>
               </View>
             </View>
-            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 12, textAlign: 'center' }}>
+            <Text
+              style={{
+                color: 'rgba(255,255,255,0.5)',
+                fontSize: 11,
+                marginTop: 12,
+                textAlign: 'center',
+              }}
+            >
               * This is an indicative estimate based on market averages. Actual price may vary.
             </Text>
           </View>

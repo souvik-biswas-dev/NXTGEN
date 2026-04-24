@@ -230,7 +230,9 @@ export default function PropertyAnalyticsScreen() {
                         width: '100%',
                         height: Math.max(barHeight, 2),
                         borderRadius: 3,
-                        backgroundColor: isToday ? theme.colors.primary : theme.colors.primaryContainer,
+                        backgroundColor: isToday
+                          ? theme.colors.primary
+                          : theme.colors.primaryContainer,
                       }}
                     />
                   </View>
@@ -278,14 +280,19 @@ export default function PropertyAnalyticsScreen() {
               return (
                 <View key={row.label} style={{ marginBottom: 12 }}>
                   <View
-                    style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      marginBottom: 4,
+                    }}
                   >
                     <Text style={{ color: theme.colors.secondary, fontSize: 13 }}>{row.label}</Text>
                     <Text style={{ color: row.color, fontWeight: '700', fontSize: 13 }}>
                       {row.value}
                       {i > 0 && (
                         <Text style={{ color: theme.colors.outline, fontWeight: '400' }}>
-                          {' '}({pct}%)
+                          {' '}
+                          ({pct}%)
                         </Text>
                       )}
                     </Text>
@@ -321,7 +328,12 @@ export default function PropertyAnalyticsScreen() {
             }}
           >
             <Text
-              style={{ fontWeight: '700', color: theme.colors.secondary, marginBottom: 8, fontSize: 13 }}
+              style={{
+                fontWeight: '700',
+                color: theme.colors.secondary,
+                marginBottom: 8,
+                fontSize: 13,
+              }}
             >
               Tips to get more leads
             </Text>
@@ -338,7 +350,9 @@ export default function PropertyAnalyticsScreen() {
                   color={theme.colors.primary}
                   style={{ marginRight: 8, marginTop: 1 }}
                 />
-                <Text style={{ color: theme.colors.outline, fontSize: 12, flex: 1, lineHeight: 18 }}>
+                <Text
+                  style={{ color: theme.colors.outline, fontSize: 12, flex: 1, lineHeight: 18 }}
+                >
                   {tip}
                 </Text>
               </View>

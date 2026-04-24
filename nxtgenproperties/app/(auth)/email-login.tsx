@@ -148,9 +148,7 @@ export default function EmailLoginScreen() {
               className="py-3 items-center"
               activeOpacity={0.8}
             >
-              <Text className="text-white/90 text-sm">
-                Use phone number instead
-              </Text>
+              <Text className="text-white/90 text-sm">Use phone number instead</Text>
             </TouchableOpacity>
 
             {/* Register link */}

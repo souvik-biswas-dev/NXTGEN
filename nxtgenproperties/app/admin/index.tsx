@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -70,37 +70,6 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Gate: only admins can access this screen
-  if (user?.role !== 'admin') {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.surface }}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
-          <Ionicons name="lock-closed-outline" size={56} color={theme.colors.outlineVariant} />
-          <Text
-            style={{ color: theme.colors.secondary, fontSize: 18, fontWeight: '700', marginTop: 16 }}
-          >
-            Access Denied
-          </Text>
-          <Text style={{ color: theme.colors.outline, marginTop: 8, textAlign: 'center' }}>
-            This area is restricted to administrators only.
-          </Text>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={{
-              marginTop: 20,
-              backgroundColor: theme.colors.primary,
-              paddingHorizontal: 24,
-              paddingVertical: 12,
-              borderRadius: theme.roundness.xl,
-            }}
-          >
-            <Text style={{ color: '#fff', fontWeight: '700' }}>Go Back</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   const fetchAll = useCallback(async () => {
     try {
       const [propRes, userRes, reportRes, projRes] = await Promise.all([
@@ -119,9 +88,7 @@ export default function AdminDashboard() {
           .select('id, reason, status, created_at, property_id')
           .order('created_at', { ascending: false })
           .limit(50),
-        supabase
-          .from('projects')
-          .select('id', { count: 'exact', head: true }),
+        supabase.from('projects').select('id', { count: 'exact', head: true }),
       ]);
 
       const props = (propRes.data ?? []) as PropertyRow[];
@@ -153,6 +120,42 @@ export default function AdminDashboard() {
     }, [fetchAll])
   );
 
+  // Gate: only admins can access this screen
+  if (user?.role !== 'admin') {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.surface }}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+          <Ionicons name="lock-closed-outline" size={56} color={theme.colors.outlineVariant} />
+          <Text
+            style={{
+              color: theme.colors.secondary,
+              fontSize: 18,
+              fontWeight: '700',
+              marginTop: 16,
+            }}
+          >
+            Access Denied
+          </Text>
+          <Text style={{ color: theme.colors.outline, marginTop: 8, textAlign: 'center' }}>
+            This area is restricted to administrators only.
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{
+              marginTop: 20,
+              backgroundColor: theme.colors.primary,
+              paddingHorizontal: 24,
+              paddingVertical: 12,
+              borderRadius: theme.roundness.xl,
+            }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700' }}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   const verifyProperty = async (id: string, verified: boolean) => {
     const { error } = await supabase.from('properties').update({ verified }).eq('id', id);
     if (error) {
@@ -176,7 +179,10 @@ export default function AdminDashboard() {
       .from('property_reports')
       .update({ status: 'resolved' })
       .eq('id', id);
-    if (error) { Alert.alert('Error', error.message); return; }
+    if (error) {
+      Alert.alert('Error', error.message);
+      return;
+    }
     setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status: 'resolved' } : r)));
   };
 
@@ -185,7 +191,10 @@ export default function AdminDashboard() {
       .from('property_reports')
       .update({ status: 'dismissed' })
       .eq('id', id);
-    if (error) { Alert.alert('Error', error.message); return; }
+    if (error) {
+      Alert.alert('Error', error.message);
+      return;
+    }
     setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status: 'dismissed' } : r)));
   };
 
@@ -259,8 +268,7 @@ export default function AdminDashboard() {
               alignItems: 'center',
               paddingVertical: 8,
               borderRadius: theme.roundness.md,
-              backgroundColor:
-                activeTab === t.id ? theme.colors.primary : 'transparent',
+              backgroundColor: activeTab === t.id ? theme.colors.primary : 'transparent',
             }}
           >
             <Ionicons
@@ -293,7 +301,10 @@ export default function AdminDashboard() {
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={() => { setRefreshing(true); fetchAll(); }}
+              onRefresh={() => {
+                setRefreshing(true);
+                fetchAll();
+              }}
               colors={[theme.colors.primary]}
               tintColor={theme.colors.primary}
             />
@@ -303,11 +314,36 @@ export default function AdminDashboard() {
           {activeTab === 'overview' && stats && (
             <>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                <StatCard label="Total Listings" value={stats.totalProperties} icon="home-outline" color="#3B82F6" />
-                <StatCard label="Pending Review" value={stats.pendingProperties} icon="time-outline" color={theme.colors.gold} />
-                <StatCard label="Total Users" value={stats.totalUsers} icon="people-outline" color="#8B5CF6" />
-                <StatCard label="Open Reports" value={stats.openReports} icon="flag-outline" color={theme.colors.error} />
-                <StatCard label="Projects" value={stats.totalProjects} icon="business-outline" color="#10B981" />
+                <StatCard
+                  label="Total Listings"
+                  value={stats.totalProperties}
+                  icon="home-outline"
+                  color="#3B82F6"
+                />
+                <StatCard
+                  label="Pending Review"
+                  value={stats.pendingProperties}
+                  icon="time-outline"
+                  color={theme.colors.gold}
+                />
+                <StatCard
+                  label="Total Users"
+                  value={stats.totalUsers}
+                  icon="people-outline"
+                  color="#8B5CF6"
+                />
+                <StatCard
+                  label="Open Reports"
+                  value={stats.openReports}
+                  icon="flag-outline"
+                  color={theme.colors.error}
+                />
+                <StatCard
+                  label="Projects"
+                  value={stats.totalProjects}
+                  icon="business-outline"
+                  color="#10B981"
+                />
               </View>
 
               {/* Recent pending listings */}
@@ -373,7 +409,11 @@ export default function AdminDashboard() {
           {/* ---- LISTINGS ---- */}
           {activeTab === 'listings' && (
             <>
-              <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search listings…" />
+              <SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search listings…"
+              />
               {filteredProperties.map((p) => (
                 <ListingAdminRow
                   key={p.id}
@@ -404,7 +444,11 @@ export default function AdminDashboard() {
           {/* ---- USERS ---- */}
           {activeTab === 'users' && (
             <>
-              <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search users…" />
+              <SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search users…"
+              />
               {filteredUsers.map((u) => (
                 <UserAdminRow key={u.id} user={u} />
               ))}
@@ -482,7 +526,10 @@ function ListingAdminRow({
       }}
     >
       <TouchableOpacity onPress={onView}>
-        <Text style={{ fontWeight: '700', color: theme.colors.secondary, fontSize: 14 }} numberOfLines={1}>
+        <Text
+          style={{ fontWeight: '700', color: theme.colors.secondary, fontSize: 14 }}
+          numberOfLines={1}
+        >
           {property.title}
         </Text>
         <Text style={{ color: theme.colors.outline, fontSize: 12, marginTop: 2 }}>
@@ -567,7 +614,14 @@ function ReportAdminRow({
       }}
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={{ fontWeight: '700', color: theme.colors.secondary, fontSize: 13, textTransform: 'capitalize' }}>
+        <Text
+          style={{
+            fontWeight: '700',
+            color: theme.colors.secondary,
+            fontSize: 13,
+            textTransform: 'capitalize',
+          }}
+        >
           {report.reason.replace(/_/g, ' ')}
         </Text>
         <View

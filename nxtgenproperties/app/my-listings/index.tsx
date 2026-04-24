@@ -260,7 +260,12 @@ function ListingRow({
       >
         <ActionBtn icon="eye-outline" label="View" onPress={onView} />
         <View style={{ width: 1, backgroundColor: theme.colors.outlineVariant }} />
-        <ActionBtn icon="bar-chart-outline" label="Analytics" onPress={onAnalytics} color={theme.colors.primary} />
+        <ActionBtn
+          icon="bar-chart-outline"
+          label="Analytics"
+          onPress={onAnalytics}
+          color={theme.colors.primary}
+        />
         <View style={{ width: 1, backgroundColor: theme.colors.outlineVariant }} />
         <ActionBtn icon="pencil-outline" label="Edit" onPress={onEdit} />
         <View style={{ width: 1, backgroundColor: theme.colors.outlineVariant }} />

@@ -140,7 +140,9 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
-            <Text className="text-white/80 text-center mb-6">We'll send an OTP for verification</Text>
+            <Text className="text-white/80 text-center mb-6">
+              We'll send an OTP for verification
+            </Text>
 
             {/* Divider */}
             <View className="flex-row items-center mb-6">

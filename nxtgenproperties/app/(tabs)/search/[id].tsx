@@ -65,10 +65,13 @@ export default function PropertyDetailScreen() {
     if (property?.id) {
       addToRecentlyViewed(property.id);
       // Record view for seller analytics (fire-and-forget)
-      supabase.from('property_views').insert({
-        property_id: property.id,
-        viewer_id: user?.user_id ?? null,
-      }).then(() => {});
+      supabase
+        .from('property_views')
+        .insert({
+          property_id: property.id,
+          viewer_id: user?.user_id ?? null,
+        })
+        .then(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [property?.id]);
@@ -207,9 +210,7 @@ export default function PropertyDetailScreen() {
           </View>
 
           {/* Badges — placed above the price rail so they stay visible. */}
-          <View
-            style={{ position: 'absolute', bottom: 56, left: 16, flexDirection: 'row' }}
-          >
+          <View style={{ position: 'absolute', bottom: 56, left: 16, flexDirection: 'row' }}>
             {property.featured && (
               <View className="bg-yellow-400 px-3 py-1 rounded-full mr-2">
                 <Text className="text-xs font-bold">FEATURED</Text>
@@ -860,7 +861,12 @@ export default function PropertyDetailScreen() {
       </View>
 
       {/* Inquiry Modal */}
-      <Modal visible={showInquiry} animationType="slide" transparent presentationStyle="overFullScreen">
+      <Modal
+        visible={showInquiry}
+        animationType="slide"
+        transparent
+        presentationStyle="overFullScreen"
+      >
         <View
           style={{
             flex: 1,

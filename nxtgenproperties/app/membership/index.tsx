@@ -14,7 +14,8 @@ const PLAN_ORDER: SubscriptionPlan[] = ['free', 'silver', 'gold'];
 export default function MembershipScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { subscription, plans, loading, fetchSubscription, fetchPlans, subscribe } = useSubscriptionStore();
+  const { subscription, plans, loading, fetchSubscription, fetchPlans, subscribe } =
+    useSubscriptionStore();
 
   const currentPlan: SubscriptionPlan = subscription?.plan ?? 'free';
 
@@ -98,10 +99,7 @@ export default function MembershipScreen() {
 
     if (planDef.plan === 'silver') {
       return (
-        <View
-          key={planDef.plan}
-          className="rounded-2xl p-5 mb-4 bg-teal-50 border border-teal-200"
-        >
+        <View key={planDef.plan} className="rounded-2xl p-5 mb-4 bg-teal-50 border border-teal-200">
           <PlanContent
             planDef={planDef}
             isCurrent={isCurrent}

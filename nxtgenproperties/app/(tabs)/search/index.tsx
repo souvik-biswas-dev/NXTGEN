@@ -18,7 +18,14 @@ import { usePropertiesStore } from '@/stores/propertiesStore';
 import { useSearchStore } from '@/stores/searchStore';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { BHKType, FurnishingType, FacingType, PropertyType, PropertyCategory, SortOrder } from '@/types';
+import {
+  BHKType,
+  FurnishingType,
+  FacingType,
+  PropertyType,
+  PropertyCategory,
+  SortOrder,
+} from '@/types';
 import { theme } from '@/constants/theme';
 
 const TAB_BOTTOM = theme.tabBarHeight + 16;
@@ -963,7 +970,16 @@ export default function SearchScreen() {
               </Text>
               <View className="flex-row flex-wrap">
                 {(
-                  ['north', 'south', 'east', 'west', 'north-east', 'north-west', 'south-east', 'south-west'] as FacingType[]
+                  [
+                    'north',
+                    'south',
+                    'east',
+                    'west',
+                    'north-east',
+                    'north-west',
+                    'south-east',
+                    'south-west',
+                  ] as FacingType[]
                 ).map((dir) => (
                   <TouchableOpacity
                     key={dir}
