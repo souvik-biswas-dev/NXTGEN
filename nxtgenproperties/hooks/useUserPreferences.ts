@@ -146,16 +146,22 @@ export const useUserPreferences = () => {
         }
       }
 
+      // Upsert so the write succeeds even if the user_preferences row was
+      // never created (or got deleted). An `.update().eq()` with no matching
+      // row would error with PGRST116 ("0 rows") under `.single()`.
       const { data, error } = await supabase
         .from('user_preferences')
-        .update({
-          search_history: updatedHistory,
-          preferred_cities: updatedPreferences.preferred_cities,
-          preferred_types: updatedPreferences.preferred_types,
-          preferred_categories: updatedPreferences.preferred_categories,
-          last_search_at: new Date().toISOString(),
-        })
-        .eq('user_id', user.id)
+        .upsert(
+          {
+            user_id: user.id,
+            search_history: updatedHistory,
+            preferred_cities: updatedPreferences.preferred_cities,
+            preferred_types: updatedPreferences.preferred_types,
+            preferred_categories: updatedPreferences.preferred_categories,
+            last_search_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' }
+        )
         .select()
         .single();
 
