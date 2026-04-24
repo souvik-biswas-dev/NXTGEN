@@ -6,9 +6,9 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   Platform,
 } from 'react-native';
+import { AppDialog } from '@/components/AppDialog';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -37,6 +37,13 @@ export default function SiteVisitScreen() {
   const [dateIdx, setDateIdx] = useState(0);
   const [slot, setSlot] = useState<string>(SLOTS[1]);
 
+  const [dialog, setDialog] = useState<{
+    variant: 'success' | 'error' | 'info' | 'warning';
+    title: string;
+    message?: string;
+    onClose?: () => void;
+  } | null>(null);
+
   // Next 7 dates, starting tomorrow.
   const dates = Array.from({ length: 7 }).map((_, i) => addDays(new Date(), i + 1));
 
@@ -51,11 +58,19 @@ export default function SiteVisitScreen() {
 
   const handleSubmit = async () => {
     if (!user) {
-      Alert.alert('Sign in required', 'Please sign in to request a site visit.');
+      setDialog({
+        variant: 'warning',
+        title: 'Sign in required',
+        message: 'Please sign in to request a site visit.',
+      });
       return;
     }
     if (!name.trim() || !phone.trim()) {
-      Alert.alert('Missing info', 'Name and phone are required.');
+      setDialog({
+        variant: 'warning',
+        title: 'Missing info',
+        message: 'Name and phone are required.',
+      });
       return;
     }
     if (!property) return;
@@ -91,13 +106,18 @@ export default function SiteVisitScreen() {
         });
       }
 
-      Alert.alert(
-        'Request sent',
-        'We have notified the owner. You will receive a confirmation shortly.',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      setDialog({
+        variant: 'success',
+        title: 'Request sent',
+        message: 'We have notified the owner. You will receive a confirmation shortly.',
+        onClose: () => router.back(),
+      });
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Could not send request');
+      setDialog({
+        variant: 'error',
+        title: 'Could not send request',
+        message: err instanceof Error ? err.message : 'Please try again in a moment.',
+      });
     } finally {
       setSubmitting(false);
     }
@@ -276,6 +296,18 @@ export default function SiteVisitScreen() {
           )}
         </TouchableOpacity>
       </ScrollView>
+
+      <AppDialog
+        visible={!!dialog}
+        variant={dialog?.variant ?? 'info'}
+        title={dialog?.title ?? ''}
+        message={dialog?.message}
+        onDismiss={() => {
+          const onClose = dialog?.onClose;
+          setDialog(null);
+          onClose?.();
+        }}
+      />
     </SafeAreaView>
   );
 }
