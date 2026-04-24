@@ -96,7 +96,10 @@ export default function SearchScreen() {
     ownerOnly: searchStore.ownerOnly || false,
   });
 
-  // Sync localFilters from store on every focus (e.g. when navigating from home with pre-set filters)
+  // Sync localFilters AND the text query from the store on every focus. The
+  // home screen pushes a query into propertiesStore.searchQuery before
+  // navigating here; without this hydration the TextInput starts empty and no
+  // search runs.
   useFocusEffect(
     React.useCallback(() => {
       const s = useSearchStore.getState();
@@ -115,8 +118,14 @@ export default function SearchScreen() {
         ownerOnly: s.ownerOnly || false,
       };
       setLocalFilters(synced);
+
+      const incomingQuery = usePropertiesStore.getState().searchQuery;
+      if (incomingQuery) {
+        setSearchQuery(incomingQuery);
+      }
+
       // Apply filters immediately so the results list updates
-      usePropertiesStore.getState().filterProperties(synced);
+      usePropertiesStore.getState().filterProperties(synced, { query: incomingQuery });
     }, [])
   );
 
@@ -125,13 +134,19 @@ export default function SearchScreen() {
 
   useEffect(() => {
     updateSearch(debouncedQuery);
-    // Only query the server if either a text query or an active filter is set;
-    // otherwise the empty-state screen is shown.
     const hasText = debouncedQuery.trim().length > 0;
     const hasFilter = Object.values(localFilters).some(
       (v) => v !== undefined && v !== false && !(Array.isArray(v) && v.length === 0)
     );
-    if (!hasText && !hasFilter) return;
+    if (!hasText && !hasFilter) {
+      // Clearing the query with no active filters — reset filtered results so
+      // the empty-state screen isn't showing stale results underneath.
+      usePropertiesStore.getState().filterProperties({});
+      return;
+    }
+    // Always re-filter on query change, including when the user clears the
+    // text with filters still active (previously we early-returned and left
+    // stale results on screen).
     usePropertiesStore.getState().filterProperties(localFilters, { query: debouncedQuery });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedQuery]);
