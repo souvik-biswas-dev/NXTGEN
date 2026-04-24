@@ -213,7 +213,10 @@ export default function TabsLayout() {
         }}
       />
       {/* Hide non-tab routes */}
-      <Tabs.Screen name="search/[id]" options={{ href: null }} />
+      <Tabs.Screen
+        name="search/[id]"
+        options={{ href: null, tabBarStyle: { display: 'none' } }}
+      />
     </Tabs>
   );
 }

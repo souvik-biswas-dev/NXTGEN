@@ -111,7 +111,7 @@ const PropertyCardInner: React.FC<PropertyCardProps> = ({ property, variant = 'd
             Using a negative top-margin on the body would clip the tag under
             `overflow: hidden`, so we render it as an absolute overlay with a
             per-variant top offset matched to the image height. */}
-      <View style={[styles.priceTag, { top: (isFeatured ? 200 : 150) - 18 }]} pointerEvents="none">
+      <View style={[styles.priceTag, { top: (isFeatured ? 200 : 150) - 14 }]} pointerEvents="none">
         <Text style={styles.priceText}>{formatPrice(property.price)}</Text>
         {isRent && <Text style={styles.priceUnit}>/mo</Text>}
       </View>
@@ -257,29 +257,30 @@ const styles = StyleSheet.create({
   },
   featuredRibbon: {
     position: 'absolute',
-    bottom: 10,
-    left: 10,
+    bottom: 8,
+    left: 8,
     backgroundColor: theme.colors.gold,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
     flexDirection: 'row',
     alignItems: 'center',
+    maxWidth: '55%',
   },
   featuredRibbonText: {
     color: '#1B2838',
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '800',
     marginLeft: 3,
-    letterSpacing: 0.6,
+    letterSpacing: 0.4,
   },
   priceTag: {
     position: 'absolute',
-    right: 12,
+    right: 10,
     backgroundColor: theme.colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 14,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'baseline',
     shadowColor: theme.colors.primary,
@@ -291,7 +292,7 @@ const styles = StyleSheet.create({
   },
   priceText: {
     color: '#fff',
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.2,
   },

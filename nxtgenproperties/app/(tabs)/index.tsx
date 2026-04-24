@@ -1108,7 +1108,7 @@ const styles = StyleSheet.create({
   hero: {
     backgroundColor: theme.colors.secondary,
     paddingTop: 16,
-    paddingBottom: 40,
+    paddingBottom: 72,
     paddingHorizontal: 20,
     // Only the bottom-right corner is rounded — deliberately asymmetric.
     borderBottomLeftRadius: 0,
@@ -1118,6 +1118,7 @@ const styles = StyleSheet.create({
   heroTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 16,
   },
   heroIconBtn: {
     width: 40,
