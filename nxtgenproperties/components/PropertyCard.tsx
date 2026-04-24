@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useCompareStore } from '@/stores/compareStore';
-import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 interface PropertyCardProps {
   property: Property;
@@ -29,6 +29,8 @@ interface PropertyCardProps {
 
 const PropertyCardInner: React.FC<PropertyCardProps> = ({ property, variant = 'default' }) => {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => makeStyles(colors), [colors]);
   const { isFavorite, toggleFavorite } = useFavoritesStore();
   const { has: hasCompare, toggle: toggleCompare } = useCompareStore();
   const isLiked = isFavorite(property.id);
@@ -85,17 +87,17 @@ const PropertyCardInner: React.FC<PropertyCardProps> = ({ property, variant = 'd
           <Ionicons
             name={isLiked ? 'heart' : 'heart-outline'}
             size={18}
-            color={isLiked ? theme.colors.primary : '#1B2838'}
+            color={isLiked ? colors.primary : colors.secondary}
           />
         </Pressable>
 
         {/* Compare toggle — sits just below the favorite button */}
         <Pressable
           onPress={handleCompare}
-          style={[styles.compareBtn, inCompare && { backgroundColor: theme.colors.primary }]}
+          style={[styles.compareBtn, inCompare && { backgroundColor: colors.primary }]}
           hitSlop={8}
         >
-          <Ionicons name="git-compare" size={14} color={inCompare ? '#fff' : '#1B2838'} />
+          <Ionicons name="git-compare" size={14} color={inCompare ? '#fff' : colors.secondary} />
         </Pressable>
 
         {/* Featured gold ribbon (corner) */}
@@ -123,7 +125,7 @@ const PropertyCardInner: React.FC<PropertyCardProps> = ({ property, variant = 'd
         </Text>
 
         <View style={styles.localityChip}>
-          <Ionicons name="location" size={11} color={theme.colors.primary} />
+          <Ionicons name="location" size={11} color={colors.primary} />
           <Text style={styles.localityText} numberOfLines={1}>
             {property.locality}, {property.city}
           </Text>
@@ -131,13 +133,37 @@ const PropertyCardInner: React.FC<PropertyCardProps> = ({ property, variant = 'd
 
         {/* Info pills — compact two-column grid on default, row on featured */}
         <View style={[styles.pillsRow, !isFeatured && { flexWrap: 'wrap' }]}>
-          <InfoPill icon="bed-outline" label={`${property.bedrooms}`} suffix="BHK" />
-          <InfoPill icon="resize-outline" label={`${property.area_sqft}`} suffix="sqft" />
+          <InfoPill
+            icon="bed-outline"
+            label={`${property.bedrooms}`}
+            suffix="BHK"
+            styles={styles}
+            iconColor={colors.primary}
+          />
+          <InfoPill
+            icon="resize-outline"
+            label={`${property.area_sqft}`}
+            suffix="sqft"
+            styles={styles}
+            iconColor={colors.primary}
+          />
           {isFeatured && (
-            <InfoPill icon="water-outline" label={`${property.bathrooms}`} suffix="Bath" />
+            <InfoPill
+              icon="water-outline"
+              label={`${property.bathrooms}`}
+              suffix="Bath"
+              styles={styles}
+              iconColor={colors.primary}
+            />
           )}
           {isFeatured && (
-            <InfoPill icon="car-outline" label={`${property.parkings}`} suffix="Park" />
+            <InfoPill
+              icon="car-outline"
+              label={`${property.parkings}`}
+              suffix="Park"
+              styles={styles}
+              iconColor={colors.primary}
+            />
           )}
         </View>
       </View>
@@ -151,14 +177,18 @@ function InfoPill({
   icon,
   label,
   suffix,
+  styles,
+  iconColor,
 }: {
   icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
   suffix: string;
+  styles: ReturnType<typeof makeStyles>;
+  iconColor: string;
 }) {
   return (
     <View style={styles.pill}>
-      <Ionicons name={icon} size={11} color={theme.colors.primary} />
+      <Ionicons name={icon} size={11} color={iconColor} />
       <Text style={styles.pillValue}>{label}</Text>
       <Text style={styles.pillSuffix}>{suffix}</Text>
     </View>
@@ -168,193 +198,196 @@ function InfoPill({
 const CORNER_LG = 22;
 const CORNER_SM = 6;
 
-const styles = StyleSheet.create({
-  card: {
-    // Asymmetric radii: signature shape.
-    borderTopLeftRadius: CORNER_LG,
-    borderTopRightRadius: CORNER_SM,
-    borderBottomLeftRadius: CORNER_SM,
-    borderBottomRightRadius: CORNER_LG,
-    backgroundColor: theme.colors.surface,
-    overflow: 'visible',
-    marginBottom: 16,
-    shadowColor: '#1B2838',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 14,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: theme.colors.outlineVariant,
-  },
-  cardDefault: {
-    width: '48%' as any,
-  },
-  cardFeatured: {
-    width: '100%',
-  },
-  imageWrap: {
-    borderTopLeftRadius: CORNER_LG,
-    borderTopRightRadius: CORNER_SM,
-    overflow: 'hidden',
-    backgroundColor: theme.colors.surfaceVariant,
-    position: 'relative',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  verifiedStrap: {
-    position: 'absolute',
-    top: 10,
-    left: 0,
-    backgroundColor: theme.colors.secondary,
-    paddingLeft: 8,
-    paddingRight: 10,
-    paddingVertical: 3,
-    borderTopRightRadius: 10,
-    borderBottomRightRadius: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  verifiedText: {
-    color: '#fff',
-    fontSize: 9,
-    fontWeight: '800',
-    marginLeft: 3,
-    letterSpacing: 0.5,
-  },
-  favoriteBtn: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255, 251, 255, 0.95)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  compareBtn: {
-    position: 'absolute',
-    top: 50,
-    right: 10,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255, 251, 255, 0.95)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  featuredRibbon: {
-    position: 'absolute',
-    bottom: 8,
-    left: 8,
-    backgroundColor: theme.colors.gold,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    maxWidth: '55%',
-  },
-  featuredRibbonText: {
-    color: '#1B2838',
-    fontSize: 8,
-    fontWeight: '800',
-    marginLeft: 3,
-    letterSpacing: 0.4,
-  },
-  priceTag: {
-    position: 'absolute',
-    right: 10,
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 10,
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-    zIndex: 10,
-  },
-  priceText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.2,
-  },
-  priceUnit: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 10,
-    fontWeight: '600',
-    marginLeft: 2,
-  },
-  body: {
-    paddingHorizontal: 12,
-    paddingTop: 18,
-    paddingBottom: 12,
-  },
-  title: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: theme.colors.secondary,
-    marginBottom: 6,
-    lineHeight: 18,
-  },
-  localityChip: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.primaryContainer,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    marginBottom: 8,
-    maxWidth: '100%',
-  },
-  localityText: {
-    color: theme.colors.secondary,
-    fontSize: 10.5,
-    fontWeight: '600',
-    marginLeft: 3,
-  },
-  pillsRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginTop: 2,
-  },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surfaceVariant,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-    gap: 2,
-  },
-  pillValue: {
-    color: theme.colors.secondary,
-    fontSize: 10.5,
-    fontWeight: '700',
-    marginLeft: 2,
-  },
-  pillSuffix: {
-    color: theme.colors.outline,
-    fontSize: 9,
-    fontWeight: '600',
-    marginLeft: 1,
-  },
-});
+type PaletteColors = ReturnType<typeof useTheme>['colors'];
+
+const makeStyles = (colors: PaletteColors) =>
+  StyleSheet.create({
+    card: {
+      // Asymmetric radii: signature shape.
+      borderTopLeftRadius: CORNER_LG,
+      borderTopRightRadius: CORNER_SM,
+      borderBottomLeftRadius: CORNER_SM,
+      borderBottomRightRadius: CORNER_LG,
+      backgroundColor: colors.surface,
+      overflow: 'visible',
+      marginBottom: 16,
+      shadowColor: '#1B2838',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.1,
+      shadowRadius: 14,
+      elevation: 4,
+      borderWidth: 1,
+      borderColor: colors.outlineVariant,
+    },
+    cardDefault: {
+      width: '48%' as any,
+    },
+    cardFeatured: {
+      width: '100%',
+    },
+    imageWrap: {
+      borderTopLeftRadius: CORNER_LG,
+      borderTopRightRadius: CORNER_SM,
+      overflow: 'hidden',
+      backgroundColor: colors.surfaceVariant,
+      position: 'relative',
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+    },
+    verifiedStrap: {
+      position: 'absolute',
+      top: 10,
+      left: 0,
+      backgroundColor: colors.secondary,
+      paddingLeft: 8,
+      paddingRight: 10,
+      paddingVertical: 3,
+      borderTopRightRadius: 10,
+      borderBottomRightRadius: 10,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    verifiedText: {
+      color: '#fff',
+      fontSize: 9,
+      fontWeight: '800',
+      marginLeft: 3,
+      letterSpacing: 0.5,
+    },
+    favoriteBtn: {
+      position: 'absolute',
+      top: 10,
+      right: 10,
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: 'rgba(255, 251, 255, 0.95)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15,
+      shadowRadius: 3,
+      elevation: 3,
+    },
+    compareBtn: {
+      position: 'absolute',
+      top: 50,
+      right: 10,
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: 'rgba(255, 251, 255, 0.95)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.12,
+      shadowRadius: 3,
+      elevation: 3,
+    },
+    featuredRibbon: {
+      position: 'absolute',
+      bottom: 8,
+      left: 8,
+      backgroundColor: colors.gold,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 6,
+      flexDirection: 'row',
+      alignItems: 'center',
+      maxWidth: '55%',
+    },
+    featuredRibbonText: {
+      color: '#1B2838',
+      fontSize: 8,
+      fontWeight: '800',
+      marginLeft: 3,
+      letterSpacing: 0.4,
+    },
+    priceTag: {
+      position: 'absolute',
+      right: 10,
+      backgroundColor: colors.primary,
+      paddingHorizontal: 9,
+      paddingVertical: 5,
+      borderRadius: 10,
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 5,
+      zIndex: 10,
+    },
+    priceText: {
+      color: '#fff',
+      fontSize: 12,
+      fontWeight: '800',
+      letterSpacing: 0.2,
+    },
+    priceUnit: {
+      color: 'rgba(255,255,255,0.85)',
+      fontSize: 10,
+      fontWeight: '600',
+      marginLeft: 2,
+    },
+    body: {
+      paddingHorizontal: 12,
+      paddingTop: 18,
+      paddingBottom: 12,
+    },
+    title: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.secondary,
+      marginBottom: 6,
+      lineHeight: 18,
+    },
+    localityChip: {
+      alignSelf: 'flex-start',
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.primaryContainer,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 6,
+      marginBottom: 8,
+      maxWidth: '100%',
+    },
+    localityText: {
+      color: colors.secondary,
+      fontSize: 10.5,
+      fontWeight: '600',
+      marginLeft: 3,
+    },
+    pillsRow: {
+      flexDirection: 'row',
+      gap: 6,
+      marginTop: 2,
+    },
+    pill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surfaceVariant,
+      paddingHorizontal: 6,
+      paddingVertical: 3,
+      borderRadius: 6,
+      gap: 2,
+    },
+    pillValue: {
+      color: colors.secondary,
+      fontSize: 10.5,
+      fontWeight: '700',
+      marginLeft: 2,
+    },
+    pillSuffix: {
+      color: colors.outline,
+      fontSize: 9,
+      fontWeight: '600',
+      marginLeft: 1,
+    },
+  });

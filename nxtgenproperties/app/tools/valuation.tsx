@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 const CITY_RATES: Record<string, number> = {
   Mumbai: 18000,
@@ -38,6 +39,8 @@ function formatPrice(price: number): string {
 
 export default function ValuationScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [city, setCity] = useState('');
   const [area, setArea] = useState('');
@@ -343,49 +346,52 @@ function Label({ children }: { children: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.outlineVariant,
-    gap: 12,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: theme.colors.secondary,
-  },
-  input: {
-    backgroundColor: theme.colors.surfaceVariant,
-    borderRadius: theme.roundness.md,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: theme.colors.secondary,
-    fontSize: 14,
-    marginBottom: 14,
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: theme.roundness.full,
-    borderWidth: 1,
-    borderColor: theme.colors.outlineVariant,
-    backgroundColor: theme.colors.surface,
-  },
-  chipActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  chipText: {
-    color: theme.colors.secondary,
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  chipTextActive: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-});
+type PaletteColors = ReturnType<typeof useTheme>['colors'];
+
+const makeStyles = (colors: PaletteColors) =>
+  StyleSheet.create({
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.outlineVariant,
+      gap: 12,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.secondary,
+    },
+    input: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: theme.roundness.md,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      color: colors.secondary,
+      fontSize: 14,
+      marginBottom: 14,
+    },
+    chip: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: theme.roundness.full,
+      borderWidth: 1,
+      borderColor: colors.outlineVariant,
+      backgroundColor: colors.surface,
+    },
+    chipActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    chipText: {
+      color: colors.secondary,
+      fontSize: 13,
+      fontWeight: '500',
+    },
+    chipTextActive: {
+      color: '#fff',
+      fontWeight: '700',
+    },
+  });

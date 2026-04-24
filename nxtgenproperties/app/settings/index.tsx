@@ -16,12 +16,15 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/lib/supabase';
 import { theme } from '@/constants/theme';
+import { useThemeStore } from '@/stores/themeStore';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { user, updateProfile } = useAuthStore();
+  const themeMode = useThemeStore((s) => s.mode);
+  const setThemeMode = useThemeStore((s) => s.setMode);
 
   const [emailModalVisible, setEmailModalVisible] = React.useState(false);
   const [newEmail, setNewEmail] = React.useState('');
@@ -312,6 +315,31 @@ export default function SettingsScreen() {
           />
         </Section>
 
+        {/* Appearance */}
+        <Section title="Appearance">
+          <ThemeOptionRow
+            icon="phone-portrait-outline"
+            label="Match system"
+            description="Follow your device theme"
+            selected={themeMode === 'system'}
+            onPress={() => setThemeMode('system')}
+            showBorder
+          />
+          <ThemeOptionRow
+            icon="sunny-outline"
+            label="Light"
+            selected={themeMode === 'light'}
+            onPress={() => setThemeMode('light')}
+            showBorder
+          />
+          <ThemeOptionRow
+            icon="moon-outline"
+            label="Dark"
+            selected={themeMode === 'dark'}
+            onPress={() => setThemeMode('dark')}
+          />
+        </Section>
+
         {/* Legal */}
         <Section title="Legal">
           <RowItem
@@ -359,8 +387,14 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         {title}
       </Text>
       <View
-        className="bg-white rounded-2xl overflow-hidden"
-        style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+        className="rounded-2xl overflow-hidden"
+        style={{
+          backgroundColor: theme.colors.cardBackground,
+          shadowColor: '#000',
+          shadowOpacity: 0.04,
+          shadowRadius: 8,
+          elevation: 2,
+        }}
       >
         {children}
       </View>
@@ -445,5 +479,60 @@ function SwitchRow({ icon, label, value, onChange, showBorder }: SwitchRowProps)
         ios_backgroundColor={theme.colors.outlineVariant}
       />
     </View>
+  );
+}
+
+/* ─── Theme option row ─── */
+interface ThemeOptionRowProps {
+  icon: IoniconsName;
+  label: string;
+  description?: string;
+  selected: boolean;
+  onPress: () => void;
+  showBorder?: boolean;
+}
+
+function ThemeOptionRow({
+  icon,
+  label,
+  description,
+  selected,
+  onPress,
+  showBorder,
+}: ThemeOptionRowProps) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      className={`flex-row items-center justify-between px-4 py-4 ${showBorder ? 'border-b' : ''}`}
+      style={showBorder ? { borderBottomColor: theme.colors.outlineVariant } : undefined}
+    >
+      <View className="flex-row items-center flex-1">
+        <View
+          className="w-9 h-9 items-center justify-center"
+          style={{
+            backgroundColor: selected ? theme.colors.primaryContainer : theme.colors.surfaceVariant,
+            borderRadius: theme.roundness.md,
+          }}
+        >
+          <Ionicons
+            name={icon}
+            size={19}
+            color={selected ? theme.colors.primary : theme.colors.outline}
+          />
+        </View>
+        <View className="ml-3 flex-1">
+          <Text className="text-base" style={{ color: theme.colors.secondary }}>
+            {label}
+          </Text>
+          {description && (
+            <Text className="text-xs mt-0.5" style={{ color: theme.colors.outline }}>
+              {description}
+            </Text>
+          )}
+        </View>
+      </View>
+      {selected && <Ionicons name="checkmark-circle" size={22} color={theme.colors.primary} />}
+    </TouchableOpacity>
   );
 }
