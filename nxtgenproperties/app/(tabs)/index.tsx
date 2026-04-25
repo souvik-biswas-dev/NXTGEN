@@ -26,6 +26,7 @@ import { useNotificationsStore } from '@/stores/notificationsStore';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { Property, PropertyType } from '@/types';
 import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 const { width } = Dimensions.get('window');
 
@@ -81,6 +82,9 @@ const SkeletonFeaturedCard = () => (
 );
 
 export default function HomeScreen() {
+  // Subscribe to theme store so this screen re-renders immediately when the
+  // user changes the theme in Settings (without requiring a navigation event).
+  useTheme();
   const router = useRouter();
   const [activeType, setActiveType] = useState<PropertyType>('buy');
   const [searchQuery, setSearchQuery] = useState('');
@@ -1272,7 +1276,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   launchCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.cardBackground,
     borderRadius: theme.roundness.lg,
     overflow: 'hidden',
     marginRight: 16,
@@ -1287,7 +1291,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   postNowBtn: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: theme.roundness.lg,
     paddingVertical: 10,
     paddingHorizontal: 18,

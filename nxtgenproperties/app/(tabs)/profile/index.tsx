@@ -24,10 +24,12 @@ import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { LinearGradient } from 'expo-linear-gradient';
 import { VerificationRequestCard } from '@/components/BrokerBadge';
 import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { uploadImage } from '@/lib/uploads';
 import { profileUpdateSchema, firstError } from '@/lib/validation';
 
 export default function ProfileScreen() {
+  useTheme(); // Subscribe so the screen re-renders immediately on theme change
   const router = useRouter();
   const { user, signOut, updateProfile } = useAuthStore();
   const { favorites, fetchFavorites } = useFavoritesStore();
@@ -168,7 +170,10 @@ export default function ProfileScreen() {
 
         {/* Profile Info Card */}
         <View className="px-6 -mt-20">
-          <View className="bg-white rounded-3xl shadow-lg p-6">
+          <View
+            className="rounded-3xl shadow-lg p-6"
+            style={{ backgroundColor: theme.colors.cardBackground }}
+          >
             {/* Avatar and Edit Button */}
             <View className="items-center -mt-16 mb-4">
               <View className="relative">
@@ -303,7 +308,10 @@ export default function ProfileScreen() {
         {user?.role !== 'buyer' && (
           <View className="px-6 mt-6">
             <Text className="text-gray-900 text-lg font-bold mb-3">My Activity</Text>
-            <View className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <View
+              className="rounded-2xl shadow-sm overflow-hidden"
+              style={{ backgroundColor: theme.colors.cardBackground }}
+            >
               <MenuItem
                 icon="home-outline"
                 label="My Listings"
@@ -329,7 +337,10 @@ export default function ProfileScreen() {
         {/* Favorites & Saved */}
         <View className="px-6 mt-6">
           <Text className="text-gray-900 text-lg font-bold mb-3">Saved & Favorites</Text>
-          <View className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <View
+            className="rounded-2xl shadow-sm overflow-hidden"
+            style={{ backgroundColor: theme.colors.cardBackground }}
+          >
             <MenuItem
               icon="heart-outline"
               label="Favorite Properties"
@@ -372,7 +383,10 @@ export default function ProfileScreen() {
         {/* Financial Tools */}
         <View className="px-6 mt-6">
           <Text className="text-gray-900 text-lg font-bold mb-3">Tools</Text>
-          <View className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <View
+            className="rounded-2xl shadow-sm overflow-hidden"
+            style={{ backgroundColor: theme.colors.cardBackground }}
+          >
             <MenuItem
               icon="calculator-outline"
               label="EMI Calculator"
@@ -402,7 +416,10 @@ export default function ProfileScreen() {
         {/* Notifications */}
         <View className="px-6 mt-6">
           <Text className="text-gray-900 text-lg font-bold mb-3">Notifications</Text>
-          <View className="bg-white rounded-2xl shadow-sm">
+          <View
+            className="rounded-2xl shadow-sm"
+            style={{ backgroundColor: theme.colors.cardBackground }}
+          >
             <SwitchItem
               label="Matched Properties"
               value={notifications.matched}
@@ -432,7 +449,10 @@ export default function ProfileScreen() {
         {/* Settings & Support */}
         <View className="px-6 mt-6">
           <Text className="text-gray-900 text-lg font-bold mb-3">Settings & Support</Text>
-          <View className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <View
+            className="rounded-2xl shadow-sm overflow-hidden"
+            style={{ backgroundColor: theme.colors.cardBackground }}
+          >
             <MenuItem
               icon="lock-closed-outline"
               label="Privacy Policy"

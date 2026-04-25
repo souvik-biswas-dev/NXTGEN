@@ -17,7 +17,7 @@ export default function RootLayout() {
   // Keep useAuth to initialise the auth listener and populate authStore
   useAuth();
 
-  const { resolved, colors, dark } = useTheme();
+  const { colors, dark } = useTheme();
   const syncFromSystem = useThemeStore((s) => s.syncFromSystem);
 
   useEffect(() => {
@@ -28,13 +28,7 @@ export default function RootLayout() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <StatusBar style={dark ? 'light' : 'dark'} />
-      {/*
-        Keying the Stack on `resolved` forces a tree remount when the theme
-        changes. That guarantees any inline styles pick up the new palette
-        values even in screens that don't subscribe to the theme store.
-      */}
       <Stack
-        key={resolved}
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',

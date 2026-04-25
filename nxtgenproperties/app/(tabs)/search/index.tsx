@@ -124,8 +124,15 @@ export default function SearchScreen() {
         setSearchQuery(incomingQuery);
       }
 
-      // Apply filters immediately so the results list updates
-      usePropertiesStore.getState().filterProperties(synced, { query: incomingQuery });
+      const hasFilter = Object.values(synced).some(
+        (v) => v !== undefined && v !== false && !(Array.isArray(v) && v.length === 0)
+      );
+      // Only hit the DB if there's actually something to search/filter.
+      // Skipping the call when everything is empty avoids showing stale
+      // results from a previous session and prevents a needless network round-trip.
+      if (incomingQuery || hasFilter) {
+        usePropertiesStore.getState().filterProperties(synced, { query: incomingQuery });
+      }
     }, [])
   );
 
@@ -151,18 +158,25 @@ export default function SearchScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedQuery]);
 
+  // Only updates local state — no DB writes on every keystroke.
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    if (query.trim()) {
-      addRecentSearch(query);
-      // Track search in user preferences
-      addToSearchHistory(query, undefined, undefined);
-    }
+  };
+
+  // Called when user presses the Search key on the keyboard.
+  const handleSubmitSearch = () => {
+    const q = searchQuery.trim();
+    if (!q) return;
+    addRecentSearch(q);
+    addToSearchHistory(q, undefined, undefined);
+    usePropertiesStore.getState().filterProperties(localFilters, { query: q });
   };
 
   const handleRecentSearch = (query: string) => {
     setSearchQuery(query);
     updateSearch(query);
+    addRecentSearch(query);
+    usePropertiesStore.getState().filterProperties(localFilters, { query });
   };
 
   const applyFilters = async () => {
@@ -241,6 +255,7 @@ export default function SearchScreen() {
               className="flex-1 ml-3 text-gray-800 text-base"
               value={searchQuery}
               onChangeText={handleSearch}
+              onSubmitEditing={handleSubmitSearch}
               returnKeyType="search"
             />
             {searchQuery.length > 0 && (

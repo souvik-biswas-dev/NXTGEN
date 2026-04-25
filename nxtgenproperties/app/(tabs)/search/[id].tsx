@@ -27,10 +27,13 @@ import { useCompareStore, MAX_COMPARE_SIZE } from '@/stores/compareStore';
 import { PropertyCard } from '@/components/PropertyCard';
 import { Property } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { theme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 Dimensions.get('window');
 
 export default function PropertyDetailScreen() {
+  useTheme(); // Subscribe so screen re-renders immediately on theme change
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { getPropertyById, getSimilarProperties } = usePropertiesStore();
@@ -78,8 +81,11 @@ export default function PropertyDetailScreen() {
 
   if (loading || !property) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#0F766E" />
+      <View
+        className="flex-1 items-center justify-center"
+        style={{ backgroundColor: theme.colors.surface }}
+      >
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
@@ -169,7 +175,11 @@ export default function PropertyDetailScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['bottom']}>
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: theme.colors.surface }}
+      edges={['bottom']}
+    >
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Image Gallery */}
         <View className="relative">
@@ -294,7 +304,7 @@ export default function PropertyDetailScreen() {
                 flex: 1,
                 alignItems: 'center',
                 paddingVertical: 10,
-                backgroundColor: '#F4F7F6',
+                backgroundColor: theme.colors.surfaceVariant,
                 borderRadius: 14,
                 borderWidth: 1,
                 borderColor: '#CBD5D1',
@@ -656,7 +666,7 @@ export default function PropertyDetailScreen() {
               }
               style={{
                 flex: 1,
-                backgroundColor: '#F4F7F6',
+                backgroundColor: theme.colors.surfaceVariant,
                 paddingVertical: 12,
                 borderRadius: 14,
                 flexDirection: 'row',
@@ -677,7 +687,7 @@ export default function PropertyDetailScreen() {
               onPress={() => router.push(`/report/${property.id}` as never)}
               style={{
                 flex: 1,
-                backgroundColor: '#F4F7F6',
+                backgroundColor: theme.colors.surfaceVariant,
                 paddingVertical: 12,
                 borderRadius: 14,
                 flexDirection: 'row',
@@ -785,7 +795,7 @@ export default function PropertyDetailScreen() {
         <View
           style={{
             flexDirection: 'row',
-            backgroundColor: '#F4F7F6',
+            backgroundColor: theme.colors.surfaceVariant,
             borderRadius: 32,
             padding: 6,
             gap: 6,
