@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { supabase } from '@/lib/supabase';
-import { Conversation, Message, User, PUBLIC_PROFILE_COLUMNS } from '@/types';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { Conversation, Message } from '@/types';
+import { api } from '@/lib/api';
+import { realtime, RealtimeEvent } from '@/lib/realtime';
 
 interface ChatState {
   conversations: Conversation[];
@@ -9,9 +9,11 @@ interface ChatState {
   loading: boolean;
   messagesLoading: boolean;
   error: string | null;
-  // Separate channels: one for the open chat room, one for the inbox list.
-  messageChannel: RealtimeChannel | null;
-  conversationChannel: RealtimeChannel | null;
+  // Unsubscribe handles for the active realtime listeners.
+  _roomUnsub: (() => void) | null;
+  _inboxUnsub: (() => void) | null;
+  _openConversationId: string | null;
+  _currentUserId: string | null;
 
   fetchConversations: (userId: string) => Promise<void>;
   fetchMessages: (conversationId: string) => Promise<void>;
@@ -22,9 +24,7 @@ interface ChatState {
     propertyId?: string
   ) => Promise<string | null>;
 
-  /** Subscribe to INSERT + UPDATE on messages for the open chat room. */
   subscribeToMessages: (conversationId: string, currentUserId: string) => void;
-  /** Subscribe to conversation-level changes so the inbox list stays live. */
   subscribeToConversations: (userId: string) => void;
   unsubscribeMessages: () => void;
   unsubscribeConversations: () => void;
@@ -39,59 +39,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
   loading: false,
   messagesLoading: false,
   error: null,
-  messageChannel: null,
-  conversationChannel: null,
+  _roomUnsub: null,
+  _inboxUnsub: null,
+  _openConversationId: null,
+  _currentUserId: null,
 
   fetchConversations: async (userId: string) => {
-    set({ loading: true, error: null });
+    set({ loading: true, error: null, _currentUserId: userId });
     try {
-      const { data, error } = await supabase
-        .from('conversations')
-        .select('*')
-        .or(`participant_1.eq.${userId},participant_2.eq.${userId}`)
-        .order('last_message_at', { ascending: false });
-
-      if (error) throw error;
-      if (!data || data.length === 0) {
-        set({ conversations: [], loading: false });
-        return;
-      }
-
-      const otherUserIds = data.map((conv) =>
-        conv.participant_1 === userId ? conv.participant_2 : conv.participant_1
-      );
-      const convIds = data.map((conv) => conv.id);
-
-      const [{ data: profiles }, { data: unreadRows }] = await Promise.all([
-        supabase.from('users_profiles').select(PUBLIC_PROFILE_COLUMNS).in('user_id', otherUserIds),
-        supabase
-          .from('messages')
-          .select('conversation_id')
-          .in('conversation_id', convIds)
-          .eq('read', false)
-          .neq('sender_id', userId),
-      ]);
-
-      const profileMap: Record<string, User> = {};
-      (profiles || []).forEach((p) => {
-        profileMap[p.user_id] = p;
-      });
-
-      const unreadMap: Record<string, number> = {};
-      (unreadRows || []).forEach((row) => {
-        unreadMap[row.conversation_id] = (unreadMap[row.conversation_id] || 0) + 1;
-      });
-
-      const conversationsWithUsers: Conversation[] = data.map((conv) => {
-        const otherUserId = conv.participant_1 === userId ? conv.participant_2 : conv.participant_1;
-        return {
-          ...conv,
-          other_user: profileMap[otherUserId] || undefined,
-          unread_count: unreadMap[conv.id] || 0,
-        };
-      });
-
-      set({ conversations: conversationsWithUsers, loading: false });
+      const { items } = await api.get<{ items: Conversation[] }>('/chat/conversations');
+      set({ conversations: items ?? [], loading: false });
     } catch (error) {
       console.error('Error fetching conversations:', error);
       set({
@@ -104,14 +61,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
   fetchMessages: async (conversationId: string) => {
     set({ messagesLoading: true, error: null });
     try {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      set({ currentMessages: data || [], messagesLoading: false });
+      const { items } = await api.get<{ items: Message[] }>(
+        `/chat/conversations/${conversationId}/messages`
+      );
+      set({ currentMessages: items ?? [], messagesLoading: false });
     } catch (error) {
       set({
         messagesLoading: false,
@@ -120,50 +73,26 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  sendMessage: async (conversationId: string, senderId: string, content: string) => {
+  sendMessage: async (conversationId: string, _senderId: string, content: string) => {
     try {
       set({ error: null });
-      const { error } = await supabase.from('messages').insert({
-        conversation_id: conversationId,
-        sender_id: senderId,
-        content: content.trim(),
-      });
-      if (error) throw error;
+      // The backend echoes the message back over the websocket, so we don't
+      // optimistically append here — the realtime handler does.
+      await api.post(`/chat/conversations/${conversationId}/messages`, { content: content.trim() });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
-      set({ error: errorMessage });
+      const msg = error instanceof Error ? error.message : 'Failed to send message';
+      set({ error: msg });
       throw error;
     }
   },
 
-  getOrCreateConversation: async (
-    currentUserId: string,
-    otherUserId: string,
-    propertyId?: string
-  ) => {
+  getOrCreateConversation: async (_currentUserId, otherUserId, propertyId) => {
     try {
-      const { data: existing } = await supabase
-        .from('conversations')
-        .select('id')
-        .or(
-          `and(participant_1.eq.${currentUserId},participant_2.eq.${otherUserId}),and(participant_1.eq.${otherUserId},participant_2.eq.${currentUserId})`
-        )
-        .maybeSingle();
-
-      if (existing) return existing.id;
-
-      const { data, error } = await supabase
-        .from('conversations')
-        .insert({
-          participant_1: currentUserId,
-          participant_2: otherUserId,
-          property_id: propertyId || null,
-        })
-        .select('id')
-        .single();
-
-      if (error) throw error;
-      return data.id;
+      const { id } = await api.post<{ id: string }>('/chat/conversations', {
+        otherUserId,
+        propertyId,
+      });
+      return id;
     } catch (error) {
       console.error('Error creating conversation:', error);
       return null;
@@ -171,161 +100,88 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   subscribeToMessages: (conversationId: string, currentUserId: string) => {
-    const { messageChannel } = get();
-    if (messageChannel) supabase.removeChannel(messageChannel);
+    get().unsubscribeMessages();
+    realtime.start();
+    set({ _openConversationId: conversationId });
 
-    const channel = supabase
-      .channel(`chat:messages:${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          const newMessage = payload.new as Message;
-          set((state) => ({
-            currentMessages: [...state.currentMessages, newMessage],
-          }));
-          // Auto-mark incoming messages as read while the chat room is open
-          if (newMessage.sender_id !== currentUserId) {
-            get().markMessagesAsRead(conversationId, currentUserId);
-          }
+    const unsub = realtime.subscribe((e: RealtimeEvent) => {
+      if (e.conversationId !== conversationId) return;
+      if (e.type === 'message:new') {
+        const newMessage = e.payload as Message;
+        set((state) => {
+          if (state.currentMessages.some((m) => m.id === newMessage.id)) return state;
+          return { currentMessages: [...state.currentMessages, newMessage] };
+        });
+        if (newMessage.sender_id !== currentUserId) {
+          get().markMessagesAsRead(conversationId, currentUserId);
         }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          const updated = payload.new as Message;
-          set((state) => ({
-            currentMessages: state.currentMessages.map((m) =>
-              m.id === updated.id ? { ...m, read: updated.read } : m
-            ),
-          }));
-        }
-      )
-      .subscribe();
-
-    set({ messageChannel: channel });
+      } else if (e.type === 'message:read') {
+        set((state) => ({
+          currentMessages: state.currentMessages.map((m) =>
+            m.sender_id === currentUserId ? { ...m, read: true } : m
+          ),
+        }));
+      }
+    });
+    set({ _roomUnsub: unsub });
   },
 
   subscribeToConversations: (userId: string) => {
-    const { conversationChannel } = get();
-    if (conversationChannel) supabase.removeChannel(conversationChannel);
+    get().unsubscribeConversations();
+    realtime.start();
+    set({ _currentUserId: userId });
 
-    const channel = supabase
-      .channel(`chat:inbox:${userId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-        },
-        (payload) => {
-          const msg = payload.new as Message;
-          set((state) => {
-            const convIndex = state.conversations.findIndex((c) => c.id === msg.conversation_id);
-            if (convIndex === -1) {
-              // New conversation not yet in list — full refresh to get profile data
-              get().fetchConversations(userId);
-              return state;
-            }
-            const updated = [...state.conversations];
-            const conv = { ...updated[convIndex] };
-            conv.last_message = msg.content;
-            conv.last_message_at = msg.created_at;
-            if (msg.sender_id !== userId) {
-              conv.unread_count = (conv.unread_count || 0) + 1;
-            }
-            // Bubble updated conversation to the top
-            updated.splice(convIndex, 1);
-            updated.unshift(conv);
-            return { conversations: updated };
-          });
+    const unsub = realtime.subscribe((e: RealtimeEvent) => {
+      if (e.type !== 'message:new') return;
+      const msg = e.payload as Message;
+      set((state) => {
+        const idx = state.conversations.findIndex((c) => c.id === msg.conversation_id);
+        if (idx === -1) {
+          get().fetchConversations(userId);
+          return state;
         }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'messages',
-        },
-        (payload) => {
-          const msg = payload.new as Message;
-          // When a message is marked read, decrement the unread badge
-          if (msg.read) {
-            set((state) => ({
-              conversations: state.conversations.map((c) => {
-                if (c.id !== msg.conversation_id) return c;
-                return { ...c, unread_count: Math.max(0, (c.unread_count || 0) - 1) };
-              }),
-            }));
-          }
+        const updated = [...state.conversations];
+        const conv = { ...updated[idx] };
+        conv.last_message = msg.content;
+        conv.last_message_at = msg.created_at;
+        const isOpen = get()._openConversationId === msg.conversation_id;
+        if (msg.sender_id !== userId && !isOpen) {
+          conv.unread_count = (conv.unread_count || 0) + 1;
         }
-      )
-      .subscribe();
-
-    set({ conversationChannel: channel });
+        updated.splice(idx, 1);
+        updated.unshift(conv);
+        return { conversations: updated };
+      });
+    });
+    set({ _inboxUnsub: unsub });
   },
 
   unsubscribeMessages: () => {
-    const { messageChannel } = get();
-    if (messageChannel) {
-      supabase.removeChannel(messageChannel);
-      set({ messageChannel: null });
-    }
+    get()._roomUnsub?.();
+    set({ _roomUnsub: null, _openConversationId: null });
   },
 
   unsubscribeConversations: () => {
-    const { conversationChannel } = get();
-    if (conversationChannel) {
-      supabase.removeChannel(conversationChannel);
-      set({ conversationChannel: null });
-    }
+    get()._inboxUnsub?.();
+    set({ _inboxUnsub: null });
   },
 
-  markMessagesAsRead: async (conversationId: string, userId: string) => {
+  markMessagesAsRead: async (conversationId: string) => {
     try {
-      await supabase
-        .from('messages')
-        .update({ read: true })
-        .eq('conversation_id', conversationId)
-        .neq('sender_id', userId)
-        .eq('read', false);
+      await api.post(`/chat/conversations/${conversationId}/read`);
+      set((state) => ({
+        conversations: state.conversations.map((c) =>
+          c.id === conversationId ? { ...c, unread_count: 0 } : c
+        ),
+      }));
     } catch (error) {
       console.error('Error marking messages as read:', error);
     }
   },
 
-  getUnreadCount: async (userId: string) => {
+  getUnreadCount: async () => {
     try {
-      const { data: convos } = await supabase
-        .from('conversations')
-        .select('id')
-        .or(`participant_1.eq.${userId},participant_2.eq.${userId}`);
-
-      if (!convos || convos.length === 0) return 0;
-
-      const { count } = await supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .in(
-          'conversation_id',
-          convos.map((c) => c.id)
-        )
-        .eq('read', false)
-        .neq('sender_id', userId);
-
+      const { count } = await api.get<{ count: number }>('/chat/unread-count');
       return count || 0;
     } catch (error) {
       console.error('Error getting unread count:', error);
