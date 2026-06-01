@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 
 export type RazorpayOrder = {
   order_id: string;
@@ -18,13 +18,7 @@ export type PaymentResult = {
  * never trust the client's number.
  */
 export async function createOrder(plan: 'silver' | 'gold'): Promise<RazorpayOrder> {
-  const { data, error } = await supabase.functions.invoke<RazorpayOrder>('create-razorpay-order', {
-    body: { plan },
-  });
-  if (error || !data) {
-    throw new Error(error?.message ?? 'Could not start payment');
-  }
-  return data;
+  return api.post<RazorpayOrder>('/payments/order', { plan });
 }
 
 /**
@@ -32,13 +26,11 @@ export async function createOrder(plan: 'silver' | 'gold'): Promise<RazorpayOrde
  * subscription activation. Returns the new subscription id on success.
  */
 export async function verifyPayment(result: PaymentResult): Promise<string> {
-  const { data, error } = await supabase.functions.invoke<{ ok: boolean; subscription_id: string }>(
-    'verify-razorpay-payment',
-    { body: result }
+  const data = await api.post<{ ok: boolean; subscription_id: string; already?: boolean }>(
+    '/payments/verify',
+    result
   );
-  if (error || !data?.ok) {
-    throw new Error(error?.message ?? 'Payment verification failed');
-  }
+  if (!data?.ok) throw new Error('Payment verification failed');
   return data.subscription_id;
 }
 
