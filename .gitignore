@@ -1,0 +1,44 @@
+# ── Admin panel — maintained in a separate repository ────────────
+admin-panel/
+
+# ── Untracked project docs (kept locally, not committed) ─────────
+APIKEYSETUP.md
+APP.md
+
+# ── Dependencies ─────────────────────────────────────────────────
+node_modules/
+**/node_modules/
+
+# ── Env / secrets ────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+
+# ── Build / cache output ─────────────────────────────────────────
+dist/
+**/dist/
+.expo/
+**/.expo/
+.next/
+**/.next/
+web-build/
+*.tsbuildinfo
+
+# ── Editor / OS / logs ───────────────────────────────────────────
+.claude/
+.vscode/
+.idea/
+.DS_Store
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# ── Native ───────────────────────────────────────────────────────
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+google-services.json
+GoogleService-Info.plist
