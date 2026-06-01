@@ -18,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { usePropertiesStore } from '@/stores/propertiesStore';
 import { useAuthStore } from '@/stores/authStore';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import {
   BHKType,
   FurnishingType,
@@ -212,14 +212,8 @@ export default function PostPropertyScreen() {
         return;
       }
 
-      // 3. Insert.
-      const { error: insertError } = await supabase.from('properties').insert({
-        ...parsed.data,
-        owner_id: user.user_id,
-        verified: false,
-        featured: false,
-      });
-      if (insertError) throw insertError;
+      // 3. Create via the API (owner is derived from the auth token server-side).
+      await api.post('/properties', parsed.data);
 
       Alert.alert(
         'Property Posted!',

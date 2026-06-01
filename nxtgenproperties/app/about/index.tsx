@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Constants from 'expo-constants';
 import { theme } from '@/constants/theme';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { AboutFeature, LinkItem, SocialLink } from '@/types';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
@@ -87,21 +87,14 @@ export default function AboutScreen() {
 
   React.useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('platform_data')
-        .select('key, data')
-        .in('key', ['about_features', 'legal_links', 'social_links']);
-      data?.forEach((row: { key: string; data: unknown }) => {
-        if (row.key === 'about_features' && Array.isArray(row.data)) {
-          setFeatures(row.data as AboutFeature[]);
-        }
-        if (row.key === 'legal_links' && Array.isArray(row.data)) {
-          setLegal(row.data as LinkItem[]);
-        }
-        if (row.key === 'social_links' && Array.isArray(row.data)) {
-          setSocial(row.data as SocialLink[]);
-        }
-      });
+      try {
+        const data = await api.get<Record<string, unknown>>('/platform-data', undefined, false);
+        if (Array.isArray(data.about_features)) setFeatures(data.about_features as AboutFeature[]);
+        if (Array.isArray(data.legal_links)) setLegal(data.legal_links as LinkItem[]);
+        if (Array.isArray(data.social_links)) setSocial(data.social_links as SocialLink[]);
+      } catch {
+        /* keep fallbacks */
+      }
     })();
   }, []);
 

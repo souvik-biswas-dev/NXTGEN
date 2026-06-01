@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,22 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
+import Constants from 'expo-constants';
+import { auth } from '@/lib/auth';
+import { useAuthStore } from '@/stores/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import { phoneSchema, firstError } from '@/lib/validation';
+
+WebBrowser.maybeCompleteAuthSession();
+
+const GOOGLE_CLIENT_ID =
+  (Constants.expoConfig?.extra?.googleClientId as string) ||
+  process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ||
+  '';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -23,28 +33,45 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  // Native Google sign-in → returns an id_token we exchange with our backend.
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: GOOGLE_CLIENT_ID,
+  });
+
+  useEffect(() => {
+    const idToken = response?.type === 'success' ? response.params?.id_token : undefined;
+    if (!idToken) {
+      if (response && response.type !== 'success') setGoogleLoading(false);
+      return;
+    }
+    (async () => {
+      try {
+        const user = await auth.google(idToken);
+        useAuthStore.getState().setUser(user);
+        router.replace('/(tabs)');
+      } catch (error) {
+        Alert.alert('Error', error instanceof Error ? error.message : 'Google login failed.');
+      } finally {
+        setGoogleLoading(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [response]);
+
   const handlePhoneAuth = async () => {
-    // Accept 10-digit national or +91-prefixed. Normalise to E.164 for Supabase.
+    // Accept 10-digit national or +91-prefixed. Normalise to E.164.
     const raw = phoneNumber.trim();
     const parsed = phoneSchema.safeParse(raw);
     if (!parsed.success) {
       Alert.alert('Invalid number', firstError(parsed.error));
       return;
     }
-    const fullPhone = raw.startsWith('+') ? raw.slice(1) : `91${raw.replace(/^91/, '')}`;
+    const fullPhone = raw.startsWith('+') ? raw : `+91${raw.replace(/^91/, '')}`;
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: fullPhone,
-      });
-
-      if (error) throw error;
-
-      router.push({
-        pathname: '/(auth)/verify',
-        params: { phone: `+${fullPhone}` },
-      });
+      await auth.requestOtp(fullPhone);
+      router.push({ pathname: '/(auth)/verify', params: { phone: fullPhone } });
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Something went wrong');
     } finally {
@@ -53,27 +80,12 @@ export default function LoginScreen() {
   };
 
   const handleGoogleLogin = async () => {
-    setGoogleLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: 'nxtgenproperties://auth/callback',
-        },
-      });
-
-      if (error) throw error;
-      if (data?.url) {
-        await Linking.openURL(data.url);
-      }
-    } catch (error) {
-      Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Google login failed. Please try again.'
-      );
-    } finally {
-      setGoogleLoading(false);
+    if (!GOOGLE_CLIENT_ID) {
+      Alert.alert('Not configured', 'Set EXPO_PUBLIC_GOOGLE_CLIENT_ID to enable Google sign-in.');
+      return;
     }
+    setGoogleLoading(true);
+    await promptAsync();
   };
 
   return (

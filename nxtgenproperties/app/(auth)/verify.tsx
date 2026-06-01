@@ -13,7 +13,8 @@ import {
   TextInputKeyPressEventData,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { supabase } from '@/lib/supabase';
+import { auth } from '@/lib/auth';
+import { useAuthStore } from '@/stores/authStore';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function VerifyScreen() {
@@ -63,13 +64,8 @@ export default function VerifyScreen() {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        phone: phone,
-        token: otpCode,
-        type: 'sms',
-      });
-
-      if (error) throw error;
+      const user = await auth.verifyOtp({ phone, code: otpCode });
+      useAuthStore.getState().setUser(user);
       router.replace('/(tabs)');
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Something went wrong');
@@ -80,10 +76,7 @@ export default function VerifyScreen() {
 
   const handleResend = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: phone,
-      });
-      if (error) throw error;
+      await auth.requestOtp(phone);
       Alert.alert('Success', 'OTP sent successfully');
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Something went wrong');

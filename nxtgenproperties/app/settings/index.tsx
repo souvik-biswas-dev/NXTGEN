@@ -14,7 +14,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
-import { supabase } from '@/lib/supabase';
 import { theme } from '@/constants/theme';
 import { useThemeStore } from '@/stores/themeStore';
 
@@ -42,18 +41,11 @@ export default function SettingsScreen() {
     }
     setEmailSaving(true);
     try {
-      const { error } = await supabase.auth.updateUser({ email: trimmed });
-      if (error) throw error;
-      // Also update the profile table so the display stays in sync
+      // Backend updates both the auth record and the profile in one call.
       await updateProfile({ email: trimmed });
       setEmailModalVisible(false);
       setNewEmail('');
-      Alert.alert(
-        'Verification Sent',
-        'A confirmation link has been sent to ' +
-          trimmed +
-          '. Your email will update once you click the link.'
-      );
+      Alert.alert('Email Updated', 'Your email has been updated to ' + trimmed + '.');
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Failed to update email.');
     } finally {

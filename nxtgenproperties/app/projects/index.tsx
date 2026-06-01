@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { Project } from '@/types';
 import { theme } from '@/constants/theme';
 
@@ -29,14 +29,8 @@ export default function ProjectsScreen() {
 
   const fetchProjects = async () => {
     try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('featured', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setProjects((data as Project[]) ?? []);
+      const { items } = await api.get<{ items: Project[] }>('/catalog/projects', undefined, false);
+      setProjects(items ?? []);
     } catch {
       setProjects([]);
     } finally {

@@ -373,6 +373,12 @@ export default function ProfileScreen() {
               showBorder
             />
             <MenuItem
+              icon="pricetag-outline"
+              label="My Offers"
+              onPress={() => router.push('/offers' as any)}
+              showBorder
+            />
+            <MenuItem
               icon="ribbon-outline"
               label="View Plans"
               onPress={() => router.push('/membership' as any)}

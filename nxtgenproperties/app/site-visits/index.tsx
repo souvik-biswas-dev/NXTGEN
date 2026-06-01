@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { format } from 'date-fns';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { SiteVisitRequest, Property, SiteVisitStatus } from '@/types';
 import { theme } from '@/constants/theme';
@@ -37,12 +37,12 @@ export default function SiteVisitsScreen() {
       setLoading(false);
       return;
     }
-    const { data } = await supabase
-      .from('site_visit_requests')
-      .select('*, property:properties(*)')
-      .or(`user_id.eq.${user.user_id},contact_user_id.eq.${user.user_id}`)
-      .order('preferred_date', { ascending: true });
-    setVisits((data as Row[]) ?? []);
+    try {
+      const { items } = await api.get<{ items: Row[] }>('/catalog/site-visits');
+      setVisits(items ?? []);
+    } catch {
+      setVisits([]);
+    }
     setLoading(false);
     setRefreshing(false);
   }, [user]);
@@ -55,7 +55,7 @@ export default function SiteVisitsScreen() {
   );
 
   const cancel = async (id: string) => {
-    await supabase.from('site_visit_requests').update({ status: 'cancelled' }).eq('id', id);
+    await api.patch(`/catalog/site-visits/${id}`, { status: 'cancelled' });
     setVisits((prev) =>
       prev.map((v) => (v.id === id ? { ...v, status: 'cancelled' as SiteVisitStatus } : v))
     );

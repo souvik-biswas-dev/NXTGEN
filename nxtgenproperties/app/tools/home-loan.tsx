@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { HomeLoanPartner } from '@/types';
 import { theme } from '@/constants/theme';
@@ -37,13 +37,15 @@ export default function HomeLoanScreen() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('platform_data')
-        .select('data')
-        .eq('key', 'home_loan_partners')
-        .maybeSingle();
-      if (data?.data && Array.isArray(data.data)) {
-        setPartners(data.data as HomeLoanPartner[]);
+      try {
+        const data = await api.get<HomeLoanPartner[]>(
+          '/platform-data/home_loan_partners',
+          undefined,
+          false
+        );
+        if (Array.isArray(data)) setPartners(data);
+      } catch {
+        /* ignore */
       }
       setLoading(false);
     })();
@@ -60,18 +62,16 @@ export default function HomeLoanScreen() {
         const n = Number(s.replace(/,/g, ''));
         return Number.isFinite(n) ? Math.trunc(n) : null;
       };
-      const { error } = await supabase.from('home_loan_leads').insert({
-        user_id: user?.user_id ?? null,
+      await api.post('/catalog/home-loan-leads', {
         name: name.trim(),
         phone: phone.trim(),
-        email: email.trim() || null,
-        city: city.trim() || null,
-        loan_amount: loanAmount ? toInt(loanAmount) : null,
-        employment_type: employmentType,
-        monthly_income: income ? toInt(income) : null,
-        partner: selected?.name || null,
+        email: email.trim() || undefined,
+        city: city.trim() || undefined,
+        loanAmount: loanAmount ? toInt(loanAmount) ?? undefined : undefined,
+        employmentType,
+        monthlyIncome: income ? toInt(income) ?? undefined : undefined,
+        partner: selected?.name || undefined,
       });
-      if (error) throw error;
       Alert.alert('Request sent', 'A loan advisor will call you within 24 hours.', [
         { text: 'OK', onPress: () => router.back() },
       ]);

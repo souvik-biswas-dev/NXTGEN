@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { ReportReason, ReportReasonItem } from '@/types';
 import { theme } from '@/constants/theme';
 
@@ -37,13 +37,11 @@ export default function ReportListingScreen() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('platform_data')
-        .select('data')
-        .eq('key', 'report_reasons')
-        .maybeSingle();
-      if (data?.data && Array.isArray(data.data)) {
-        setReasons(data.data as ReportReasonItem[]);
+      try {
+        const data = await api.get<ReportReasonItem[]>('/platform-data/report_reasons', undefined, false);
+        if (Array.isArray(data)) setReasons(data);
+      } catch {
+        /* keep fallback */
       }
     })();
   }, []);
@@ -61,13 +59,11 @@ export default function ReportListingScreen() {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.from('property_reports').insert({
-        property_id: id,
-        reported_by: user.user_id,
+      await api.post('/catalog/reports', {
+        propertyId: id,
         reason: selected,
-        details: details.trim() || null,
+        details: details.trim() || undefined,
       });
-      if (error) throw error;
       Alert.alert('Thanks for reporting', 'Our team will review this listing within 24 hours.', [
         { text: 'OK', onPress: () => router.back() },
       ]);

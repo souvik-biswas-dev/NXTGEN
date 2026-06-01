@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { PropertyCard } from '@/components/PropertyCard';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { theme } from '@/constants/theme';
 import { Property } from '@/types';
 
@@ -28,11 +28,8 @@ export default function FavoritesScreen() {
 
       setLoading(true);
       try {
-        const favoriteIds = Array.from(favorites);
-        const { data, error } = await supabase.from('properties').select('*').in('id', favoriteIds);
-
-        if (error) throw error;
-        if (!cancelled) setProperties(data || []);
+        const { items } = await api.get<{ items: Property[] }>('/favorites');
+        if (!cancelled) setProperties(items ?? []);
       } catch (error) {
         console.error('Error fetching favorite properties:', error);
       } finally {

@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { theme } from '@/constants/theme';
 
 interface DailyView {
@@ -38,49 +38,8 @@ export default function PropertyAnalyticsScreen() {
   const fetchAnalytics = async () => {
     if (!id) return;
     try {
-      const [propertyRes, viewsRes, inquiriesRes, visitsRes] = await Promise.all([
-        supabase.from('properties').select('title').eq('id', id).single(),
-        supabase
-          .from('property_views')
-          .select('viewed_at')
-          .eq('property_id', id)
-          .order('viewed_at', { ascending: false }),
-        supabase
-          .from('inquiries')
-          .select('id', { count: 'exact', head: true })
-          .eq('property_id', id),
-        supabase
-          .from('site_visit_requests')
-          .select('id', { count: 'exact', head: true })
-          .eq('property_id', id),
-      ]);
-
-      const views = viewsRes.data ?? [];
-      const now = Date.now();
-      const day7 = now - 7 * 86400000;
-      const day30 = now - 30 * 86400000;
-
-      // Group daily views for the last 30 days
-      const dailyMap: Record<string, number> = {};
-      for (let i = 29; i >= 0; i--) {
-        const d = new Date(now - i * 86400000);
-        const key = d.toISOString().slice(0, 10);
-        dailyMap[key] = 0;
-      }
-      views.forEach((v) => {
-        const key = v.viewed_at.slice(0, 10);
-        if (key in dailyMap) dailyMap[key]++;
-      });
-
-      setData({
-        totalViews: views.length,
-        last7Days: views.filter((v) => new Date(v.viewed_at).getTime() > day7).length,
-        last30Days: views.filter((v) => new Date(v.viewed_at).getTime() > day30).length,
-        inquiries: inquiriesRes.count ?? 0,
-        siteVisits: visitsRes.count ?? 0,
-        dailyViews: Object.entries(dailyMap).map(([date, count]) => ({ date, count })),
-        propertyTitle: propertyRes.data?.title ?? 'Property',
-      });
+      const res = await api.get<AnalyticsData>(`/users/analytics/${id}`);
+      setData(res);
     } catch (err) {
       console.error('Analytics fetch error:', err);
     } finally {

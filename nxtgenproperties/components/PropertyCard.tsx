@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useCompareStore } from '@/stores/compareStore';
 import { useTheme } from '@/hooks/useTheme';
+import { MotiView } from 'moti';
 
 interface PropertyCardProps {
   property: Property;
@@ -60,6 +61,11 @@ const PropertyCardInner: React.FC<PropertyCardProps> = ({ property, variant = 'd
   const isRent = property.type === 'rent';
 
   return (
+    <MotiView
+      from={{ opacity: 0, translateY: 12 }}
+      animate={{ opacity: 1, translateY: 0 }}
+      transition={{ type: 'timing', duration: 320 }}
+    >
     <TouchableOpacity
       onPress={() => router.push(`/(tabs)/search/${property.id}`)}
       activeOpacity={0.85}
@@ -168,6 +174,7 @@ const PropertyCardInner: React.FC<PropertyCardProps> = ({ property, variant = 'd
         </View>
       </View>
     </TouchableOpacity>
+    </MotiView>
   );
 };
 

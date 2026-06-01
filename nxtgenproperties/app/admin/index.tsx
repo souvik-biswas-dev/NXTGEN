@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { theme } from '@/constants/theme';
 
@@ -72,38 +72,26 @@ export default function AdminDashboard() {
 
   const fetchAll = useCallback(async () => {
     try {
-      const [propRes, userRes, reportRes, projRes] = await Promise.all([
-        supabase
-          .from('properties')
-          .select('id, title, city, price, verified, featured, created_at')
-          .order('created_at', { ascending: false })
-          .limit(50),
-        supabase
-          .from('users_profiles')
-          .select('id, name, role, verified_broker, created_at')
-          .order('created_at', { ascending: false })
-          .limit(50),
-        supabase
-          .from('property_reports')
-          .select('id, reason, status, created_at, property_id')
-          .order('created_at', { ascending: false })
-          .limit(50),
-        supabase.from('projects').select('id', { count: 'exact', head: true }),
+      const [propRes, userRes, reportRes, statRes] = await Promise.all([
+        api.get<{ items: PropertyRow[] }>('/admin/listings'),
+        api.get<{ items: UserRow[] }>('/admin/users'),
+        api.get<{ items: ReportRow[] }>('/admin/reports'),
+        api.get<{ properties: number; users: number; reports: number }>('/admin/stats'),
       ]);
 
-      const props = (propRes.data ?? []) as PropertyRow[];
-      const usrs = (userRes.data ?? []) as UserRow[];
-      const reps = (reportRes.data ?? []) as ReportRow[];
+      const props = propRes.items ?? [];
+      const usrs = userRes.items ?? [];
+      const reps = reportRes.items ?? [];
 
       setProperties(props);
       setUsers(usrs);
       setReports(reps);
       setStats({
-        totalProperties: props.length,
+        totalProperties: statRes.properties,
         pendingProperties: props.filter((p) => !p.verified).length,
-        totalUsers: usrs.length,
+        totalUsers: statRes.users,
         openReports: reps.filter((r) => r.status === 'open').length,
-        totalProjects: projRes.count ?? 0,
+        totalProjects: 0,
       });
     } catch (err) {
       console.error('Admin fetch error:', err);
@@ -157,45 +145,39 @@ export default function AdminDashboard() {
   }
 
   const verifyProperty = async (id: string, verified: boolean) => {
-    const { error } = await supabase.from('properties').update({ verified }).eq('id', id);
-    if (error) {
-      Alert.alert('Error', error.message);
-      return;
+    try {
+      await api.patch(`/admin/listings/${id}`, { verified });
+      setProperties((prev) => prev.map((p) => (p.id === id ? { ...p, verified } : p)));
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Update failed');
     }
-    setProperties((prev) => prev.map((p) => (p.id === id ? { ...p, verified } : p)));
   };
 
   const featureProperty = async (id: string, featured: boolean) => {
-    const { error } = await supabase.from('properties').update({ featured }).eq('id', id);
-    if (error) {
-      Alert.alert('Error', error.message);
-      return;
+    try {
+      await api.patch(`/admin/listings/${id}`, { featured });
+      setProperties((prev) => prev.map((p) => (p.id === id ? { ...p, featured } : p)));
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Update failed');
     }
-    setProperties((prev) => prev.map((p) => (p.id === id ? { ...p, featured } : p)));
   };
 
   const resolveReport = async (id: string) => {
-    const { error } = await supabase
-      .from('property_reports')
-      .update({ status: 'resolved' })
-      .eq('id', id);
-    if (error) {
-      Alert.alert('Error', error.message);
-      return;
+    try {
+      await api.patch(`/admin/reports/${id}`, { status: 'resolved' });
+      setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status: 'resolved' } : r)));
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Update failed');
     }
-    setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status: 'resolved' } : r)));
   };
 
   const dismissReport = async (id: string) => {
-    const { error } = await supabase
-      .from('property_reports')
-      .update({ status: 'dismissed' })
-      .eq('id', id);
-    if (error) {
-      Alert.alert('Error', error.message);
-      return;
+    try {
+      await api.patch(`/admin/reports/${id}`, { status: 'dismissed' });
+      setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status: 'dismissed' } : r)));
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Update failed');
     }
-    setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status: 'dismissed' } : r)));
   };
 
   const filteredProperties = properties.filter(

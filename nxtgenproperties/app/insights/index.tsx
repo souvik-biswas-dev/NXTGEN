@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 
 type TimeRange = '1M' | '3M' | '6M' | '1Y';
 type PropertyType = 'residential' | 'commercial';
@@ -39,31 +39,19 @@ export default function InsightsScreen() {
   const [topLocalities, setTopLocalities] = useState<TopLocality[]>([]);
   const [avgApartmentPrice, setAvgApartmentPrice] = useState<number>(0);
   const [avgVillaPrice, setAvgVillaPrice] = useState<number>(0);
+  // Live locality price trends (₹/sqft) computed from listings for the selected city.
+  const [localityPsf, setLocalityPsf] = useState<
+    { locality: string; avgPsf: number; listings: number }[]
+  >([]);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [{ data: platformData }, { data: aptAvg }, { data: villaAvg }] = await Promise.all([
-          supabase
-            .from('platform_data')
-            .select('key, data')
-            .in('key', ['market_trends', 'popular_cities', 'top_localities']),
-          supabase
-            .from('properties')
-            .select('avg_price:avg(price)')
-            .in('bhk', ['2BHK', '3BHK'])
-            .maybeSingle(),
-          supabase
-            .from('properties')
-            .select('avg_price:avg(price)')
-            .eq('bhk', '5+BHK')
-            .maybeSingle(),
-        ]);
-
-        const platformMap: Record<string, unknown> = {};
-        platformData?.forEach((row: { key: string; data: unknown }) => {
-          platformMap[row.key] = row.data;
-        });
+        const platformMap = await api.get<Record<string, unknown>>(
+          '/platform-data',
+          undefined,
+          false
+        );
 
         if (Array.isArray(platformMap.market_trends)) {
           setMarketTrends(platformMap.market_trends as MarketTrend[]);
@@ -74,17 +62,6 @@ export default function InsightsScreen() {
         if (Array.isArray(platformMap.top_localities)) {
           setTopLocalities(platformMap.top_localities as TopLocality[]);
         }
-
-        const aptData = aptAvg as { avg_price: number | null } | null;
-        const villaData = villaAvg as { avg_price: number | null } | null;
-        const apt = aptData?.avg_price ?? null;
-        const villa = villaData?.avg_price ?? null;
-        if (apt) {
-          setAvgApartmentPrice(Math.round(apt / 100000));
-        }
-        if (villa) {
-          setAvgVillaPrice(Math.round(villa / 100000));
-        }
       } catch (e) {
         console.error('Error loading insights data:', e);
       }
@@ -92,6 +69,24 @@ export default function InsightsScreen() {
 
     loadData();
   }, []);
+
+  // Reload live ₹/sqft per locality whenever the selected city changes.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.get<{
+          localities: { locality: string; avgPsf: number; listings: number }[];
+        }>(`/reviews/insights/${encodeURIComponent(selectedCity)}`, undefined, false);
+        if (!cancelled) setLocalityPsf(res.localities ?? []);
+      } catch {
+        if (!cancelled) setLocalityPsf([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCity]);
 
   const cityTrend = marketTrends.find((t) => t.city === selectedCity) ||
     marketTrends[0] || {
@@ -359,6 +354,32 @@ export default function InsightsScreen() {
           ))}
         </View>
       </View>
+
+      {/* Live ₹/sqft by locality — computed from current listings in the selected city */}
+      {localityPsf.length > 0 && (
+        <View className="px-4 mt-6">
+          <Text className="text-lg font-bold text-gray-900 mb-1">Live prices in {selectedCity}</Text>
+          <Text className="text-gray-500 text-sm mb-4">Average ₹/sqft from active listings</Text>
+          <View className="bg-white rounded-2xl p-4 shadow-sm">
+            {localityPsf.slice(0, 8).map((row, index, arr) => (
+              <View
+                key={row.locality}
+                className={`flex-row items-center justify-between py-3 ${
+                  index < arr.length - 1 ? 'border-b border-gray-100' : ''
+                }`}
+              >
+                <View className="flex-1 pr-3">
+                  <Text className="font-medium text-gray-900">{row.locality}</Text>
+                  <Text className="text-gray-500 text-xs">{row.listings} listings</Text>
+                </View>
+                <Text className="text-primary font-bold">
+                  ₹{Number(row.avgPsf || 0).toLocaleString('en-IN')}/sqft
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
 
       {/* Market Comparison */}
       <View className="px-4 mt-6">

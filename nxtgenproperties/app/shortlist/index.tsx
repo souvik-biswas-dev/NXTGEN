@@ -5,7 +5,7 @@ import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { PropertyCard } from '@/components/PropertyCard';
 import { useAuthStore } from '@/stores/authStore';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { Property } from '@/types';
 
 export default function ShortlistScreen() {
@@ -25,24 +25,8 @@ export default function ShortlistScreen() {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('favorites')
-        .select(
-          `
-          *,
-          property:properties(
-            *,
-            owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
-            broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
-          )
-        `
-        )
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      const propertyList = data?.map((fav: any) => fav.property).filter(Boolean) || [];
-      setProperties(propertyList);
+      const { items } = await api.get<{ items: Property[] }>('/favorites');
+      setProperties(items ?? []);
     } catch (error) {
       console.error('Error fetching favorites:', error);
     } finally {
