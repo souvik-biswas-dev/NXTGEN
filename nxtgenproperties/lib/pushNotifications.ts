@@ -2,7 +2,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 
 // Expo push handles iOS (APNs) and Android (FCM) with a single token.
 // The token is uploaded to the `push_tokens` table (migration 009). Server-side
@@ -63,16 +63,14 @@ export async function registerForPushNotifications({
     const token = (await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined))
       .data;
 
-    const { error } = await supabase.from('push_tokens').upsert(
-      {
-        user_id: userId,
+    try {
+      await api.post('/notifications/push-token', {
         token,
         platform: Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web',
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'token' }
-    );
-    if (error) console.warn('[push] upsert token failed:', error.message);
+      });
+    } catch (e) {
+      console.warn('[push] register token failed:', e);
+    }
 
     return token;
   } catch (err) {
@@ -85,7 +83,7 @@ export async function registerForPushNotifications({
 /** Remove the device's token — call on sign-out to stop sending pushes to it. */
 export async function unregisterPushToken(token: string): Promise<void> {
   try {
-    await supabase.from('push_tokens').delete().eq('token', token);
+    await api.del('/notifications/push-token', { token });
   } catch (err) {
     console.warn('[push] unregister failed:', err);
   }
