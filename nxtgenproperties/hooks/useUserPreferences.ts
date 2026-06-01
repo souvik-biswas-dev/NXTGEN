@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import {
   UserPreferences,
   SearchHistory,
@@ -15,7 +15,6 @@ export const useUserPreferences = () => {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuthStore();
 
-  // Fetch user preferences on component mount or when user changes
   useEffect(() => {
     if (user?.id) {
       fetchUserPreferences();
@@ -29,24 +28,9 @@ export const useUserPreferences = () => {
     try {
       setLoading(true);
       setError(null);
-
-      const { data, error: fetchError } = await supabase
-        .from('user_preferences')
-        .select('*')
-        .eq('user_id', user?.id)
-        .single();
-
-      if (fetchError) {
-        if (fetchError.code === 'PGRST116') {
-          // No preferences found, create default
-          const newPreferences = await createUserPreferences();
-          setPreferences(newPreferences);
-        } else {
-          throw fetchError;
-        }
-      } else {
-        setPreferences(data);
-      }
+      // Backend creates a default row on first fetch.
+      const data = await api.get<UserPreferences>('/preferences');
+      setPreferences(data);
     } catch (err) {
       console.error('Error fetching user preferences:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch preferences');
@@ -55,50 +39,13 @@ export const useUserPreferences = () => {
     }
   };
 
-  const createUserPreferences = async (): Promise<UserPreferences | null> => {
-    if (!user?.id) return null;
-
-    // The Supabase session JWT may not be committed to the client yet right
-    // after onAuthStateChange fires (OTP flow timing). Poll briefly until
-    // getUser() confirms an active session before hitting RLS-protected tables.
-    let sessionUserId: string | null = null;
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
-      if (authUser?.id) {
-        sessionUserId = authUser.id;
-        break;
-      }
-      await new Promise((r) => setTimeout(r, 300));
-    }
-
-    if (!sessionUserId) {
-      // Session genuinely not available — skip silently
-      return null;
-    }
-
+  const save = async (patch: Record<string, unknown>) => {
     try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .upsert(
-          {
-            user_id: sessionUserId,
-            preferred_cities: [],
-            preferred_types: [],
-            preferred_categories: [],
-            search_history: [],
-          },
-          { onConflict: 'user_id' }
-        )
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      const data = await api.put<UserPreferences>('/preferences', patch);
+      setPreferences(data);
     } catch (err) {
-      console.error('Error creating user preferences:', err);
-      return null;
+      console.error('Error saving preferences:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save preferences');
     }
   };
 
@@ -108,161 +55,59 @@ export const useUserPreferences = () => {
     city?: string
   ): Promise<void> => {
     if (!user?.id || !preferences) return;
+    const newSearchEntry: SearchHistory = {
+      id: Date.now().toString(),
+      query,
+      filters,
+      city: city || filters?.city,
+      timestamp: new Date().toISOString(),
+    };
+    const updatedHistory = [newSearchEntry, ...(preferences.search_history ?? [])].slice(0, 50);
 
-    try {
-      const newSearchEntry: SearchHistory = {
-        id: Date.now().toString(),
-        query,
-        filters,
-        city: city || filters?.city,
-        timestamp: new Date().toISOString(),
-      };
-
-      // Keep only last 50 searches
-      const updatedHistory = [newSearchEntry, ...preferences.search_history].slice(0, 50);
-
-      // Update preferred_cities if city is provided
-      let updatedPreferences = { ...preferences };
-      if (city) {
-        const currentCities = preferences.preferred_cities || [];
-        if (!currentCities.includes(city)) {
-          updatedPreferences.preferred_cities = [...currentCities, city].slice(0, 5); // Keep top 5
-        }
-      }
-
-      // Update preferred_types if provided
-      if (filters?.type) {
-        const currentTypes = preferences.preferred_types || [];
-        if (!currentTypes.includes(filters.type)) {
-          updatedPreferences.preferred_types = [...currentTypes, filters.type];
-        }
-      }
-
-      // Update preferred_categories if provided
-      if (filters?.category) {
-        const currentCategories = preferences.preferred_categories || [];
-        if (!currentCategories.includes(filters.category)) {
-          updatedPreferences.preferred_categories = [...currentCategories, filters.category];
-        }
-      }
-
-      // Upsert so the write succeeds even if the user_preferences row was
-      // never created (or got deleted). An `.update().eq()` with no matching
-      // row would error with PGRST116 ("0 rows") under `.single()`.
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .upsert(
-          {
-            user_id: user.id,
-            search_history: updatedHistory,
-            preferred_cities: updatedPreferences.preferred_cities,
-            preferred_types: updatedPreferences.preferred_types,
-            preferred_categories: updatedPreferences.preferred_categories,
-            last_search_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id' }
-        )
-        .select()
-        .single();
-
-      if (error) throw error;
-      setPreferences(data);
-    } catch (err) {
-      console.error('Error adding to search history:', err);
+    let preferred_cities = preferences.preferred_cities || [];
+    if (city && !preferred_cities.includes(city)) {
+      preferred_cities = [...preferred_cities, city].slice(0, 5);
     }
+    let preferred_types = preferences.preferred_types || [];
+    if (filters?.type && !preferred_types.includes(filters.type)) {
+      preferred_types = [...preferred_types, filters.type];
+    }
+    let preferred_categories = preferences.preferred_categories || [];
+    if (filters?.category && !preferred_categories.includes(filters.category)) {
+      preferred_categories = [...preferred_categories, filters.category];
+    }
+
+    await save({
+      search_history: updatedHistory,
+      preferred_cities,
+      preferred_types,
+      preferred_categories,
+      last_search_at: new Date().toISOString(),
+    });
   };
 
   const updatePreferredCities = async (cities: string[]): Promise<void> => {
-    if (!user?.id || !preferences) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .update({
-          preferred_cities: cities.slice(0, 5), // Keep max 5
-        })
-        .eq('user_id', user.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      setPreferences(data);
-    } catch (err) {
-      console.error('Error updating preferred cities:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update cities');
-    }
+    if (!user?.id) return;
+    await save({ preferred_cities: cities.slice(0, 5) });
   };
 
   const updatePreferredTypes = async (types: PropertyType[]): Promise<void> => {
-    if (!user?.id || !preferences) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .update({
-          preferred_types: types,
-        })
-        .eq('user_id', user.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      setPreferences(data);
-    } catch (err) {
-      console.error('Error updating preferred types:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update types');
-    }
+    if (!user?.id) return;
+    await save({ preferred_types: types });
   };
 
   const updatePreferredCategories = async (categories: PropertyCategory[]): Promise<void> => {
-    if (!user?.id || !preferences) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .update({
-          preferred_categories: categories,
-        })
-        .eq('user_id', user.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      setPreferences(data);
-    } catch (err) {
-      console.error('Error updating preferred categories:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update categories');
-    }
+    if (!user?.id) return;
+    await save({ preferred_categories: categories });
   };
 
   const clearSearchHistory = async (): Promise<void> => {
-    if (!user?.id || !preferences) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .update({
-          search_history: [],
-        })
-        .eq('user_id', user.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      setPreferences(data);
-    } catch (err) {
-      console.error('Error clearing search history:', err);
-      setError(err instanceof Error ? err.message : 'Failed to clear history');
-    }
+    if (!user?.id) return;
+    await save({ search_history: [] });
   };
 
-  const getPreferredCities = (): string[] => {
-    return preferences?.preferred_cities || [];
-  };
-
-  const getSearchHistory = (): SearchHistory[] => {
-    return preferences?.search_history || [];
-  };
+  const getPreferredCities = (): string[] => preferences?.preferred_cities || [];
+  const getSearchHistory = (): SearchHistory[] => preferences?.search_history || [];
 
   return {
     preferences,

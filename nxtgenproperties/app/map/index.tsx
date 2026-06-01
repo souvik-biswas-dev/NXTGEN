@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker, Region } from 'react-native-maps';
 import { usePropertiesStore } from '@/stores/propertiesStore';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { Property } from '@/types';
 import { theme } from '@/constants/theme';
 
@@ -43,13 +43,17 @@ export default function MapViewScreen() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.from('city_centroids').select('city, latitude, longitude');
-      if (cancelled || !data) return;
-      const map: Record<string, Centroid> = {};
-      data.forEach((c: Centroid) => {
-        map[c.city.toLowerCase()] = c;
-      });
-      setCentroids(map);
+      try {
+        const { items } = await api.get<{ items: Centroid[] }>('/properties/centroids', undefined, false);
+        if (cancelled) return;
+        const map: Record<string, Centroid> = {};
+        items.forEach((c: Centroid) => {
+          map[c.city.toLowerCase()] = c;
+        });
+        setCentroids(map);
+      } catch {
+        /* ignore */
+      }
     })();
     return () => {
       cancelled = true;

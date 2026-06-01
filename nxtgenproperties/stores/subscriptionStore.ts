@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Subscription, SubscriptionPlan } from '@/types';
-import { supabase } from '@/lib/supabase';
+import { api, hasSession } from '@/lib/api';
 
 export interface PlanDefinition {
   plan: SubscriptionPlan;
@@ -57,14 +57,8 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
 
   fetchPlans: async () => {
     try {
-      const { data } = await supabase
-        .from('platform_data')
-        .select('data')
-        .eq('key', 'subscription_plans')
-        .maybeSingle();
-      if (data?.data && Array.isArray(data.data)) {
-        set({ plans: data.data as PlanDefinition[] });
-      }
+      const data = await api.get<PlanDefinition[]>('/platform-data/subscription_plans', undefined, false);
+      if (Array.isArray(data)) set({ plans: data });
     } catch {
       // Keep DEFAULT_PLANS on error
     }
@@ -73,26 +67,14 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
   fetchSubscription: async () => {
     set({ loading: true });
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        // User not authenticated, just clear subscription and return
+      if (!(await hasSession())) {
         set({ subscription: null, loading: false });
         return;
       }
-
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-      set({ subscription: data });
+      const { subscription } = await api.get<{ subscription: Subscription | null }>(
+        '/payments/subscription'
+      );
+      set({ subscription });
     } catch (error) {
       console.error('Error fetching subscription:', error);
     } finally {
@@ -112,36 +94,10 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
     }
     set({ loading: true });
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const now = new Date();
-      const endsAt = new Date(now);
-      endsAt.setDate(endsAt.getDate() + 30);
-
-      // Cancel any prior active sub, then create a free one.
-      await supabase
-        .from('subscriptions')
-        .update({ status: 'cancelled' })
-        .eq('user_id', user.id)
-        .eq('status', 'active');
-
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .insert({
-          user_id: user.id,
-          plan,
-          status: 'active',
-          starts_at: now.toISOString(),
-          ends_at: endsAt.toISOString(),
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      set({ subscription: data });
+      const { subscription } = await api.post<{ subscription: Subscription }>(
+        '/payments/subscription/free'
+      );
+      set({ subscription });
     } catch (error) {
       console.error('Error subscribing:', error);
       throw error;
@@ -153,18 +109,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
   cancelSubscription: async () => {
     set({ loading: true });
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({ status: 'cancelled' })
-        .eq('user_id', user.id)
-        .eq('status', 'active');
-
-      if (error) throw error;
+      await api.post('/payments/subscription/cancel');
       set({ subscription: null });
     } catch (error) {
       console.error('Error cancelling subscription:', error);

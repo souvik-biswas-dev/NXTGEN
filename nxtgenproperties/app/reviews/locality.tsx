@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { formatDistanceToNow } from 'date-fns';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { LocalityReviewDetailed, PUBLIC_PROFILE_COLUMNS, User } from '@/types';
 import { theme } from '@/constants/theme';
@@ -75,18 +75,16 @@ export default function LocalityReviewsScreen() {
       setLoading(false);
       return;
     }
-    const { data } = await supabase
-      .from('locality_reviews_detailed')
-      .select(
-        `
-          *,
-          reviewer:users_profiles!locality_reviews_detailed_reviewer_id_fkey(${PUBLIC_PROFILE_COLUMNS})
-        `
-      )
-      .eq('locality', locality)
-      .eq('city', city)
-      .order('created_at', { ascending: false });
-    setReviews((data as ReviewRow[]) ?? []);
+    try {
+      const { items } = await api.get<{ items: ReviewRow[] }>(
+        '/reviews/locality',
+        { locality, city },
+        false
+      );
+      setReviews(items ?? []);
+    } catch {
+      setReviews([]);
+    }
     setLoading(false);
   }, [locality, city]);
 
@@ -124,19 +122,17 @@ export default function LocalityReviewsScreen() {
     }
     setSubmitting(true);
     try {
-      const { error } = await supabase.from('locality_reviews_detailed').insert({
+      await api.post('/reviews/locality', {
         locality,
         city,
-        reviewer_id: user.user_id,
         rating,
-        safety: safety || null,
-        connectivity: connectivity || null,
-        amenities_rating: amenitiesRating || null,
-        cleanliness: cleanliness || null,
-        title: title.trim() || null,
-        comment: comment.trim() || null,
+        safety: safety || undefined,
+        connectivity: connectivity || undefined,
+        amenities_rating: amenitiesRating || undefined,
+        cleanliness: cleanliness || undefined,
+        title: title.trim() || undefined,
+        comment: comment.trim() || undefined,
       });
-      if (error) throw error;
       setShowForm(false);
       setRating(0);
       setSafety(0);

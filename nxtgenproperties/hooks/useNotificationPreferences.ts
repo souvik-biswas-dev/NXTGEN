@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 
 export type NotificationPrefs = {
@@ -34,14 +34,14 @@ export function useNotificationPreferences() {
         setLoading(false);
         return;
       }
-      const { data } = await supabase
-        .from('user_preferences')
-        .select('notifications')
-        .eq('user_id', user.user_id)
-        .maybeSingle();
-      if (cancelled) return;
-      if (data?.notifications) {
-        setPrefs({ ...DEFAULTS, ...data.notifications });
+      try {
+        const { notifications } = await api.get<{ notifications: NotificationPrefs | null }>(
+          '/notifications/prefs'
+        );
+        if (cancelled) return;
+        if (notifications) setPrefs({ ...DEFAULTS, ...notifications });
+      } catch {
+        /* keep defaults */
       }
       setLoading(false);
     })();
@@ -53,10 +53,7 @@ export function useNotificationPreferences() {
   const persist = useCallback(
     (next: NotificationPrefs) => {
       if (!user?.user_id) return;
-      // Upsert by user_id so the row is created on first toggle.
-      void supabase
-        .from('user_preferences')
-        .upsert({ user_id: user.user_id, notifications: next }, { onConflict: 'user_id' });
+      void api.put('/notifications/prefs', next).catch(() => {});
     },
     [user?.user_id]
   );

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Property, SearchFilters } from '@/types';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 
 interface PlatformCity {
   id: string;
@@ -120,20 +120,8 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
     if (!force && get().propertiesLoaded) return;
     set({ loading: true });
     try {
-      // Single query for all cases — Postgres sorts preferred-city rows first via
-      // a CASE expression emulated by ordering on a computed boolean column isn't
-      // available in PostgREST, so we fetch one flat batch and re-sort client-side.
-      // This halves round-trips when preferredCities is set (was 2 queries → 1).
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .order('featured', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-
-      let allProperties = data || [];
+      const { items } = await api.get<{ items: Property[] }>('/properties', { limit: 50 }, false);
+      let allProperties = items || [];
 
       // Client-side preferred-city sort: O(n) stable partition
       if (preferredCities && preferredCities.length > 0) {
@@ -160,14 +148,7 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
 
   fetchPlatformData: async () => {
     try {
-      const { data, error } = await supabase.from('platform_data').select('*');
-
-      if (error) throw error;
-
-      const platformMap: Record<string, unknown> = {};
-      data?.forEach((item) => {
-        platformMap[item.key] = item.data;
-      });
+      const platformMap = await api.get<Record<string, unknown>>('/platform-data', undefined, false);
 
       set({
         popularCities: (platformMap.popular_cities as PlatformCity[]) ?? [],
@@ -209,16 +190,12 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
 
     set({ loading: true });
     try {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .or(`title.ilike.%${query}%,locality.ilike.%${query}%,city.ilike.%${query}%`)
-        .order('featured', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(30);
-
-      if (error) throw error;
-      set({ filteredProperties: data || [], loading: false });
+      const { items } = await api.get<{ items: Property[] }>(
+        '/properties',
+        { q: query, limit: 30 },
+        false
+      );
+      set({ filteredProperties: items || [], loading: false });
     } catch (error) {
       console.error('Error searching properties:', error);
       set({ loading: false });
@@ -247,80 +224,29 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
     });
 
     try {
-      let query = supabase.from('properties').select('*');
+      const params: Record<string, unknown> = {
+        sort: get().sort,
+        offset,
+        limit: PAGE_SIZE,
+      };
+      if (textQuery.length > 0) params.q = textQuery;
+      if (filters.city) params.city = filters.city;
+      if (filters.locality) params.locality = filters.locality;
+      if (filters.type) params.type = filters.type;
+      if (filters.category) params.category = filters.category;
+      if (filters.minPrice !== undefined) params.minPrice = filters.minPrice;
+      if (filters.maxPrice !== undefined) params.maxPrice = filters.maxPrice;
+      if (filters.minArea !== undefined) params.minArea = filters.minArea;
+      if (filters.maxArea !== undefined) params.maxArea = filters.maxArea;
+      if (filters.possession) params.possession = filters.possession;
+      if (filters.ownerOnly) params.ownerOnly = 'true';
+      if (filters.bhk && filters.bhk.length > 0) params.bhk = filters.bhk.join(',');
+      if (filters.furnishing && filters.furnishing.length > 0)
+        params.furnishing = filters.furnishing.join(',');
+      if (filters.facing && filters.facing.length > 0) params.facing = filters.facing.join(',');
 
-      const sort = get().sort;
-      if (sort === 'price_low_high') {
-        query = query.order('price', { ascending: true });
-      } else if (sort === 'price_high_low') {
-        query = query.order('price', { ascending: false });
-      } else if (sort === 'area_low_high') {
-        query = query.order('area_sqft', { ascending: true });
-      } else if (sort === 'area_high_low') {
-        query = query.order('area_sqft', { ascending: false });
-      } else {
-        // newest / relevance / undefined — keep featured first, then recency.
-        query = query
-          .order('featured', { ascending: false })
-          .order('created_at', { ascending: false });
-      }
-
-      query = query.range(offset, offset + PAGE_SIZE - 1);
-
-      if (textQuery.length > 0) {
-        // Escape PostgREST-significant characters (comma, parens) and
-        // search across the useful text columns in a single OR.
-        const esc = textQuery.replace(/[(),*]/g, ' ').trim();
-        if (esc.length > 0) {
-          const pattern = `%${esc}%`;
-          query = query.or(
-            `title.ilike.${pattern},locality.ilike.${pattern},city.ilike.${pattern},description.ilike.${pattern}`
-          );
-        }
-      }
-      if (filters.city) {
-        query = query.ilike('city', `%${filters.city}%`);
-      }
-      if (filters.locality) {
-        query = query.ilike('locality', `%${filters.locality}%`);
-      }
-      if (filters.type) {
-        query = query.eq('type', filters.type);
-      }
-      if (filters.category) {
-        query = query.eq('category', filters.category);
-      }
-      if (filters.minPrice !== undefined) {
-        query = query.gte('price', filters.minPrice);
-      }
-      if (filters.maxPrice !== undefined) {
-        query = query.lte('price', filters.maxPrice);
-      }
-      if (filters.bhk && filters.bhk.length > 0) {
-        query = query.in('bhk', filters.bhk);
-      }
-      if (filters.furnishing && filters.furnishing.length > 0) {
-        query = query.in('furnishing', filters.furnishing);
-      }
-      if (filters.minArea !== undefined) {
-        query = query.gte('area_sqft', filters.minArea);
-      }
-      if (filters.maxArea !== undefined) {
-        query = query.lte('area_sqft', filters.maxArea);
-      }
-      if (filters.facing && filters.facing.length > 0) {
-        query = query.in('facing', filters.facing);
-      }
-      if (filters.possession) {
-        query = query.eq('possession', filters.possession);
-      }
-      if (filters.ownerOnly) {
-        query = query.not('owner_id', 'is', null);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      const page = data ?? [];
+      const { items } = await api.get<{ items: Property[] }>('/properties', params, false);
+      const page = items ?? [];
       set({
         filteredProperties: append ? [...existing, ...page] : page,
         hasMore: page.length === PAGE_SIZE,
@@ -358,20 +284,7 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
     if (cached) return cached;
 
     try {
-      const { data, error } = await supabase
-        .from('properties')
-        .select(
-          `
-          *,
-          owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
-          broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
-        `
-        )
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-      return data;
+      return await api.get<Property>(`/properties/${id}`, undefined, false);
     } catch (error) {
       console.error('Error fetching property:', error);
       return undefined;
@@ -398,17 +311,8 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
 
   getMyListings: async () => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .or(`owner_id.eq.${user.id},broker_id.eq.${user.id}`)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return (data as Property[]) ?? [];
+      const { items } = await api.get<{ items: Property[] }>('/properties/mine');
+      return items ?? [];
     } catch (error) {
       console.error('Error fetching my listings:', error);
       return [];
@@ -416,8 +320,7 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
   },
 
   updateProperty: async (id, patch) => {
-    const { error } = await supabase.from('properties').update(patch).eq('id', id);
-    if (error) throw error;
+    await api.patch(`/properties/${id}`, patch);
     // Keep local caches in sync.
     set({
       properties: get().properties.map((p) => (p.id === id ? { ...p, ...patch } : p)),
@@ -428,8 +331,7 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
   },
 
   deleteProperty: async (id) => {
-    const { error } = await supabase.from('properties').delete().eq('id', id);
-    if (error) throw error;
+    await api.del(`/properties/${id}`);
     set({
       properties: get().properties.filter((p) => p.id !== id),
       filteredProperties: get().filteredProperties.filter((p) => p.id !== id),
@@ -438,21 +340,12 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
 
   getSimilarProperties: async (property, limit = 6) => {
     try {
-      // Similar = same city, same type, within ±30% price band, exclude self.
-      const min = Math.floor(property.price * 0.7);
-      const max = Math.ceil(property.price * 1.3);
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .neq('id', property.id)
-        .eq('city', property.city)
-        .eq('type', property.type)
-        .gte('price', min)
-        .lte('price', max)
-        .order('featured', { ascending: false })
-        .limit(limit);
-      if (error) throw error;
-      return (data as Property[]) ?? [];
+      const { items } = await api.get<{ items: Property[] }>(
+        `/properties/${property.id}/similar`,
+        { limit },
+        false
+      );
+      return items ?? [];
     } catch (error) {
       console.error('Error fetching similar properties:', error);
       return [];

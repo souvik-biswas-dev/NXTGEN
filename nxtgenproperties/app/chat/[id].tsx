@@ -15,10 +15,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useChatStore } from '@/stores/chatStore';
 import { useAuthStore } from '@/stores/authStore';
-import { Conversation, Message, PUBLIC_PROFILE_COLUMNS } from '@/types';
+import { Conversation, Message } from '@/types';
 import { chatMessageSchema } from '@/lib/validation';
 import { format, isToday, isYesterday } from 'date-fns';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 
 function formatMessageTime(dateStr: string) {
   const date = new Date(dateStr);
@@ -77,43 +77,15 @@ export default function ChatRoomScreen() {
         return;
       }
 
-      // Fetch from Supabase
+      // Fall back to the conversations list (includes other_user + unread).
       try {
-        const { data: conv } = await supabase
-          .from('conversations')
-          .select('*')
-          .eq('id', conversationId)
-          .single();
-
-        if (!conv || !user?.id) {
+        if (!user?.id) {
           setLoadingConvo(false);
           return;
         }
-
-        const otherUserId =
-          conv.participant_1 === user.id ? conv.participant_2 : conv.participant_1;
-
-        const { data: profile } = await supabase
-          .from('users_profiles')
-          .select(PUBLIC_PROFILE_COLUMNS)
-          .eq('user_id', otherUserId)
-          .single();
-
-        let property;
-        if (conv.property_id) {
-          const { data: prop } = await supabase
-            .from('properties')
-            .select('id, title, price, type, photos, locality, city')
-            .eq('id', conv.property_id)
-            .single();
-          property = prop || undefined;
-        }
-
-        setConversation({
-          ...conv,
-          other_user: profile || undefined,
-          property: property || undefined,
-        });
+        const { items } = await api.get<{ items: Conversation[] }>('/chat/conversations');
+        const conv = items.find((c) => c.id === conversationId);
+        if (conv) setConversation(conv);
       } catch (e) {
         console.error('Error loading conversation:', e);
       } finally {

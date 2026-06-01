@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { PropertyAlert, SearchFilters } from '@/types';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 
 interface AlertsState {
   alerts: PropertyAlert[];
@@ -18,19 +18,8 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
   fetchAlerts: async () => {
     set({ loading: true });
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { data, error } = await supabase
-        .from('property_alerts')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      set({ alerts: data ?? [] });
+      const { items } = await api.get<{ items: PropertyAlert[] }>('/notifications/alerts');
+      set({ alerts: items ?? [] });
     } catch (error) {
       console.error('Error fetching alerts:', error);
     } finally {
@@ -41,19 +30,8 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
   createAlert: async (filters: SearchFilters, name: string) => {
     set({ loading: true });
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { data, error } = await supabase
-        .from('property_alerts')
-        .insert({ user_id: user.id, filters, name, active: true })
-        .select()
-        .single();
-
-      if (error) throw error;
-      set({ alerts: [data, ...get().alerts] });
+      const alert = await api.post<PropertyAlert>('/notifications/alerts', { name, filters });
+      set({ alerts: [alert, ...get().alerts] });
     } catch (error) {
       console.error('Error creating alert:', error);
     } finally {
@@ -63,18 +41,7 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
 
   deleteAlert: async (id: string) => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { error } = await supabase
-        .from('property_alerts')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
+      await api.del(`/notifications/alerts/${id}`);
       set({ alerts: get().alerts.filter((a) => a.id !== id) });
     } catch (error) {
       console.error('Error deleting alert:', error);
@@ -83,24 +50,10 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
 
   toggleAlert: async (id: string) => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
       const alert = get().alerts.find((a) => a.id === id);
       if (!alert) return;
-
-      const { error } = await supabase
-        .from('property_alerts')
-        .update({ active: !alert.active })
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-      set({
-        alerts: get().alerts.map((a) => (a.id === id ? { ...a, active: !a.active } : a)),
-      });
+      await api.patch(`/notifications/alerts/${id}`, { active: !alert.active });
+      set({ alerts: get().alerts.map((a) => (a.id === id ? { ...a, active: !a.active } : a)) });
     } catch (error) {
       console.error('Error toggling alert:', error);
     }

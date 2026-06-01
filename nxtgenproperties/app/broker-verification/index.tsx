@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { theme } from '@/constants/theme';
 import { uploadBrokerDocument } from '@/lib/uploads';
@@ -56,13 +56,15 @@ export default function BrokerVerificationScreen() {
         setLoading(false);
         return;
       }
-      const { data } = await supabase
-        .from('broker_verifications')
-        .select('id, status, reviewer_notes, submitted_at')
-        .eq('user_id', user.user_id)
-        .maybeSingle();
-      if (cancelled) return;
-      setExisting((data as ExistingRequest) ?? null);
+      try {
+        const { verification } = await api.get<{ verification: ExistingRequest | null }>(
+          '/broker/verification'
+        );
+        if (cancelled) return;
+        setExisting(verification ?? null);
+      } catch {
+        if (!cancelled) setExisting(null);
+      }
       setLoading(false);
     })();
     return () => {
@@ -127,23 +129,16 @@ export default function BrokerVerificationScreen() {
 
     setSubmitting(true);
     try {
-      // Store the storage PATHs, not the signed URLs (URLs expire).
-      const row = {
-        user_id: user.user_id,
+      // Store the storage object KEYS (paths), not the signed URLs (URLs expire).
+      await api.post('/broker/verification', {
         full_name: parsed.data.full_name,
         rera_id: parsed.data.rera_id,
-        agency_name: parsed.data.agency_name || null,
-        years_experience: parsed.data.years_experience ?? null,
+        agency_name: parsed.data.agency_name || undefined,
+        years_experience: parsed.data.years_experience ?? undefined,
         id_document_url: idDoc!.path,
         rera_document_url: reraDoc!.path,
-        agency_document_url: agencyDoc?.path ?? null,
-        status: 'pending' as const,
-      };
-
-      const { error } = await supabase
-        .from('broker_verifications')
-        .upsert(row, { onConflict: 'user_id' });
-      if (error) throw error;
+        agency_document_url: agencyDoc?.path ?? undefined,
+      });
 
       Alert.alert(
         'Submitted',

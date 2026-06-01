@@ -15,7 +15,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { format, addDays } from 'date-fns';
 import { useAuthStore } from '@/stores/authStore';
 import { usePropertiesStore } from '@/stores/propertiesStore';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { Property } from '@/types';
 import { theme } from '@/constants/theme';
 
@@ -78,33 +78,15 @@ export default function SiteVisitScreen() {
     setSubmitting(true);
     try {
       const preferredDate = dates[dateIdx];
-      const contactId = property.broker_id || property.owner_id || null;
-      const { error } = await supabase.from('site_visit_requests').insert({
-        property_id: property.id,
-        user_id: user.user_id,
-        contact_user_id: contactId,
-        preferred_date: preferredDate.toISOString(),
+      // The backend records the request and notifies the owner/broker.
+      await api.post('/catalog/site-visits', {
+        propertyId: property.id,
+        preferredDate: preferredDate.toISOString(),
         slot,
         name: name.trim(),
         phone: phone.trim(),
-        notes: notes.trim() || null,
-        status: 'pending',
+        notes: notes.trim() || undefined,
       });
-      if (error) throw error;
-
-      // Fire-and-forget in-app notification for the owner/broker.
-      if (contactId) {
-        await supabase.from('in_app_notifications').insert({
-          user_id: contactId,
-          type: 'site_visit',
-          title: 'Site visit requested',
-          body: `${name.trim()} wants to visit ${property.title} on ${format(
-            preferredDate,
-            'EEE, d MMM'
-          )} at ${slot}.`,
-          data: { property_id: property.id },
-        });
-      }
 
       setDialog({
         variant: 'success',

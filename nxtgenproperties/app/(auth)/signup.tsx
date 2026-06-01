@@ -12,7 +12,8 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
+import { auth } from '@/lib/auth';
+import { useAuthStore } from '@/stores/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import { signupSchema, firstError } from '@/lib/validation';
 
@@ -36,22 +37,10 @@ export default function SignupScreen() {
 
     setLoading(true);
     try {
-      // 1. Sign up the user. The `handle_new_user` trigger (migration 006)
-      //    populates users_profiles from the email + raw_user_meta_data.name.
-      const { error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: username,
-          },
-        },
-      });
-
-      if (authError) throw authError;
-
-      // NOTE: We no longer manually insert into 'users_profiles' here.
-      // The Database Trigger handles it instantly on the server side.
+      // Register against our own backend. This returns + persists JWT tokens,
+      // and the useAuth listener loads the profile automatically.
+      const user = await auth.register({ email, password, name: username });
+      useAuthStore.getState().setUser(user);
 
       Alert.alert('Success', 'Account created successfully!', [
         { text: 'OK', onPress: () => router.replace('/(tabs)') },

@@ -1,6 +1,25 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { Property, SearchFilters } from '@/types';
+
+function filtersToParams(filters?: SearchFilters): Record<string, unknown> {
+  const p: Record<string, unknown> = {};
+  if (!filters) return p;
+  if (filters.city) p.city = filters.city;
+  if (filters.locality) p.locality = filters.locality;
+  if (filters.type) p.type = filters.type;
+  if (filters.category) p.category = filters.category;
+  if (filters.minPrice !== undefined) p.minPrice = filters.minPrice;
+  if (filters.maxPrice !== undefined) p.maxPrice = filters.maxPrice;
+  if (filters.minArea !== undefined) p.minArea = filters.minArea;
+  if (filters.maxArea !== undefined) p.maxArea = filters.maxArea;
+  if (filters.possession) p.possession = filters.possession;
+  if (filters.ownerOnly) p.ownerOnly = 'true';
+  if (filters.bhk?.length) p.bhk = filters.bhk.join(',');
+  if (filters.furnishing?.length) p.furnishing = filters.furnishing.join(',');
+  if (filters.facing?.length) p.facing = filters.facing.join(',');
+  return p;
+}
 
 export const useProperties = (filters?: SearchFilters, limit: number = 20) => {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -16,67 +35,14 @@ export const useProperties = (filters?: SearchFilters, limit: number = 20) => {
   const fetchProperties = async (offset: number = 0) => {
     try {
       setLoading(true);
-      let query = supabase
-        .from('properties')
-        .select(
-          `
-          *,
-          owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
-          broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
-        `
-        )
-        .range(offset, offset + limit - 1)
-        .order('created_at', { ascending: false });
-
-      // Apply filters
-      if (filters?.city) {
-        query = query.ilike('city', `%${filters.city}%`);
-      }
-      if (filters?.locality) {
-        query = query.ilike('locality', `%${filters.locality}%`);
-      }
-      if (filters?.type) {
-        query = query.eq('type', filters.type);
-      }
-      if (filters?.category) {
-        query = query.eq('category', filters.category);
-      }
-      if (filters?.minPrice !== undefined) {
-        query = query.gte('price', filters.minPrice);
-      }
-      if (filters?.maxPrice !== undefined) {
-        query = query.lte('price', filters.maxPrice);
-      }
-      if (filters?.bhk && filters.bhk.length > 0) {
-        query = query.in('bhk', filters.bhk);
-      }
-      if (filters?.furnishing && filters.furnishing.length > 0) {
-        query = query.in('furnishing', filters.furnishing);
-      }
-      if (filters?.minArea !== undefined) {
-        query = query.gte('area_sqft', filters.minArea);
-      }
-      if (filters?.maxArea !== undefined) {
-        query = query.lte('area_sqft', filters.maxArea);
-      }
-      if (filters?.possession) {
-        query = query.eq('possession', filters.possession);
-      }
-      if (filters?.ownerOnly) {
-        query = query.not('owner_id', 'is', null);
-      }
-
-      const { data, error: fetchError } = await query;
-
-      if (fetchError) throw fetchError;
-
-      if (offset === 0) {
-        setProperties(data || []);
-      } else {
-        setProperties((prev) => [...prev, ...(data || [])]);
-      }
-
-      setHasMore((data?.length || 0) === limit);
+      const { items } = await api.get<{ items: Property[] }>(
+        '/properties',
+        { ...filtersToParams(filters), offset, limit },
+        false
+      );
+      const data = items ?? [];
+      setProperties((prev) => (offset === 0 ? data : [...prev, ...data]));
+      setHasMore(data.length === limit);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
@@ -87,9 +53,7 @@ export const useProperties = (filters?: SearchFilters, limit: number = 20) => {
   };
 
   const loadMore = () => {
-    if (!loading && hasMore) {
-      fetchProperties(properties.length);
-    }
+    if (!loading && hasMore) fetchProperties(properties.length);
   };
 
   const refresh = () => {
@@ -110,21 +74,9 @@ export const useFeaturedProperties = () => {
 
   const fetchFeatured = async () => {
     try {
-      const { data, error } = await supabase
-        .from('properties')
-        .select(
-          `
-          *,
-          owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
-          broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
-        `
-        )
-        .eq('featured', true)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-      setProperties(data || []);
+      // Default sort puts featured first; take the top slice.
+      const { items } = await api.get<{ items: Property[] }>('/properties', { limit: 20 }, false);
+      setProperties((items ?? []).filter((p) => p.featured).slice(0, 10));
     } catch (error) {
       console.error('Error fetching featured properties:', error);
     } finally {
@@ -153,23 +105,15 @@ export const usePreferredCitiesProperties = (preferredCities?: string[], limit: 
   const fetchByPreferredCities = async () => {
     try {
       setLoading(true);
-
-      // Fetch properties from preferred cities with case-insensitive match
-      const { data, error: fetchError } = await supabase
-        .from('properties')
-        .select(
-          `
-          *,
-          owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
-          broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
-        `
+      // One request per city, then merge (the API filters a single city at a time).
+      const results = await Promise.all(
+        (preferredCities ?? []).map((city) =>
+          api.get<{ items: Property[] }>('/properties', { city, limit }, false).then((r) => r.items)
         )
-        .in('city', preferredCities || [])
-        .limit(limit)
-        .order('created_at', { ascending: false });
-
-      if (fetchError) throw fetchError;
-      setProperties(data || []);
+      );
+      const merged = ([] as Property[]).concat(...results);
+      const seen = new Set<string>();
+      setProperties(merged.filter((p) => (seen.has(p.id) ? false : seen.add(p.id))));
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
@@ -180,9 +124,7 @@ export const usePreferredCitiesProperties = (preferredCities?: string[], limit: 
   };
 
   const refresh = () => {
-    if (preferredCities && preferredCities.length > 0) {
-      fetchByPreferredCities();
-    }
+    if (preferredCities && preferredCities.length > 0) fetchByPreferredCities();
   };
 
   return { properties, loading, error, refresh };
@@ -201,19 +143,7 @@ export const useProperty = (id: string) => {
   const fetchProperty = async () => {
     try {
       setLoading(true);
-      const { data, error: fetchError } = await supabase
-        .from('properties')
-        .select(
-          `
-          *,
-          owner:users_profiles!properties_owner_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at),
-          broker:users_profiles!properties_broker_id_fkey(id, user_id, name, role, avatar_url, rating, verified_broker, created_at, updated_at)
-        `
-        )
-        .eq('id', id)
-        .single();
-
-      if (fetchError) throw fetchError;
+      const data = await api.get<Property>(`/properties/${id}`, undefined, false);
       setProperty(data);
       setError(null);
     } catch (err) {

@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { theme } from '@/constants/theme';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { FaqCategory, SupportInfo } from '@/types';
 
 if (Platform.OS === 'android') {
@@ -139,18 +139,15 @@ export default function HelpSupportScreen() {
 
   React.useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('platform_data')
-        .select('key, data')
-        .in('key', ['faqs', 'support']);
-      data?.forEach((row: { key: string; data: unknown }) => {
-        if (row.key === 'faqs' && Array.isArray(row.data)) {
-          setFaq(row.data as FaqCategory[]);
+      try {
+        const data = await api.get<Record<string, unknown>>('/platform-data', undefined, false);
+        if (Array.isArray(data.faqs)) setFaq(data.faqs as FaqCategory[]);
+        if (data.support && typeof data.support === 'object') {
+          setSupport({ ...DEFAULT_SUPPORT, ...(data.support as SupportInfo) });
         }
-        if (row.key === 'support' && row.data && typeof row.data === 'object') {
-          setSupport({ ...DEFAULT_SUPPORT, ...(row.data as SupportInfo) });
-        }
-      });
+      } catch {
+        /* keep fallbacks */
+      }
     })();
   }, []);
 

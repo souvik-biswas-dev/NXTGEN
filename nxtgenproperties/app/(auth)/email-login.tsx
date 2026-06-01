@@ -12,7 +12,8 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
+import { auth } from '@/lib/auth';
+import { useAuthStore } from '@/stores/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import { loginSchema, firstError } from '@/lib/validation';
 
@@ -32,13 +33,8 @@ export default function EmailLoginScreen() {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: parsed.data.email,
-        password: parsed.data.password,
-      });
-
-      if (error) throw error;
-
+      const user = await auth.login(parsed.data.email, parsed.data.password);
+      useAuthStore.getState().setUser(user);
       router.replace('/(tabs)');
     } catch (error) {
       Alert.alert(

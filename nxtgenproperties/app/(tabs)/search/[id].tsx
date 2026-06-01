@@ -26,7 +26,7 @@ import { useRecentlyViewedStore } from '@/stores/recentlyViewedStore';
 import { useCompareStore, MAX_COMPARE_SIZE } from '@/stores/compareStore';
 import { PropertyCard } from '@/components/PropertyCard';
 import { Property } from '@/types';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { theme } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -49,6 +49,14 @@ export default function PropertyDetailScreen() {
   const [showInquiry, setShowInquiry] = useState(false);
   const [inquiryMsg, setInquiryMsg] = useState('');
   const [sendingInquiry, setSendingInquiry] = useState(false);
+  // Make-an-Offer (Phase 9)
+  const [showOffer, setShowOffer] = useState(false);
+  const [offerAmount, setOfferAmount] = useState('');
+  const [offerMsg, setOfferMsg] = useState('');
+  const [sendingOffer, setSendingOffer] = useState(false);
+  // Contact gate (Phase 9): phone is hidden until revealed via the gated API.
+  const [revealedPhone, setRevealedPhone] = useState<string | null>(null);
+  const [revealing, setRevealing] = useState(false);
 
   useEffect(() => {
     const loadProperty = async () => {
@@ -67,14 +75,8 @@ export default function PropertyDetailScreen() {
   useEffect(() => {
     if (property?.id) {
       addToRecentlyViewed(property.id);
-      // Record view for seller analytics (fire-and-forget)
-      supabase
-        .from('property_views')
-        .insert({
-          property_id: property.id,
-          viewer_id: user?.user_id ?? null,
-        })
-        .then(() => {});
+      // Record view for seller analytics (fire-and-forget).
+      api.post(`/properties/${property.id}/view`).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [property?.id]);
@@ -102,9 +104,67 @@ export default function PropertyDetailScreen() {
     return `₹${price.toLocaleString('en-IN')}`;
   };
 
+  const contactUserId = contact?.user_id;
+  const phoneToUse = revealedPhone ?? contact?.phone ?? null;
+
+  // Reveal the owner/broker number through the gated endpoint. Returns the
+  // real number only if the viewer has earned access (inquired, chatted,
+  // subscribed, or is admin) — otherwise a masked value.
+  const viewNumber = async () => {
+    if (!contactUserId) return;
+    if (!user) {
+      Alert.alert('Sign in required', 'Please sign in to view contact details.');
+      return;
+    }
+    setRevealing(true);
+    try {
+      const res = await api.get<{ allowed: boolean; phone: string | null }>(
+        `/users/${contactUserId}/contact`
+      );
+      setRevealedPhone(res.phone);
+      if (!res.allowed) {
+        Alert.alert(
+          'Number hidden',
+          'Send an inquiry or start a chat to unlock the full contact number.'
+        );
+      }
+    } catch {
+      Alert.alert('Error', 'Could not fetch contact details.');
+    } finally {
+      setRevealing(false);
+    }
+  };
+
+  const submitOffer = async () => {
+    if (!user) {
+      Alert.alert('Sign in required', 'Please sign in to make an offer.');
+      return;
+    }
+    const amount = Number(offerAmount.replace(/[^0-9]/g, ''));
+    if (!amount || amount <= 0) {
+      Alert.alert('Enter an amount', 'Please enter a valid offer amount.');
+      return;
+    }
+    setSendingOffer(true);
+    try {
+      await api.post('/offers', { propertyId: property.id, amount, message: offerMsg.trim() || undefined });
+      Alert.alert('Offer sent!', 'The owner/broker will review your offer and respond.');
+      setShowOffer(false);
+      setOfferAmount('');
+      setOfferMsg('');
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Could not send offer');
+    } finally {
+      setSendingOffer(false);
+    }
+  };
+
   const handleCall = async () => {
-    if (!contact?.phone) return;
-    const url = `tel:${contact.phone}`;
+    if (!phoneToUse) {
+      await viewNumber();
+      return;
+    }
+    const url = `tel:${phoneToUse}`;
     const supported = await Linking.canOpenURL(url);
     if (supported) {
       await Linking.openURL(url);
@@ -112,9 +172,12 @@ export default function PropertyDetailScreen() {
   };
 
   const handleWhatsApp = async () => {
-    if (!contact?.phone) return;
+    if (!phoneToUse) {
+      await viewNumber();
+      return;
+    }
     const message = encodeURIComponent(`Hi, I'm interested in ${property.title}`);
-    const url = `https://wa.me/${contact.phone.replace(/[^0-9]/g, '')}?text=${message}`;
+    const url = `https://wa.me/${phoneToUse.replace(/[^0-9]/g, '')}?text=${message}`;
     const supported = await Linking.canOpenURL(url);
     if (supported) {
       await Linking.openURL(url);
@@ -150,20 +213,13 @@ export default function PropertyDetailScreen() {
       Alert.alert('Message required', 'Please enter your message before sending.');
       return;
     }
-    const toUserId = property.broker?.user_id ?? property.owner?.user_id;
-    if (!toUserId) {
-      Alert.alert('Not available', 'Contact information is not available for this property.');
-      return;
-    }
     setSendingInquiry(true);
     try {
-      const { error } = await supabase.from('inquiries').insert({
-        from_user_id: user.user_id,
-        to_user_id: toUserId,
-        property_id: property.id,
+      // The backend resolves the recipient (owner/broker) from the property.
+      await api.post('/inquiries', {
+        propertyId: property.id,
         message: inquiryMsg.trim(),
       });
-      if (error) throw error;
       Alert.alert('Inquiry sent!', 'The owner/broker will get back to you shortly.');
       setShowInquiry(false);
       setInquiryMsg('');
@@ -578,6 +634,27 @@ export default function PropertyDetailScreen() {
                 </View>
               </View>
 
+              {/* Contact-gate reveal: number is hidden until the user unlocks it. */}
+              <TouchableOpacity
+                onPress={viewNumber}
+                disabled={revealing}
+                className="flex-row items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3"
+              >
+                <View className="flex-row items-center">
+                  <Ionicons name="call-outline" size={18} color="#0F766E" />
+                  <Text className="text-gray-900 font-semibold ml-2">
+                    {revealedPhone ?? '+91 •••••• ••••'}
+                  </Text>
+                </View>
+                {revealing ? (
+                  <ActivityIndicator size="small" color="#0F766E" />
+                ) : (
+                  <Text className="text-primary font-semibold text-sm">
+                    {revealedPhone ? 'Shown' : 'View Number'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+
               <View className="flex-row">
                 <TouchableOpacity
                   onPress={handleCall}
@@ -854,6 +931,20 @@ export default function PropertyDetailScreen() {
             <Ionicons name="mail-outline" size={20} color="#0F766E" />
           </TouchableOpacity>
           <TouchableOpacity
+            onPress={() => setShowOffer(true)}
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+              backgroundColor: '#D4A24C',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="pricetag-outline" size={20} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={handleWhatsApp}
             style={{
               width: 48,
@@ -869,6 +960,88 @@ export default function PropertyDetailScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Make-an-Offer Modal (Phase 9) */}
+      <Modal visible={showOffer} animationType="slide" transparent presentationStyle="overFullScreen">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <View
+            style={{
+              backgroundColor: '#FFFBFF',
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              padding: 20,
+              paddingBottom: 36,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+              <Text style={{ flex: 1, fontSize: 18, fontWeight: '700', color: '#1B2838' }}>
+                Make an Offer
+              </Text>
+              <TouchableOpacity onPress={() => setShowOffer(false)}>
+                <Ionicons name="close" size={24} color="#1B2838" />
+              </TouchableOpacity>
+            </View>
+            <Text style={{ color: '#64766F', fontSize: 13, marginBottom: 12 }}>
+              Listed at {formatPrice(property.price)}. Propose your price — the {contact?.role ?? 'owner'} can accept, reject, or counter.
+            </Text>
+            <TextInput
+              value={offerAmount}
+              onChangeText={(t) => setOfferAmount(t.replace(/[^0-9]/g, ''))}
+              keyboardType="number-pad"
+              placeholder="Your offer (₹)"
+              placeholderTextColor="#B0A09A"
+              style={{
+                backgroundColor: '#E0EDEA',
+                borderRadius: 14,
+                padding: 14,
+                color: '#1B2838',
+                fontSize: 16,
+                fontWeight: '700',
+                marginBottom: 12,
+              }}
+            />
+            <TextInput
+              value={offerMsg}
+              onChangeText={setOfferMsg}
+              multiline
+              placeholder="Add a note (optional)"
+              placeholderTextColor="#B0A09A"
+              style={{
+                backgroundColor: '#E0EDEA',
+                borderRadius: 14,
+                padding: 14,
+                minHeight: 80,
+                textAlignVertical: 'top',
+                color: '#1B2838',
+                fontSize: 14,
+                marginBottom: 16,
+              }}
+            />
+            <TouchableOpacity
+              onPress={submitOffer}
+              disabled={sendingOffer}
+              style={{
+                backgroundColor: '#D4A24C',
+                borderRadius: 24,
+                paddingVertical: 14,
+                alignItems: 'center',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+            >
+              {sendingOffer ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="pricetag" size={18} color="#fff" />
+                  <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>Send Offer</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Inquiry Modal */}
       <Modal

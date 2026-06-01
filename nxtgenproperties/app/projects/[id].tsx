@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { Project } from '@/types';
 import { theme } from '@/constants/theme';
 
@@ -33,8 +33,12 @@ export default function ProjectDetailScreen() {
   useEffect(() => {
     (async () => {
       if (!id) return;
-      const { data } = await supabase.from('projects').select('*').eq('id', id).single();
-      setProject((data as Project | null) ?? null);
+      try {
+        const data = await api.get<Project>(`/catalog/projects/${id}`, undefined, false);
+        setProject(data ?? null);
+      } catch {
+        setProject(null);
+      }
       setLoading(false);
     })();
   }, [id]);
