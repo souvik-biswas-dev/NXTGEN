@@ -72,6 +72,8 @@
     },
     "extra": {
       "router": {},
+      "apiUrl": "http://localhost:4000",
+      "googleClientId": "",
       "eas": {
         "projectId": "3fe60882-cebd-4ff6-95ae-60e36b26e882"
       }
