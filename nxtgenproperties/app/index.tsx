@@ -1,16 +1,12 @@
 import { Redirect } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { View, ActivityIndicator } from 'react-native';
+import BrandedSplash from '@/components/BrandedSplash';
 
 export default function Index() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#0F766E" />
-      </View>
-    );
+    return <BrandedSplash />;
   }
 
   if (!user) {

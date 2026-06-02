@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- roof -->
+  <polygon points="512,250 818,476 206,476" fill="#D4A24C"
+           stroke="#D4A24C" stroke-width="10" stroke-linejoin="round"/>
+  <!-- building body -->
+  <rect x="292" y="458" width="440" height="320" rx="44" ry="44" fill="#FFFFFF"/>
+  <!-- upward arrow = next-gen growth -->
+  <polygon points="512,498 632,618 568,618 568,730 456,730 456,618 392,618"
+           fill="#0F766E" stroke="#0F766E" stroke-width="6" stroke-linejoin="round"/>
+</svg>

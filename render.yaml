@@ -1,0 +1,70 @@
+# Render Blueprint for the NxtGenProperties backend (Hono + Drizzle + Neon).
+# Deploy: push to GitHub, then in Render -> "New +" -> "Blueprint" and pick this repo.
+# Render auto-injects PORT; the app reads it via env.port. DB is Neon (external),
+# so no Render database is provisioned here.
+services:
+  - type: web
+    name: nxtgenproperties-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    region: singapore # closest Render region to India; change if you prefer
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start # -> tsx src/index.ts
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Secrets — set these in the Render dashboard (sync:false = not stored in git)
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: ACCESS_TOKEN_TTL
+        value: 15m
+      - key: REFRESH_TOKEN_TTL_DAYS
+        value: "30"
+      # CORS for the admin panel / web (the mobile app does not need CORS).
+      - key: CORS_ORIGINS
+        sync: false
+      # Phone OTP (MSG91)
+      - key: MSG91_AUTH_KEY
+        sync: false
+      - key: MSG91_SENDER_ID
+        value: NXTGEN
+      - key: MSG91_OTP_TEMPLATE_ID
+        sync: false
+      # Test-OTP bypass (your number + fixed code) — clear in real production.
+      - key: OTP_TEST_PHONES
+        sync: false
+      - key: OTP_TEST_CODE
+        sync: false
+      # Image uploads (Cloudinary)
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      # Payments (Razorpay)
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      # Email (Resend)
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: NxtGenProperties <no-reply@nxtgenproperties.com>
+      # Google OAuth
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      # Expo push notifications
+      - key: EXPO_ACCESS_TOKEN
+        sync: false

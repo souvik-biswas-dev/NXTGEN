@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FF6B35"
+      "backgroundColor": "#0F766E"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -33,7 +33,7 @@
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FF6B35"
+        "backgroundColor": "#0F766E"
       },
       "permissions": [
         "android.permission.ACCESS_FINE_LOCATION",
@@ -72,7 +72,7 @@
     },
     "extra": {
       "router": {},
-      "apiUrl": "http://localhost:4000",
+      "apiUrl": "https://nxtgenproperties-api.onrender.com",
       "googleClientId": "",
       "eas": {
         "projectId": "3fe60882-cebd-4ff6-95ae-60e36b26e882"

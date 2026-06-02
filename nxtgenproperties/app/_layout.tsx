@@ -2,10 +2,15 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LogBox, Appearance, View } from 'react-native';
 import { useEffect } from 'react';
+import * as SplashScreen from 'expo-splash-screen';
 import '../global.css';
 import { useAuth } from '@/hooks/useAuth';
 import { useThemeStore } from '@/stores/themeStore';
 import { useTheme } from '@/hooks/useTheme';
+
+// Keep the native splash up until our JS branded loading screen is mounted,
+// so the teal logo screen hands off without a white flash.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // Suppress known no-op warnings from the New Architecture bridge
 LogBox.ignoreLogs([
@@ -19,6 +24,11 @@ export default function RootLayout() {
 
   const { colors, dark } = useTheme();
   const syncFromSystem = useThemeStore((s) => s.syncFromSystem);
+
+  useEffect(() => {
+    // First JS frame is ready; hand off from the native splash to BrandedSplash.
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
 
   useEffect(() => {
     const sub = Appearance.addChangeListener(() => syncFromSystem());

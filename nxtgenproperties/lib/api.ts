@@ -5,8 +5,8 @@ import Constants from 'expo-constants';
 // Base URL of the Hono backend. Set EXPO_PUBLIC_API_URL in .env.
 // On a physical device, use your machine's LAN IP (not localhost).
 const API_URL =
-  (Constants.expoConfig?.extra?.apiUrl as string) ||
   process.env.EXPO_PUBLIC_API_URL ||
+  (Constants.expoConfig?.extra?.apiUrl as string) ||
   'http://localhost:4000';
 
 const ACCESS_KEY = 'ngp.accessToken';

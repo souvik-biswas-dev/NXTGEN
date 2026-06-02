@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 5.2.0"
+    "version": ">= 5.2.0",
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
@@ -11,11 +12,19 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://nxtgenproperties-api.onrender.com",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "991277533478-0snm5fq3ln5uttpodbstock5u96e606s.apps.googleusercontent.com"
       }
     },
     "production": {
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://nxtgenproperties-api.onrender.com",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "991277533478-0snm5fq3ln5uttpodbstock5u96e606s.apps.googleusercontent.com"
       }
     }
   },
