@@ -36,8 +36,10 @@ services:
         sync: false
       - key: MSG91_SENDER_ID
         value: NXTGEN
+      # Optional (set after DLT approval). Empty default so the Blueprint
+      # does not prompt for it; keeps msg91.configured=false until set.
       - key: MSG91_OTP_TEMPLATE_ID
-        sync: false
+        value: ""
       # Test-OTP bypass (your number + fixed code) — clear in real production.
       - key: OTP_TEST_PHONES
         sync: false
@@ -65,6 +67,6 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
-      # Expo push notifications
+      # Expo push notifications (optional). Empty default = no Blueprint prompt.
       - key: EXPO_ACCESS_TOKEN
-        sync: false
+        value: ""
