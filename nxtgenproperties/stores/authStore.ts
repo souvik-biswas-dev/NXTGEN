@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { User, UserPreferences } from '@/types';
-import { auth } from '@/lib/auth';
+import { auth, toUser } from '@/lib/auth';
 import { clearTokens } from '@/lib/api';
 
 interface AuthState {
@@ -39,13 +39,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // Only fields the API accepts; server maintains the rest.
     const { name, phone, email, avatar_url } = updates;
     const me = await auth.updateProfile({ name, phone, email, avatar_url });
-    set({
-      user: {
-        ...user,
-        ...updates,
-        name: me.profile?.name ?? user.name,
-        avatar_url: me.profile?.avatar_url ?? user.avatar_url,
-      },
-    });
+    // Prefer the server's canonical profile (handles camelCase), then overlay
+    // the just-sent edits so the UI reflects them immediately.
+    const fromServer = toUser(me);
+    set({ user: { ...user, ...(fromServer ?? {}), ...updates } });
   },
 }));

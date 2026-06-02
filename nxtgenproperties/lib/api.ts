@@ -1,6 +1,7 @@
 import 'react-native-url-polyfill/auto';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
+import { normalizePropertyResponse } from './normalize';
 
 // Base URL of the Hono backend. Set EXPO_PUBLIC_API_URL in .env.
 // On a physical device, use your machine's LAN IP (not localhost).
@@ -125,12 +126,21 @@ async function request<T>(path: string, opts: RequestOpts = {}): Promise<T> {
   if (res.status === 204) return undefined as T;
 
   const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+  let data = text ? JSON.parse(text) : null;
   if (!res.ok) {
     throw new ApiError(res.status, data?.error ?? `Request failed (${res.status})`, data?.code);
   }
+  // Property/favorite endpoints come back with raw camelCase Drizzle keys;
+  // normalize them to the snake_case shape the app's types expect. Scoped by
+  // path so we never touch camelCase JSON blobs (platform_data, auth tokens).
+  if (data && PROPERTY_RESPONSE_PATH.test(path)) {
+    data = normalizePropertyResponse(data);
+  }
   return data as T;
 }
+
+// Endpoints whose payloads are property rows (or arrays of them).
+const PROPERTY_RESPONSE_PATH = /^\/(properties(\/|\?|$)|favorites|recently-viewed|admin\/listings)/;
 
 function qs(params?: Record<string, unknown>): string {
   if (!params) return '';

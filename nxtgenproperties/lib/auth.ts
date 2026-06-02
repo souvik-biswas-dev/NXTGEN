@@ -25,17 +25,26 @@ interface AuthResponse {
   user: MeResponse;
 }
 
-/** Map the backend me/profile payload to the app's flat `User` shape. */
+/** Map the backend me/profile payload to the app's flat `User` shape.
+ *  The backend serializes `profile` as the raw Drizzle row (camelCase:
+ *  `userId`, `avatarUrl`, `verifiedBroker`), so read both casings — otherwise
+ *  `user_id` is undefined and avatar/upload actions wrongly think you're signed
+ *  out. */
 export function toUser(me: MeResponse): User | null {
   if (!me.profile) return null;
+  const p = me.profile as MeResponse['profile'] & {
+    userId?: string;
+    avatarUrl?: string | null;
+    verifiedBroker?: boolean | null;
+  };
   return {
-    id: me.profile.id,
-    user_id: me.profile.user_id,
-    name: me.profile.name ?? 'User',
-    role: me.profile.role as User['role'],
-    avatar_url: me.profile.avatar_url ?? undefined,
-    rating: me.profile.rating ? Number(me.profile.rating) : undefined,
-    verified_broker: me.profile.verified_broker ?? undefined,
+    id: p.id,
+    user_id: p.user_id ?? p.userId,
+    name: p.name ?? 'User',
+    role: p.role as User['role'],
+    avatar_url: p.avatar_url ?? p.avatarUrl ?? undefined,
+    rating: p.rating ? Number(p.rating) : undefined,
+    verified_broker: p.verified_broker ?? p.verifiedBroker ?? undefined,
     email: me.email ?? undefined,
     phone: me.phone ?? undefined,
     created_at: '',
