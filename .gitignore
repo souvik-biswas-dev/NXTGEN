@@ -7,6 +7,7 @@ nxt-web/
 # ── Untracked project docs (kept locally, not committed) ─────────
 APIKEYSETUP.md
 APP.md
+SETUP.md
 
 # ── Dependencies ─────────────────────────────────────────────────
 node_modules/
