@@ -95,6 +95,7 @@ inquiryRoutes.get('/offers', requireAuth, async (c) => {
 
 inquiryRoutes.post('/offers', requireAuth, async (c) => {
   const u = mustUser(c);
+  await enforceLimit(u.id, 'offer', 30, 3600, 'Too many offers. Please wait a while.');
   const b = z
     .object({
       propertyId: z.string().uuid(),

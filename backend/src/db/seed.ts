@@ -92,6 +92,15 @@ async function seedProperties() {
 }
 
 async function main() {
+  // Safety: the demo accounts below use a password that is committed in this
+  // repo. Refuse to seed a production database unless explicitly forced.
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PROD_SEED !== 'true') {
+    console.error(
+      '✋ Refusing to seed in production (demo accounts use a public password).\n' +
+        '   Set ALLOW_PROD_SEED=true to override, and change the demo password first.'
+    );
+    process.exit(1);
+  }
   console.log('🌱 Seeding…');
   await seedUsers();
   await seedPlatformData();

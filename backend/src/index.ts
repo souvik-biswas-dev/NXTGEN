@@ -2,6 +2,7 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { bodyLimit } from 'hono/body-limit';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { env } from '@/config/env';
 import { handleError } from '@/lib/errors';
@@ -28,15 +29,32 @@ import { adminRoutes } from '@/routes/admin';
 const app = new Hono<AppEnv>();
 const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 
-app.use('*', logger());
+// Redact access tokens (passed as ?token= on the WS upgrade) from request logs.
+app.use(
+  '*',
+  logger((message: string, ...rest: string[]) => {
+    console.log(message.replace(/token=[^&\s"]+/gi, 'token=[REDACTED]'), ...rest);
+  })
+);
+
+// In production, CORS must be explicitly allow-listed — never reflect '*'.
+// (The native mobile app sends no Origin header, so it is unaffected.)
+const allowWildcard = env.corsOrigins.includes('*') && !env.isProd;
+if (env.isProd && (env.corsOrigins.includes('*') || env.corsOrigins.length === 0)) {
+  console.warn('[cors] No explicit CORS_ORIGINS set in production — cross-origin browser requests are blocked.');
+}
 app.use(
   '*',
   cors({
-    origin: env.corsOrigins.includes('*') ? '*' : env.corsOrigins,
+    origin: allowWildcard ? '*' : env.corsOrigins.filter((o) => o !== '*'),
     allowMethods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Authorization', 'Content-Type'],
   })
 );
+
+// Cap request bodies (defends against memory-exhaustion payloads). File bytes
+// never hit this server — uploads go straight to Cloudinary via signed params.
+app.use('*', bodyLimit({ maxSize: 1024 * 1024 }));
 
 app.get('/health', (c) => c.json({ ok: true, ts: Date.now() }));
 

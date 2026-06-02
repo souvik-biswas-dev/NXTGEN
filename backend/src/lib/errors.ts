@@ -1,4 +1,5 @@
 import type { Context } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { ZodError } from 'zod';
 
 /** Throw this from any route/handler to return a clean JSON error. */
@@ -29,6 +30,10 @@ export function handleError(err: Error, c: Context) {
       { error: 'Validation failed', code: 'validation', issues: err.flatten() },
       400
     );
+  }
+  // Hono-thrown errors (e.g. bodyLimit 413, malformed routes) carry their own status.
+  if (err instanceof HTTPException) {
+    return c.json({ error: err.message || 'Request error' }, err.status);
   }
   console.error('[unhandled]', err);
   return c.json({ error: 'Internal server error' }, 500);

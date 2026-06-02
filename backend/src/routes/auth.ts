@@ -8,13 +8,20 @@ import { hashPassword, verifyPassword, hashSecret, verifySecret } from '@/lib/pa
 import { generateOtp, sendPhoneOtp } from '@/lib/otp';
 import { issueTokens, rotateRefresh, revokeAllRefresh, getMe } from '@/services/authService';
 import { requireAuth, mustUser } from '@/middleware/auth';
-import { badRequest, conflict, unauthorized, notFound } from '@/lib/errors';
-import { enforceLimit } from '@/lib/rateLimit';
+import { badRequest, conflict, unauthorized, ApiError } from '@/lib/errors';
+import { enforceLimit, rlKey } from '@/lib/rateLimit';
 import type { AppEnv } from '@/types';
+import type { Context } from 'hono';
 
 export const authRoutes = new Hono<AppEnv>();
 
 const ROLES = ['buyer', 'owner', 'broker'] as const;
+
+/** Best-effort client IP (Render/most proxies set x-forwarded-for). */
+function clientIp(c: Context): string {
+  const xff = c.req.header('x-forwarded-for');
+  return xff?.split(',')[0]?.trim() || c.req.header('x-real-ip') || 'unknown';
+}
 
 // ── Register (email + password) ──────────────────────────────────
 authRoutes.post('/register', async (c) => {
@@ -27,6 +34,8 @@ authRoutes.post('/register', async (c) => {
       phone: z.string().optional(),
     })
     .parse(await c.req.json());
+
+  await enforceLimit(rlKey(`register-ip:${clientIp(c)}`), 'register', 20, 3600, 'Too many sign-up attempts. Try again later.');
 
   const email = body.email.toLowerCase().trim();
   const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
@@ -56,6 +65,10 @@ authRoutes.post('/login', async (c) => {
     .parse(await c.req.json());
 
   const email = body.email.toLowerCase().trim();
+  // Brute-force guard: per-account and per-IP.
+  await enforceLimit(rlKey(`login:${email}`), 'login', 10, 900, 'Too many login attempts. Try again later.');
+  await enforceLimit(rlKey(`login-ip:${clientIp(c)}`), 'login_ip', 50, 900, 'Too many login attempts. Try again later.');
+
   const user = await db.query.users.findFirst({ where: eq(users.email, email) });
   if (!user || !user.passwordHash) throw unauthorized('Invalid email or password');
   if (!(await verifyPassword(body.password, user.passwordHash))) {
@@ -93,12 +106,21 @@ authRoutes.patch('/me', requireAuth, async (c) => {
   const u = mustUser(c);
   const body = z
     .object({
-      name: z.string().optional(),
-      phone: z.string().optional(),
+      name: z.string().min(1).max(120).optional(),
+      phone: z.string().min(8).max(20).optional(),
       avatar_url: z.string().url().optional(),
       email: z.string().email().optional(),
     })
     .parse(await c.req.json());
+
+  const newEmail = body.email?.toLowerCase().trim();
+
+  // Changing email: enforce uniqueness ourselves (friendly 409 instead of a raw
+  // DB constraint 500) and drop the verified flag until the new address is proven.
+  if (newEmail) {
+    const clash = await db.query.users.findFirst({ where: eq(users.email, newEmail) });
+    if (clash && clash.id !== u.id) throw conflict('That email is already in use');
+  }
 
   await db
     .update(usersProfiles)
@@ -106,13 +128,16 @@ authRoutes.patch('/me', requireAuth, async (c) => {
       ...(body.name !== undefined && { name: body.name }),
       ...(body.phone !== undefined && { phone: body.phone }),
       ...(body.avatar_url !== undefined && { avatarUrl: body.avatar_url }),
-      ...(body.email !== undefined && { email: body.email.toLowerCase() }),
+      ...(newEmail !== undefined && { email: newEmail }),
       updatedAt: new Date(),
     })
     .where(eq(usersProfiles.userId, u.id));
 
-  if (body.email) {
-    await db.update(users).set({ email: body.email.toLowerCase() }).where(eq(users.id, u.id));
+  if (newEmail) {
+    await db
+      .update(users)
+      .set({ email: newEmail, emailVerified: false, updatedAt: new Date() })
+      .where(eq(users.id, u.id));
   }
   return c.json(await getMe(u.id));
 });
@@ -120,16 +145,18 @@ authRoutes.patch('/me', requireAuth, async (c) => {
 // ── Phone OTP: request ───────────────────────────────────────────
 authRoutes.post('/otp/request', async (c) => {
   const { phone } = z
-    .object({ phone: z.string().min(8) })
+    .object({ phone: z.string().min(8).max(20) })
     .parse(await c.req.json());
+
+  // Abuse guard: cap OTP sends per phone and per IP (SMS bombing / cost).
+  await enforceLimit(rlKey(`otp:${phone}`), 'otp_request', 5, 600, 'Too many OTP requests. Please wait a few minutes.');
+  await enforceLimit(rlKey(`otp-ip:${clientIp(c)}`), 'otp_request_ip', 20, 600, 'Too many OTP requests. Please wait a few minutes.');
 
   // Whitelisted test numbers get a fixed code and skip MSG91 entirely, so the
   // app is testable before DLT approval. Everyone else goes through MSG91.
   const isTestPhone = env.otp.testPhones.includes(phone.replace(/[\s+]/g, ''));
   const code = isTestPhone ? env.otp.testCode : generateOtp(6);
 
-  // Light abuse guard keyed by phone (use the phone as a pseudo user id).
-  // 5 requests / 10 min.
   await db.insert(otpCodes).values({
     identifier: phone,
     channel: 'phone',
@@ -154,6 +181,9 @@ authRoutes.post('/otp/verify', async (c) => {
       role: z.enum(ROLES).optional(),
     })
     .parse(await c.req.json());
+
+  // Cap verification attempts so a 6-digit code can't be brute-forced.
+  await enforceLimit(rlKey(`otpv:${body.phone}`), 'otp_verify', 10, 600, 'Too many attempts. Request a new code.');
 
   const rows = await db
     .select()
@@ -202,19 +232,40 @@ authRoutes.post('/otp/verify', async (c) => {
 // ── Google OAuth (verify ID token from the mobile Google sign-in) ─
 authRoutes.post('/google', async (c) => {
   const { idToken, role } = z
-    .object({ idToken: z.string(), role: z.enum(ROLES).optional() })
+    .object({ idToken: z.string().min(1), role: z.enum(ROLES).optional() })
     .parse(await c.req.json());
 
-  const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+  // Fail closed: without configured client IDs we cannot validate the token's
+  // audience, so Google sign-in must be explicitly configured.
+  if (env.google.clientIds.length === 0) {
+    throw new ApiError(500, 'Google sign-in is not configured');
+  }
+
+  const res = await fetch(
+    `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`
+  );
   if (!res.ok) throw unauthorized('Invalid Google token');
   const info = (await res.json()) as {
     sub: string;
+    aud?: string;
+    iss?: string;
     email?: string;
     name?: string;
     picture?: string;
     email_verified?: string | boolean;
   };
-  const email = info.email?.toLowerCase();
+
+  // Critical: verify the token was minted for *our* app, not some other Google
+  // OAuth client. Without this, an ID token from any app would be accepted.
+  if (!info.aud || !env.google.clientIds.includes(info.aud)) {
+    throw unauthorized('Google token was issued for a different application');
+  }
+  if (info.iss !== 'accounts.google.com' && info.iss !== 'https://accounts.google.com') {
+    throw unauthorized('Invalid Google token issuer');
+  }
+  // Only trust a verified email for account linking.
+  const emailVerified = info.email_verified === true || info.email_verified === 'true';
+  const email = emailVerified ? info.email?.toLowerCase() : undefined;
 
   let user =
     (await db.query.users.findFirst({ where: eq(users.googleId, info.sub) })) ??
@@ -223,7 +274,7 @@ authRoutes.post('/google', async (c) => {
   if (!user) {
     [user] = await db
       .insert(users)
-      .values({ email, googleId: info.sub, emailVerified: true })
+      .values({ email, googleId: info.sub, emailVerified })
       .returning();
     await db.insert(usersProfiles).values({
       userId: user.id,
