@@ -58,6 +58,17 @@ export const env = {
     },
   },
 
+  // Testing aid: whitelisted phones skip MSG91 and accept a fixed code.
+  // Useful before DLT approval (real SMS won't deliver in India until then).
+  // Numbers are normalised (no '+' / spaces) so format doesn't matter.
+  otp: {
+    testPhones: optional('OTP_TEST_PHONES')
+      .split(',')
+      .map((s) => s.replace(/[\s+]/g, ''))
+      .filter(Boolean),
+    testCode: optional('OTP_TEST_CODE', '123456'),
+  },
+
   resend: {
     apiKey: optional('RESEND_API_KEY'),
     from: optional('EMAIL_FROM', 'NxtGenProperties <no-reply@nxtgenproperties.com>'),

@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { and, eq, gt, isNull } from 'drizzle-orm';
+import { env } from '@/config/env';
 import { db } from '@/db';
 import { users, usersProfiles, otpCodes } from '@/db/schema';
 import { hashPassword, verifyPassword, hashSecret, verifySecret } from '@/lib/password';
@@ -122,16 +123,24 @@ authRoutes.post('/otp/request', async (c) => {
     .object({ phone: z.string().min(8) })
     .parse(await c.req.json());
 
+  // Whitelisted test numbers get a fixed code and skip MSG91 entirely, so the
+  // app is testable before DLT approval. Everyone else goes through MSG91.
+  const isTestPhone = env.otp.testPhones.includes(phone.replace(/[\s+]/g, ''));
+  const code = isTestPhone ? env.otp.testCode : generateOtp(6);
+
   // Light abuse guard keyed by phone (use the phone as a pseudo user id).
   // 5 requests / 10 min.
-  const code = generateOtp(6);
   await db.insert(otpCodes).values({
     identifier: phone,
     channel: 'phone',
     codeHash: await hashSecret(code),
     expiresAt: new Date(Date.now() + 5 * 60_000),
   });
-  await sendPhoneOtp(phone, code);
+  if (isTestPhone) {
+    console.log(`[otp:test] whitelisted phone=${phone} uses fixed code`);
+  } else {
+    await sendPhoneOtp(phone, code);
+  }
   return c.json({ ok: true });
 });
 
