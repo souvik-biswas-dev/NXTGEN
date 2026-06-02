@@ -21,15 +21,17 @@ import Constants from 'expo-constants';
 import { useAuthStore } from '@/stores/authStore';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
+import { useCountUp } from '@/hooks/useCountUp';
 import { LinearGradient } from 'expo-linear-gradient';
 import { VerificationRequestCard } from '@/components/BrokerBadge';
-import { theme } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { uploadImage } from '@/lib/uploads';
 import { profileUpdateSchema, firstError } from '@/lib/validation';
 
+type Colors = ReturnType<typeof useTheme>['colors'];
+
 export default function ProfileScreen() {
-  useTheme(); // Subscribe so the screen re-renders immediately on theme change
+  const { colors, roundness, tabBarHeight, dark } = useTheme();
   const router = useRouter();
   const { user, signOut, updateProfile } = useAuthStore();
   const { favorites, fetchFavorites } = useFavoritesStore();
@@ -38,12 +40,17 @@ export default function ProfileScreen() {
   const [editForm, setEditForm] = React.useState({
     name: user?.name || '',
     phone: user?.phone || '',
+    email: user?.email || '',
   });
   const [saving, setSaving] = React.useState(false);
   const [avatarUploading, setAvatarUploading] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
 
   const handleChangeAvatar = async () => {
+    if (!user?.user_id) {
+      Alert.alert('Sign In Required', 'Please sign in to change your avatar.');
+      return;
+    }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
@@ -60,10 +67,6 @@ export default function ProfileScreen() {
     });
     if (result.canceled || !result.assets[0]) return;
 
-    if (!user?.user_id) {
-      Alert.alert('Sign In Required', 'Please sign in to change your avatar.');
-      return;
-    }
     setAvatarUploading(true);
     try {
       const url = await uploadImage({
@@ -106,6 +109,7 @@ export default function ProfileScreen() {
     setEditForm({
       name: user?.name || '',
       phone: user?.phone || '',
+      email: user?.email || '',
     });
     setEditModalVisible(true);
   };
@@ -119,11 +123,22 @@ export default function ProfileScreen() {
       Alert.alert('Check your details', firstError(parsed.error));
       return;
     }
+    // Email is optional; validate only when the user typed one.
+    const emailTrimmed = editForm.email.trim().toLowerCase();
+    if (emailTrimmed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) {
+      Alert.alert('Check your details', 'Please enter a valid email address.');
+      return;
+    }
     setSaving(true);
     try {
-      await updateProfile(parsed.data);
+      await updateProfile({
+        ...parsed.data,
+        ...(emailTrimmed && emailTrimmed !== user?.email?.toLowerCase()
+          ? { email: emailTrimmed }
+          : {}),
+      });
       setEditModalVisible(false);
-      Alert.alert('Success', 'Profile updated successfully');
+      Alert.alert('Saved', 'Your profile has been updated.');
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update profile');
     } finally {
@@ -137,539 +152,591 @@ export default function ProfileScreen() {
     views: user?.role === 'broker' ? 1240 : 0,
   };
 
+  const avatarUri =
+    user?.avatar_url ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&size=200&background=0F766E&color=fff`;
+
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.surface }}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }} edges={['top']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[theme.colors.primary]}
-            tintColor={theme.colors.primary}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
           />
         }
       >
-        {/* Cover Photo with Gradient */}
-        <View className="relative">
+        {/* Cover */}
+        <View style={{ position: 'relative' }}>
           <LinearGradient
-            colors={['#0F766E', '#D4A24C']}
+            colors={dark ? ['#0B3B36', '#0B1220'] : [colors.secondary, colors.primary]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            className="h-40"
+            style={{ height: 168 }}
           />
-
-          {/* Settings Icon */}
           <TouchableOpacity
             onPress={() => router.push('/settings' as any)}
-            className="absolute top-4 right-4 bg-white/20 rounded-full p-2"
+            style={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              backgroundColor: 'rgba(255,255,255,0.2)',
+              borderRadius: 20,
+              padding: 9,
+            }}
           >
-            <Ionicons name="settings-outline" size={24} color="white" />
+            <Ionicons name="settings-outline" size={22} color="#fff" />
           </TouchableOpacity>
         </View>
 
-        {/* Profile Info Card */}
-        <View className="px-6 -mt-20">
+        {/* Profile card */}
+        <View style={{ paddingHorizontal: 20, marginTop: -84 }}>
           <View
-            className="rounded-3xl shadow-lg p-6"
-            style={{ backgroundColor: theme.colors.cardBackground }}
+            style={{
+              backgroundColor: colors.cardBackground,
+              borderRadius: 26,
+              padding: 22,
+              borderWidth: 1,
+              borderColor: colors.outlineVariant,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: 0.12,
+              shadowRadius: 20,
+              elevation: 6,
+            }}
           >
-            {/* Avatar and Edit Button */}
-            <View className="items-center -mt-16 mb-4">
-              <View className="relative">
+            <View style={{ alignItems: 'center', marginTop: -64, marginBottom: 8 }}>
+              <View style={{ position: 'relative' }}>
                 <Image
-                  source={{
-                    uri:
-                      user?.avatar_url ||
-                      'https://ui-avatars.com/api/?name=' +
-                        (user?.name || 'User') +
-                        '&size=200&background=0F766E&color=fff',
-                  }}
-                  className="w-28 h-28 rounded-full shadow-md"
+                  source={{ uri: avatarUri }}
                   style={{
+                    width: 112,
+                    height: 112,
+                    borderRadius: 56,
                     borderWidth: 4,
-                    borderColor: theme.colors.primaryContainer,
-                    backgroundColor: theme.colors.primaryContainer,
+                    borderColor: colors.cardBackground,
+                    backgroundColor: colors.primaryContainer,
                   }}
                   fadeDuration={0}
                 />
                 <TouchableOpacity
                   onPress={handleChangeAvatar}
                   disabled={avatarUploading}
-                  className="absolute bottom-0 right-0 bg-primary rounded-full p-2.5 border-4 border-white"
+                  style={{
+                    position: 'absolute',
+                    bottom: 2,
+                    right: 2,
+                    backgroundColor: colors.primary,
+                    borderRadius: 18,
+                    padding: 8,
+                    borderWidth: 3,
+                    borderColor: colors.cardBackground,
+                  }}
                 >
                   {avatarUploading ? (
-                    <ActivityIndicator size="small" color="white" />
+                    <ActivityIndicator size="small" color="#fff" />
                   ) : (
-                    <Ionicons name="camera" size={18} color="white" />
+                    <Ionicons name="camera" size={16} color="#fff" />
                   )}
                 </TouchableOpacity>
               </View>
 
-              {/* Name and Email */}
-              <Text className="text-gray-900 text-2xl font-bold mt-4">
-                {user?.name || 'Stella French'}
+              <Text
+                style={{ color: colors.onSurface, fontSize: 22, fontWeight: '800', marginTop: 14 }}
+              >
+                {user?.name || 'Welcome'}
               </Text>
-              <Text className="text-gray-500 text-sm mt-1">
-                {user?.email || 'stella@example.com'}
-              </Text>
+              {user?.email ? (
+                <Text style={{ color: colors.outline, fontSize: 13, marginTop: 2 }}>
+                  {user.email}
+                </Text>
+              ) : (
+                <TouchableOpacity onPress={handleEditProfile}>
+                  <Text
+                    style={{ color: colors.primary, fontSize: 13, marginTop: 2, fontWeight: '600' }}
+                  >
+                    + Add your email
+                  </Text>
+                </TouchableOpacity>
+              )}
 
-              {/* Role Badge */}
-              <View className="mt-3 px-4 py-1.5 bg-primary/10 rounded-full">
-                <Text className="text-primary text-xs font-semibold capitalize">
+              <View
+                style={{
+                  marginTop: 10,
+                  paddingHorizontal: 14,
+                  paddingVertical: 5,
+                  backgroundColor: colors.primaryContainer,
+                  borderRadius: 999,
+                }}
+              >
+                <Text
+                  style={{
+                    color: colors.primary,
+                    fontSize: 12,
+                    fontWeight: '700',
+                    textTransform: 'capitalize',
+                  }}
+                >
                   {user?.role || 'Buyer'}
                 </Text>
               </View>
 
-              {/* Broker Verification Badge */}
-              {user?.role === 'broker' && (
-                <View className="mt-2 flex-row items-center bg-teal-50 px-3 py-1.5 rounded-full">
-                  <Ionicons name="shield-checkmark" size={16} color="#0F766E" />
-                  <Text className="text-primary text-xs font-medium ml-1">Verified Broker</Text>
+              {user?.role === 'broker' && user?.verified_broker && (
+                <View
+                  style={{
+                    marginTop: 8,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: colors.success + '22',
+                    paddingHorizontal: 12,
+                    paddingVertical: 5,
+                    borderRadius: 999,
+                  }}
+                >
+                  <Ionicons name="shield-checkmark" size={15} color={colors.success} />
+                  <Text
+                    style={{
+                      color: colors.success,
+                      fontSize: 12,
+                      fontWeight: '700',
+                      marginLeft: 5,
+                    }}
+                  >
+                    Verified Broker
+                  </Text>
                 </View>
               )}
             </View>
 
-            {/* Stats Row */}
+            {/* Stats */}
             <View
-              className="flex-row justify-around pt-5 mt-3 mx-2 pb-4"
               style={{
-                backgroundColor: theme.colors.surfaceVariant,
-                borderRadius: theme.roundness.lg,
+                flexDirection: 'row',
+                justifyContent: 'space-around',
+                backgroundColor: colors.surfaceVariant,
+                borderRadius: roundness.lg,
+                paddingVertical: 16,
+                marginTop: 14,
               }}
             >
               {user?.role !== 'buyer' && (
-                <View className="items-center">
-                  <Text className="text-gray-900 text-xl font-bold">{stats.listings}</Text>
-                  <Text className="text-gray-500 text-xs mt-1">Listings</Text>
-                </View>
+                <Stat colors={colors} value={stats.listings} label="Listings" />
               )}
-              <View className="items-center">
-                <Text className="text-gray-900 text-xl font-bold">{stats.favorites}</Text>
-                <Text className="text-gray-500 text-xs mt-1">Favorites</Text>
-              </View>
+              <Stat colors={colors} value={stats.favorites} label="Favorites" />
               {user?.role === 'broker' && (
-                <View className="items-center">
-                  <Text className="text-gray-900 text-xl font-bold">{stats.views}</Text>
-                  <Text className="text-gray-500 text-xs mt-1">Profile Views</Text>
-                </View>
+                <Stat colors={colors} value={stats.views} label="Profile Views" />
               )}
             </View>
 
-            {/* Edit Profile Button */}
             <TouchableOpacity
               onPress={handleEditProfile}
-              className="mt-5 py-3.5 flex-row items-center justify-center"
-              style={{ backgroundColor: theme.colors.primary, borderRadius: theme.roundness.xl }}
+              style={{
+                marginTop: 16,
+                paddingVertical: 14,
+                backgroundColor: colors.primary,
+                borderRadius: roundness.xl,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              activeOpacity={0.85}
             >
-              <Ionicons name="pencil" size={18} color="white" />
-              <Text className="text-white text-base font-semibold ml-2">Edit Profile</Text>
+              <Ionicons name="pencil" size={18} color="#fff" />
+              <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700', marginLeft: 8 }}>
+                Edit Profile
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Broker Verification Card - Show for brokers who aren't verified */}
         {user?.role === 'broker' && !user?.verified_broker && (
           <VerificationRequestCard onRequest={() => router.push('/broker-verification' as any)} />
         )}
 
-        {/* Verified Broker Benefits */}
-        {user?.role === 'broker' && user?.verified_broker && (
-          <View className="px-4 mt-4">
-            <View className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl p-4">
-              <View className="flex-row items-center">
-                <View className="bg-white/20 rounded-full p-2">
-                  <Ionicons name="shield-checkmark" size={24} color="white" />
-                </View>
-                <View className="ml-3 flex-1">
-                  <Text className="text-white font-bold text-lg">Verified Broker</Text>
-                  <Text className="text-white/80 text-sm">Your profile is trusted by buyers</Text>
-                </View>
-              </View>
-              <View className="flex-row mt-4">
-                <View className="flex-1 bg-white/20 rounded-xl p-3 mr-2">
-                  <Text className="text-white text-xl font-bold">3x</Text>
-                  <Text className="text-white/80 text-xs">More Leads</Text>
-                </View>
-                <View className="flex-1 bg-white/20 rounded-xl p-3 mr-2">
-                  <Text className="text-white text-xl font-bold">Top</Text>
-                  <Text className="text-white/80 text-xs">Search Rank</Text>
-                </View>
-                <View className="flex-1 bg-white/20 rounded-xl p-3">
-                  <Text className="text-white text-xl font-bold">Badge</Text>
-                  <Text className="text-white/80 text-xs">On Listings</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* My Activity Section */}
         {user?.role !== 'buyer' && (
-          <View className="px-6 mt-6">
-            <Text className="text-gray-900 text-lg font-bold mb-3">My Activity</Text>
-            <View
-              className="rounded-2xl shadow-sm overflow-hidden"
-              style={{ backgroundColor: theme.colors.cardBackground }}
-            >
-              <MenuItem
-                icon="home-outline"
-                label="My Listings"
-                onPress={() => router.push('/my-listings' as any)}
-                showBorder
-              />
-              <MenuItem
-                icon="bar-chart-outline"
-                label="Performance"
-                badge="New"
-                onPress={() => router.push('/insights' as any)}
-                showBorder
-              />
-              <MenuItem
-                icon="calendar-outline"
-                label="Site Visits"
-                onPress={() => router.push('/site-visits' as any)}
-              />
-            </View>
-          </View>
-        )}
-
-        {/* Favorites & Saved */}
-        <View className="px-6 mt-6">
-          <Text className="text-gray-900 text-lg font-bold mb-3">Saved & Favorites</Text>
-          <View
-            className="rounded-2xl shadow-sm overflow-hidden"
-            style={{ backgroundColor: theme.colors.cardBackground }}
-          >
+          <Group colors={colors} title="My Activity">
             <MenuItem
-              icon="heart-outline"
-              label="Favorite Properties"
-              count={stats.favorites}
-              onPress={() => router.push('/(tabs)/favorite')}
+              colors={colors}
+              icon="home-outline"
+              label="My Listings"
+              onPress={() => router.push('/my-listings' as any)}
               showBorder
             />
             <MenuItem
-              icon="bookmark-outline"
-              label="Saved Searches"
-              onPress={() => router.push('/saved-searches' as any)}
+              colors={colors}
+              icon="bar-chart-outline"
+              label="Performance"
+              badge="New"
+              onPress={() => router.push('/insights' as any)}
               showBorder
             />
             <MenuItem
-              icon="git-compare-outline"
-              label="Compare Properties"
-              onPress={() => router.push('/compare' as any)}
-              showBorder
-            />
-            <MenuItem
-              icon="notifications-outline"
-              label="Notifications"
-              onPress={() => router.push('/notifications' as any)}
-              showBorder
-            />
-            <MenuItem
+              colors={colors}
               icon="calendar-outline"
               label="Site Visits"
               onPress={() => router.push('/site-visits' as any)}
-              showBorder
             />
-            <MenuItem
-              icon="pricetag-outline"
-              label="My Offers"
-              onPress={() => router.push('/offers' as any)}
-              showBorder
-            />
-            <MenuItem
-              icon="ribbon-outline"
-              label="View Plans"
-              onPress={() => router.push('/membership' as any)}
-            />
-          </View>
-        </View>
+          </Group>
+        )}
 
-        {/* Financial Tools */}
-        <View className="px-6 mt-6">
-          <Text className="text-gray-900 text-lg font-bold mb-3">Tools</Text>
-          <View
-            className="rounded-2xl shadow-sm overflow-hidden"
-            style={{ backgroundColor: theme.colors.cardBackground }}
-          >
-            <MenuItem
-              icon="calculator-outline"
-              label="EMI Calculator"
-              onPress={() => router.push('/tools/emi-calculator' as any)}
-              showBorder
-            />
-            <MenuItem
-              icon="wallet-outline"
-              label="Budget Calculator"
-              onPress={() => router.push('/tools/budget-calculator' as any)}
-              showBorder
-            />
-            <MenuItem
-              icon="resize-outline"
-              label="Area Converter"
-              onPress={() => router.push('/tools/area-converter' as any)}
-              showBorder
-            />
-            <MenuItem
-              icon="cash-outline"
-              label="Home Loan Offers"
-              onPress={() => router.push('/tools/home-loan' as any)}
-            />
-          </View>
-        </View>
+        <Group colors={colors} title="Saved & Favorites">
+          <MenuItem
+            colors={colors}
+            icon="heart-outline"
+            label="Favorite Properties"
+            count={stats.favorites}
+            onPress={() => router.push('/(tabs)/favorite')}
+            showBorder
+          />
+          <MenuItem
+            colors={colors}
+            icon="bookmark-outline"
+            label="Saved Searches"
+            onPress={() => router.push('/saved-searches' as any)}
+            showBorder
+          />
+          <MenuItem
+            colors={colors}
+            icon="git-compare-outline"
+            label="Compare Properties"
+            onPress={() => router.push('/compare' as any)}
+            showBorder
+          />
+          <MenuItem
+            colors={colors}
+            icon="notifications-outline"
+            label="Notifications"
+            onPress={() => router.push('/notifications' as any)}
+            showBorder
+          />
+          <MenuItem
+            colors={colors}
+            icon="calendar-outline"
+            label="Site Visits"
+            onPress={() => router.push('/site-visits' as any)}
+            showBorder
+          />
+          <MenuItem
+            colors={colors}
+            icon="pricetag-outline"
+            label="My Offers"
+            onPress={() => router.push('/offers' as any)}
+            showBorder
+          />
+          <MenuItem
+            colors={colors}
+            icon="ribbon-outline"
+            label="View Plans"
+            onPress={() => router.push('/membership' as any)}
+          />
+        </Group>
 
-        {/* Notifications */}
-        <View className="px-6 mt-6">
-          <Text className="text-gray-900 text-lg font-bold mb-3">Notifications</Text>
-          <View
-            className="rounded-2xl shadow-sm"
-            style={{ backgroundColor: theme.colors.cardBackground }}
-          >
-            <SwitchItem
-              label="Matched Properties"
-              value={notifications.matched}
-              onValueChange={(value) => updateNotifications({ matched: value })}
-              showBorder
-            />
-            <SwitchItem
-              label="New Launched Properties"
-              value={notifications.new_launches}
-              onValueChange={(value) => updateNotifications({ new_launches: value })}
-              showBorder
-            />
-            <SwitchItem
-              label="Price Drop Alerts"
-              value={notifications.price_drop}
-              onValueChange={(value) => updateNotifications({ price_drop: value })}
-              showBorder
-            />
-            <SwitchItem
-              label="Property News & Updates"
-              value={notifications.property_news}
-              onValueChange={(value) => updateNotifications({ property_news: value })}
-            />
-          </View>
-        </View>
+        <Group colors={colors} title="Tools">
+          <MenuItem
+            colors={colors}
+            icon="calculator-outline"
+            label="EMI Calculator"
+            onPress={() => router.push('/tools/emi-calculator' as any)}
+            showBorder
+          />
+          <MenuItem
+            colors={colors}
+            icon="wallet-outline"
+            label="Budget Calculator"
+            onPress={() => router.push('/tools/budget-calculator' as any)}
+            showBorder
+          />
+          <MenuItem
+            colors={colors}
+            icon="resize-outline"
+            label="Area Converter"
+            onPress={() => router.push('/tools/area-converter' as any)}
+            showBorder
+          />
+          <MenuItem
+            colors={colors}
+            icon="cash-outline"
+            label="Home Loan Offers"
+            onPress={() => router.push('/tools/home-loan' as any)}
+          />
+        </Group>
 
-        {/* Settings & Support */}
-        <View className="px-6 mt-6">
-          <Text className="text-gray-900 text-lg font-bold mb-3">Settings & Support</Text>
-          <View
-            className="rounded-2xl shadow-sm overflow-hidden"
-            style={{ backgroundColor: theme.colors.cardBackground }}
-          >
-            <MenuItem
-              icon="lock-closed-outline"
-              label="Privacy Policy"
-              onPress={() => Linking.openURL('https://nxtgenproperties.com/privacy')}
-              showBorder
-            />
-            <MenuItem
-              icon="document-text-outline"
-              label="Terms of Use"
-              onPress={() => Linking.openURL('https://nxtgenproperties.com/terms')}
-              showBorder
-            />
-            <MenuItem
-              icon="help-circle-outline"
-              label="Help & Support"
-              onPress={() => router.push('/help' as any)}
-              showBorder
-            />
-            <MenuItem
-              icon="bug-outline"
-              label="Report a Bug"
-              onPress={() =>
-                Linking.openURL('mailto:bugs@nxtgenproperties.com?subject=Bug%20Report')
-              }
-              showBorder
-            />
-            <MenuItem
-              icon="information-circle-outline"
-              label="App Version"
-              rightText={Constants.expoConfig?.version ?? '1.0.0'}
-            />
-          </View>
-        </View>
+        <Group colors={colors} title="Notifications">
+          <SwitchItem
+            colors={colors}
+            label="Matched Properties"
+            value={notifications.matched}
+            onValueChange={(v) => updateNotifications({ matched: v })}
+            showBorder
+          />
+          <SwitchItem
+            colors={colors}
+            label="New Launched Properties"
+            value={notifications.new_launches}
+            onValueChange={(v) => updateNotifications({ new_launches: v })}
+            showBorder
+          />
+          <SwitchItem
+            colors={colors}
+            label="Price Drop Alerts"
+            value={notifications.price_drop}
+            onValueChange={(v) => updateNotifications({ price_drop: v })}
+            showBorder
+          />
+          <SwitchItem
+            colors={colors}
+            label="Property News & Updates"
+            value={notifications.property_news}
+            onValueChange={(v) => updateNotifications({ property_news: v })}
+          />
+        </Group>
 
-        {/* Logout Button */}
-        <View className="px-6 mt-6 mb-8">
+        <Group colors={colors} title="Settings & Support">
+          <MenuItem
+            colors={colors}
+            icon="settings-outline"
+            label="Settings"
+            onPress={() => router.push('/settings' as any)}
+            showBorder
+          />
+          <MenuItem
+            colors={colors}
+            icon="lock-closed-outline"
+            label="Privacy Policy"
+            onPress={() => Linking.openURL('https://nxtgenproperties.com/privacy')}
+            showBorder
+          />
+          <MenuItem
+            colors={colors}
+            icon="document-text-outline"
+            label="Terms of Use"
+            onPress={() => Linking.openURL('https://nxtgenproperties.com/terms')}
+            showBorder
+          />
+          <MenuItem
+            colors={colors}
+            icon="help-circle-outline"
+            label="Help & Support"
+            onPress={() => router.push('/help' as any)}
+            showBorder
+          />
+          <MenuItem
+            colors={colors}
+            icon="bug-outline"
+            label="Report a Bug"
+            onPress={() => Linking.openURL('mailto:bugs@nxtgenproperties.com?subject=Bug%20Report')}
+            showBorder
+          />
+          <MenuItem
+            colors={colors}
+            icon="information-circle-outline"
+            label="App Version"
+            rightText={Constants.expoConfig?.version ?? '1.0.0'}
+          />
+        </Group>
+
+        <View style={{ paddingHorizontal: 20, marginTop: 22 }}>
           <TouchableOpacity
             onPress={handleLogout}
-            className="shadow-sm flex-row items-center justify-center py-4"
             style={{
-              backgroundColor: theme.colors.surface,
-              borderRadius: theme.roundness.xl,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: 15,
+              backgroundColor: colors.cardBackground,
+              borderRadius: roundness.xl,
               borderWidth: 1,
-              borderColor: theme.colors.error + '30',
+              borderColor: colors.error + '40',
             }}
+            activeOpacity={0.85}
           >
-            <Ionicons name="log-out-outline" size={22} color="#EF4444" />
-            <Text className="text-red-500 text-base font-semibold ml-2">Logout</Text>
+            <Ionicons name="log-out-outline" size={20} color={colors.error} />
+            <Text style={{ color: colors.error, fontSize: 15, fontWeight: '700', marginLeft: 8 }}>
+              Logout
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Extra padding for floating tab bar */}
-        <View style={{ height: theme.tabBarHeight + 16 }} />
+        <View style={{ height: tabBarHeight + 16 }} />
       </ScrollView>
 
       {/* Edit Profile Modal */}
       <Modal visible={editModalVisible} animationType="slide" presentationStyle="pageSheet">
-        <SafeAreaView className="flex-1" style={{ backgroundColor: theme.colors.surface }}>
-          {/* Modal Header */}
+        <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
           <View
-            className="flex-row items-center justify-between px-5 py-4"
-            style={{ borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: 20,
+              paddingVertical: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.outlineVariant,
+            }}
           >
             <TouchableOpacity onPress={() => setEditModalVisible(false)}>
-              <Ionicons name="close" size={24} color={theme.colors.secondary} />
+              <Ionicons name="close" size={24} color={colors.onSurface} />
             </TouchableOpacity>
-            <Text className="text-lg font-bold" style={{ color: theme.colors.secondary }}>
+            <Text style={{ fontSize: 17, fontWeight: '800', color: colors.onSurface }}>
               Edit Profile
             </Text>
             <TouchableOpacity onPress={handleSaveProfile} disabled={saving}>
               <Text
-                className={`font-semibold`}
-                style={{ color: saving ? theme.colors.outlineVariant : theme.colors.primary }}
+                style={{
+                  fontWeight: '700',
+                  color: saving ? colors.outlineVariant : colors.primary,
+                }}
               >
-                {saving ? 'Saving...' : 'Save'}
+                {saving ? 'Saving…' : 'Save'}
               </Text>
             </TouchableOpacity>
           </View>
 
-          <ScrollView className="flex-1 px-5 pt-6" showsVerticalScrollIndicator={false}>
-            {/* Avatar */}
-            <View className="items-center mb-8">
-              <View className="relative">
+          <ScrollView
+            style={{ flex: 1, paddingHorizontal: 20, paddingTop: 24 }}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={{ alignItems: 'center', marginBottom: 28 }}>
+              <View style={{ position: 'relative' }}>
                 <Image
-                  source={{
-                    uri:
-                      user?.avatar_url ||
-                      'https://ui-avatars.com/api/?name=' +
-                        (user?.name || 'User') +
-                        '&size=200&background=0F766E&color=fff',
+                  source={{ uri: avatarUri }}
+                  style={{
+                    width: 96,
+                    height: 96,
+                    borderRadius: 48,
+                    borderWidth: 4,
+                    borderColor: colors.primaryContainer,
                   }}
-                  className="w-24 h-24 rounded-full"
-                  style={{ borderWidth: 4, borderColor: theme.colors.primaryContainer }}
                 />
                 <TouchableOpacity
                   onPress={handleChangeAvatar}
                   disabled={avatarUploading}
-                  className="absolute bottom-0 right-0 bg-primary rounded-full p-2 border-2 border-white"
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    backgroundColor: colors.primary,
+                    borderRadius: 16,
+                    padding: 7,
+                    borderWidth: 2,
+                    borderColor: colors.background,
+                  }}
                 >
                   {avatarUploading ? (
-                    <ActivityIndicator size="small" color="white" />
+                    <ActivityIndicator size="small" color="#fff" />
                   ) : (
-                    <Ionicons name="camera" size={16} color="white" />
+                    <Ionicons name="camera" size={15} color="#fff" />
                   )}
                 </TouchableOpacity>
               </View>
-              <Text className="text-gray-400 text-xs mt-2">Tap camera to change photo</Text>
+              <Text style={{ color: colors.outline, fontSize: 12, marginTop: 10 }}>
+                Tap the camera to change photo
+              </Text>
             </View>
 
-            {/* Full Name */}
-            <View className="mb-5">
-              <Text className="text-sm font-medium mb-2" style={{ color: theme.colors.outline }}>
-                Full Name
-              </Text>
-              <TextInput
-                value={editForm.name}
-                onChangeText={(text) => setEditForm((prev) => ({ ...prev, name: text }))}
-                className="px-4 py-3 text-base"
-                style={{
-                  backgroundColor: theme.colors.surfaceVariant,
-                  borderRadius: theme.roundness.lg,
-                  color: theme.colors.secondary,
-                }}
-                placeholder="Enter your name"
-                placeholderTextColor={theme.colors.outline}
-              />
-            </View>
+            <EditField
+              colors={colors}
+              roundness={roundness}
+              label="Full Name"
+              value={editForm.name}
+              onChangeText={(t) => setEditForm((p) => ({ ...p, name: t }))}
+              placeholder="Enter your name"
+              icon="person-outline"
+            />
+            <EditField
+              colors={colors}
+              roundness={roundness}
+              label="Phone Number"
+              value={editForm.phone}
+              onChangeText={(t) => setEditForm((p) => ({ ...p, phone: t }))}
+              placeholder="Enter phone number"
+              icon="call-outline"
+              keyboardType="phone-pad"
+            />
+            <EditField
+              colors={colors}
+              roundness={roundness}
+              label="Email"
+              value={editForm.email}
+              onChangeText={(t) => setEditForm((p) => ({ ...p, email: t }))}
+              placeholder="Enter your email"
+              icon="mail-outline"
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
 
-            {/* Email (read-only) */}
-            <View className="mb-5">
-              <Text className="text-sm font-medium mb-2" style={{ color: theme.colors.outline }}>
-                Email
-              </Text>
-              <View
-                className="px-4 py-3"
-                style={{
-                  backgroundColor: theme.colors.surfaceVariant,
-                  borderRadius: theme.roundness.lg,
-                }}
+            {/* Role — locked */}
+            <View style={{ marginBottom: 20 }}>
+              <Text
+                style={{ color: colors.outline, fontSize: 13, fontWeight: '600', marginBottom: 8 }}
               >
-                <Text className="text-base" style={{ color: theme.colors.outline }}>
-                  {user?.email || 'Not set'}
-                </Text>
-              </View>
-              <Text className="text-xs mt-1" style={{ color: theme.colors.outlineVariant }}>
-                Change email in Settings → Account
-              </Text>
-            </View>
-
-            {/* Phone */}
-            <View className="mb-5">
-              <Text className="text-sm font-medium mb-2" style={{ color: theme.colors.outline }}>
-                Phone Number
-              </Text>
-              <TextInput
-                value={editForm.phone}
-                onChangeText={(text) => setEditForm((prev) => ({ ...prev, phone: text }))}
-                className="px-4 py-3 text-base"
-                style={{
-                  backgroundColor: theme.colors.surfaceVariant,
-                  borderRadius: theme.roundness.lg,
-                  color: theme.colors.secondary,
-                }}
-                placeholder="Enter phone number"
-                placeholderTextColor={theme.colors.outline}
-                keyboardType="phone-pad"
-              />
-            </View>
-
-            {/* Role (read-only) */}
-            <View className="mb-5">
-              <Text className="text-sm font-medium mb-2" style={{ color: theme.colors.outline }}>
                 I am a
               </Text>
               <View
-                className="px-4 py-3"
                 style={{
-                  backgroundColor: theme.colors.surfaceVariant,
-                  borderRadius: theme.roundness.lg,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: colors.surfaceVariant,
+                  borderRadius: roundness.lg,
+                  paddingHorizontal: 14,
+                  paddingVertical: 14,
+                  opacity: 0.85,
                 }}
               >
-                <Text className="text-base capitalize" style={{ color: theme.colors.outline }}>
+                <Ionicons name="briefcase-outline" size={18} color={colors.outline} />
+                <Text
+                  style={{
+                    flex: 1,
+                    marginLeft: 10,
+                    fontSize: 15,
+                    color: colors.outline,
+                    textTransform: 'capitalize',
+                  }}
+                >
                   {user?.role || 'Buyer'}
                 </Text>
+                <Ionicons name="lock-closed" size={15} color={colors.outline} />
               </View>
-              <Text className="text-xs mt-1" style={{ color: theme.colors.outlineVariant }}>
-                Contact support to change role
+              <Text style={{ color: colors.outlineVariant, fontSize: 12, marginTop: 6 }}>
+                Contact support to change your role
               </Text>
             </View>
+
+            <View style={{ height: 24 }} />
           </ScrollView>
 
-          {/* Save Button */}
           <View
-            className="px-5 py-4"
-            style={{ borderTopWidth: 1, borderTopColor: theme.colors.outlineVariant }}
+            style={{
+              paddingHorizontal: 20,
+              paddingVertical: 16,
+              borderTopWidth: 1,
+              borderTopColor: colors.outlineVariant,
+            }}
           >
             <TouchableOpacity
               onPress={handleSaveProfile}
               disabled={saving}
-              className="py-4 flex-row items-center justify-center"
               style={{
-                borderRadius: theme.roundness.xl,
-                backgroundColor: saving ? theme.colors.outlineVariant : theme.colors.primary,
+                paddingVertical: 16,
+                borderRadius: roundness.xl,
+                backgroundColor: saving ? colors.outlineVariant : colors.primary,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
+              activeOpacity={0.85}
             >
               {saving ? (
-                <ActivityIndicator size="small" color="white" />
+                <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <>
-                  <Ionicons name="checkmark-circle" size={20} color="white" />
-                  <Text className="text-white text-base font-semibold ml-2">Save Changes</Text>
+                  <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                  <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700', marginLeft: 8 }}>
+                    Save Changes
+                  </Text>
                 </>
               )}
             </TouchableOpacity>
@@ -680,8 +747,111 @@ export default function ProfileScreen() {
   );
 }
 
-// Reusable MenuItem Component
+function Stat({ colors, value, label }: { colors: Colors; value: number; label: string }) {
+  const animated = useCountUp(value, 800, [value]);
+  return (
+    <View style={{ alignItems: 'center' }}>
+      <Text style={{ color: colors.onSurface, fontSize: 20, fontWeight: '800' }}>{animated}</Text>
+      <Text style={{ color: colors.outline, fontSize: 12, marginTop: 2 }}>{label}</Text>
+    </View>
+  );
+}
+
+function Group({
+  colors,
+  title,
+  children,
+}: {
+  colors: Colors;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+      <Text style={{ color: colors.onSurface, fontSize: 17, fontWeight: '800', marginBottom: 12 }}>
+        {title}
+      </Text>
+      <View
+        style={{
+          backgroundColor: colors.cardBackground,
+          borderRadius: 18,
+          overflow: 'hidden',
+          borderWidth: 1,
+          borderColor: colors.outlineVariant,
+        }}
+      >
+        {children}
+      </View>
+    </View>
+  );
+}
+
+interface EditFieldProps {
+  colors: Colors;
+  roundness: ReturnType<typeof useTheme>['roundness'];
+  label: string;
+  value: string;
+  onChangeText: (t: string) => void;
+  placeholder: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  keyboardType?: 'default' | 'phone-pad' | 'email-address';
+  autoCapitalize?: 'none' | 'sentences';
+}
+
+function EditField({
+  colors,
+  roundness,
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  icon,
+  keyboardType,
+  autoCapitalize,
+}: EditFieldProps) {
+  const [focused, setFocused] = React.useState(false);
+  return (
+    <View style={{ marginBottom: 20 }}>
+      <Text style={{ color: colors.outline, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>
+        {label}
+      </Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: colors.surface,
+          borderRadius: roundness.lg,
+          paddingHorizontal: 14,
+          borderWidth: 1.5,
+          borderColor: focused ? colors.primary : colors.outlineVariant,
+        }}
+      >
+        <Ionicons name={icon} size={18} color={focused ? colors.primary : colors.outline} />
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder={placeholder}
+          placeholderTextColor={colors.outline}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={false}
+          style={{
+            flex: 1,
+            marginLeft: 10,
+            paddingVertical: 14,
+            fontSize: 15,
+            color: colors.onSurface,
+          }}
+        />
+      </View>
+    </View>
+  );
+}
+
 interface MenuItemProps {
+  colors: Colors;
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   onPress?: () => void;
@@ -691,97 +861,130 @@ interface MenuItemProps {
   badge?: string;
 }
 
-function MenuItem({ icon, label, onPress, showBorder, rightText, count, badge }: MenuItemProps) {
+function MenuItem({
+  colors,
+  icon,
+  label,
+  onPress,
+  showBorder,
+  rightText,
+  count,
+  badge,
+}: MenuItemProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`flex-row items-center justify-between px-4 py-4 ${showBorder ? 'border-b' : ''}`}
-      style={showBorder ? { borderBottomColor: theme.colors.outlineVariant } : undefined}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 14,
+        paddingVertical: 15,
+        borderBottomWidth: showBorder ? 1 : 0,
+        borderBottomColor: colors.outlineVariant,
+      }}
       activeOpacity={0.7}
     >
-      <View className="flex-row items-center flex-1">
+      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
         <View
-          className="w-10 h-10 items-center justify-center"
-          style={{ backgroundColor: theme.colors.surfaceVariant, borderRadius: theme.roundness.md }}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 11,
+            backgroundColor: colors.surfaceVariant,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          <Ionicons name={icon} size={20} color={theme.colors.outline} />
+          <Ionicons name={icon} size={19} color={colors.primary} />
         </View>
-        <Text className="text-base ml-3 flex-1" style={{ color: theme.colors.secondary }}>
+        <Text style={{ fontSize: 15, marginLeft: 12, flex: 1, color: colors.onSurface }}>
           {label}
         </Text>
 
         {badge && (
           <View
-            className="px-2.5 py-0.5 mr-2"
-            style={{ backgroundColor: theme.colors.primary, borderRadius: theme.roundness.full }}
-          >
-            <Text className="text-xs font-semibold" style={{ color: theme.colors.onPrimary }}>
-              {badge}
-            </Text>
-          </View>
-        )}
-
-        {count !== undefined && (
-          <View
-            className="px-2.5 py-0.5 mr-2"
             style={{
-              backgroundColor: theme.colors.primaryContainer,
-              borderRadius: theme.roundness.full,
+              paddingHorizontal: 9,
+              paddingVertical: 2,
+              marginRight: 8,
+              backgroundColor: colors.primary,
+              borderRadius: 999,
             }}
           >
-            <Text className="text-xs font-semibold" style={{ color: theme.colors.primary }}>
-              {count}
-            </Text>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: '#fff' }}>{badge}</Text>
           </View>
         )}
-
+        {count !== undefined && (
+          <View
+            style={{
+              paddingHorizontal: 9,
+              paddingVertical: 2,
+              marginRight: 8,
+              backgroundColor: colors.primaryContainer,
+              borderRadius: 999,
+            }}
+          >
+            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>{count}</Text>
+          </View>
+        )}
         {rightText && (
-          <Text className="text-sm mr-2" style={{ color: theme.colors.outline }}>
-            {rightText}
-          </Text>
+          <Text style={{ fontSize: 13, marginRight: 8, color: colors.outline }}>{rightText}</Text>
         )}
       </View>
-
-      {onPress && <Ionicons name="chevron-forward" size={20} color={theme.colors.outlineVariant} />}
+      {onPress && <Ionicons name="chevron-forward" size={20} color={colors.outlineVariant} />}
     </TouchableOpacity>
   );
 }
 
-// Reusable SwitchItem Component
 interface SwitchItemProps {
+  colors: Colors;
   label: string;
   value: boolean;
   onValueChange: (value: boolean) => void;
   showBorder?: boolean;
 }
 
-function SwitchItem({ label, value, onValueChange, showBorder }: SwitchItemProps) {
+function SwitchItem({ colors, label, value, onValueChange, showBorder }: SwitchItemProps) {
   return (
     <View
-      className={`flex-row items-center justify-between px-4 py-4 ${showBorder ? 'border-b' : ''}`}
-      style={showBorder ? { borderBottomColor: theme.colors.outlineVariant } : undefined}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 14,
+        paddingVertical: 13,
+        borderBottomWidth: showBorder ? 1 : 0,
+        borderBottomColor: colors.outlineVariant,
+      }}
     >
-      <View className="flex-row items-center flex-1">
+      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
         <View
-          className="w-10 h-10 items-center justify-center"
-          style={{ backgroundColor: theme.colors.surfaceVariant, borderRadius: theme.roundness.md }}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 11,
+            backgroundColor: colors.surfaceVariant,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
           <Ionicons
             name={value ? 'notifications' : 'notifications-outline'}
-            size={20}
-            color={value ? theme.colors.primary : theme.colors.outline}
+            size={19}
+            color={value ? colors.primary : colors.outline}
           />
         </View>
-        <Text className="text-base ml-3" style={{ color: theme.colors.secondary }}>
+        <Text style={{ fontSize: 15, marginLeft: 12, flex: 1, color: colors.onSurface }}>
           {label}
         </Text>
       </View>
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ false: theme.colors.outlineVariant, true: theme.colors.primaryContainer }}
-        thumbColor={value ? theme.colors.primary : theme.colors.surface}
-        ios_backgroundColor={theme.colors.outlineVariant}
+        trackColor={{ false: colors.outlineVariant, true: colors.primary }}
+        thumbColor="#fff"
+        ios_backgroundColor={colors.outlineVariant}
       />
     </View>
   );
