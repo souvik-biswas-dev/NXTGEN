@@ -2,7 +2,6 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform, Animated, View, Text } from 'react-native';
 import { useRef, useEffect } from 'react';
-import { theme } from '@/constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 
 // Tab design: icon + small label below, stacked vertically. Active state is
@@ -116,32 +115,33 @@ function PostButton({ focused }: { focused: boolean }) {
 }
 
 export default function TabsLayout() {
+  const { colors } = useTheme();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.outline,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.outline,
         tabBarStyle: {
           position: 'absolute',
           bottom: Platform.OS === 'ios' ? 24 : 16,
           left: 14,
           right: 14,
           height: 68,
-          backgroundColor: theme.colors.surface,
+          backgroundColor: colors.surface,
           borderRadius: 32,
           borderTopWidth: 0,
           paddingTop: 8,
           paddingBottom: 8,
           paddingHorizontal: 4,
-          shadowColor: '#1B2838',
+          shadowColor: '#000',
           shadowOffset: { width: 0, height: 8 },
           shadowOpacity: 0.12,
           shadowRadius: 24,
           elevation: 14,
           borderWidth: 1,
-          borderColor: theme.colors.outlineVariant,
+          borderColor: colors.outlineVariant,
         },
         tabBarItemStyle: {
           justifyContent: 'center',
