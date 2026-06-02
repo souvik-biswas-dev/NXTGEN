@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { brokerReviews, localityReviewsDetailed, properties, usersProfiles } from '@/db/schema';
 import { requireAuth, mustUser } from '@/middleware/auth';
 import { badRequest } from '@/lib/errors';
+import { enforceLimit } from '@/lib/rateLimit';
 import type { AppEnv } from '@/types';
 
 export const reviewRoutes = new Hono<AppEnv>();
@@ -26,6 +27,7 @@ reviewRoutes.get('/broker/:brokerId', async (c) => {
 
 reviewRoutes.post('/broker/:brokerId', requireAuth, async (c) => {
   const u = mustUser(c);
+  await enforceLimit(u.id, 'review', 30, 3600, 'Too many reviews. Please wait a while.');
   const brokerId = c.req.param('brokerId');
   if (brokerId === u.id) throw badRequest('You cannot review yourself');
   const b = z
@@ -77,6 +79,7 @@ reviewRoutes.get('/locality', async (c) => {
 
 reviewRoutes.post('/locality', requireAuth, async (c) => {
   const u = mustUser(c);
+  await enforceLimit(u.id, 'review', 30, 3600, 'Too many reviews. Please wait a while.');
   const b = z
     .object({
       locality: z.string(),

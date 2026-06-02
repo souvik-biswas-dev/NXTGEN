@@ -5,10 +5,18 @@ import { db } from '@/db';
 import { projects, siteVisitRequests, propertyReports, homeLoanLeads, properties } from '@/db/schema';
 import { requireAuth, optionalAuth, mustUser } from '@/middleware/auth';
 import { notFound } from '@/lib/errors';
+import { enforceLimit, rlKey } from '@/lib/rateLimit';
 import { notify } from '@/services/notify';
+import type { Context } from 'hono';
 import type { AppEnv } from '@/types';
 
 export const catalogRoutes = new Hono<AppEnv>();
+
+/** Best-effort client IP for rate-limiting unauthenticated endpoints. */
+function clientIp(c: Context): string {
+  const xff = c.req.header('x-forwarded-for');
+  return xff?.split(',')[0]?.trim() || c.req.header('x-real-ip') || 'unknown';
+}
 
 // ── Projects (new launches) ──────────────────────────────────────
 catalogRoutes.get('/projects', async (c) => {
@@ -46,6 +54,7 @@ catalogRoutes.get('/site-visits', requireAuth, async (c) => {
 
 catalogRoutes.post('/site-visits', requireAuth, async (c) => {
   const u = mustUser(c);
+  await enforceLimit(u.id, 'site_visit', 20, 3600, 'Too many site visit requests. Please wait a while.');
   const b = z
     .object({
       propertyId: z.string().uuid(),
@@ -105,8 +114,9 @@ catalogRoutes.patch('/site-visits/:id', requireAuth, async (c) => {
 // ── Property reports ─────────────────────────────────────────────
 catalogRoutes.post('/reports', requireAuth, async (c) => {
   const u = mustUser(c);
+  await enforceLimit(u.id, 'report', 20, 3600, 'Too many reports. Please wait a while.');
   const b = z
-    .object({ propertyId: z.string().uuid(), reason: z.string(), details: z.string().optional() })
+    .object({ propertyId: z.string().uuid(), reason: z.string().min(1), details: z.string().optional() })
     .parse(await c.req.json());
   const [row] = await db
     .insert(propertyReports)
@@ -118,6 +128,14 @@ catalogRoutes.post('/reports', requireAuth, async (c) => {
 // ── Home loan leads ──────────────────────────────────────────────
 catalogRoutes.post('/home-loan-leads', optionalAuth, async (c) => {
   const u = c.get('user');
+  // Unauthenticated endpoint: rate-limit by user when present, else by IP.
+  await enforceLimit(
+    u ? rlKey(`hll:${u.id}`) : rlKey(`hll-ip:${clientIp(c)}`),
+    'home_loan_lead',
+    10,
+    3600,
+    'Too many requests. Please try again later.'
+  );
   const b = z
     .object({
       name: z.string(),
