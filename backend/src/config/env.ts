@@ -18,7 +18,9 @@ export const env = {
   nodeEnv: optional('NODE_ENV', 'development'),
   isProd: process.env.NODE_ENV === 'production',
   port: Number(optional('PORT', '4000')),
-  corsOrigins: optional('CORS_ORIGINS', '*')
+  // Default to '*' in dev for convenience, but require an explicit allow-list
+  // in production (no implicit wildcard).
+  corsOrigins: optional('CORS_ORIGINS', process.env.NODE_ENV === 'production' ? '' : '*')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean),
@@ -80,6 +82,12 @@ export const env = {
   google: {
     clientId: optional('GOOGLE_CLIENT_ID'),
     clientSecret: optional('GOOGLE_CLIENT_SECRET'),
+    // The ID token's `aud` must match one of these. Supports a comma-separated
+    // list because Google issues distinct client IDs for iOS / Android / Web.
+    clientIds: optional('GOOGLE_CLIENT_ID')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
   },
 
   expo: {

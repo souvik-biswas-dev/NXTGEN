@@ -1,9 +1,10 @@
+import { randomInt } from 'node:crypto';
 import { env } from '@/config/env';
 
-/** Generate a numeric OTP of the given length. */
+/** Generate a cryptographically-secure numeric OTP of the given length. */
 export function generateOtp(length = 6): string {
   let code = '';
-  for (let i = 0; i < length; i++) code += Math.floor(Math.random() * 10).toString();
+  for (let i = 0; i < length; i++) code += randomInt(0, 10).toString();
   return code;
 }
 

@@ -19,7 +19,7 @@ export async function signAccessToken(claims: AccessClaims): Promise<string> {
 }
 
 export async function verifyAccessToken(token: string): Promise<AccessClaims> {
-  const { payload } = await jwtVerify(token, accessKey);
+  const { payload } = await jwtVerify(token, accessKey, { algorithms: ['HS256'] });
   return { sub: payload.sub as string, role: (payload.role as string) ?? 'buyer' };
 }
 
@@ -39,6 +39,6 @@ export async function signRefreshToken(userId: string, jti: string): Promise<str
 }
 
 export async function verifyRefreshToken(token: string): Promise<{ sub: string; jti: string }> {
-  const { payload } = await jwtVerify(token, refreshKey);
+  const { payload } = await jwtVerify(token, refreshKey, { algorithms: ['HS256'] });
   return { sub: payload.sub as string, jti: payload.jti as string };
 }
