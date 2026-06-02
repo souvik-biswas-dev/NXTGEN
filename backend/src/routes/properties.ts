@@ -14,6 +14,13 @@ export const propertyRoutes = new Hono<AppEnv>();
 const PAGE_SIZE = 20;
 const csv = (v?: string) => (v ? v.split(',').map((s) => s.trim()).filter(Boolean) : []);
 
+/** Parse a query int, clamped to [min, max]; falls back on NaN/garbage. */
+function clampInt(v: string | undefined, fallback: number, min: number, max: number): number {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(Math.trunc(n), max));
+}
+
 /** Build the WHERE clause from query params (mirrors propertiesStore.filterProperties). */
 function buildWhere(q: Record<string, string | undefined>): SQL | undefined {
   const conds: (SQL | undefined)[] = [];
@@ -67,8 +74,8 @@ function orderFor(sort?: string) {
 // ── List / search / filter (paginated) ───────────────────────────
 propertyRoutes.get('/', async (c) => {
   const q = c.req.query();
-  const offset = Number(q.offset ?? 0);
-  const limit = Math.min(Number(q.limit ?? PAGE_SIZE), 50);
+  const offset = clampInt(q.offset, 0, 0, 100_000);
+  const limit = clampInt(q.limit, PAGE_SIZE, 1, 50);
   const rows = await db
     .select()
     .from(properties)
@@ -149,7 +156,7 @@ propertyRoutes.get('/:id', optionalAuth, async (c) => {
 // ── Similar properties (same city + type, ±30% price) ────────────
 propertyRoutes.get('/:id/similar', async (c) => {
   const id = c.req.param('id');
-  const limit = Math.min(Number(c.req.query('limit') ?? 6), 20);
+  const limit = clampInt(c.req.query('limit'), 6, 1, 20);
   const base = await db.query.properties.findFirst({ where: eq(properties.id, id) });
   if (!base) throw notFound('Property not found');
   const rows = await db
@@ -171,9 +178,15 @@ propertyRoutes.get('/:id/similar', async (c) => {
 
 // ── Track a view (analytics) ─────────────────────────────────────
 propertyRoutes.post('/:id/view', optionalAuth, async (c) => {
-  const id = c.req.param('id');
+  const parsed = z.string().uuid().safeParse(c.req.param('id'));
+  if (!parsed.success) throw badRequest('Invalid property id');
   const u = c.get('user');
-  await db.insert(propertyViews).values({ propertyId: id, viewerId: u?.id ?? null });
+  // Fire-and-forget analytics: never fail the request (e.g. unknown id) on this.
+  try {
+    await db.insert(propertyViews).values({ propertyId: parsed.data, viewerId: u?.id ?? null });
+  } catch {
+    /* ignore — analytics row is best-effort */
+  }
   return c.json({ ok: true });
 });
 
@@ -208,6 +221,29 @@ const propertyInput = z.object({
   latitude: z.number().optional(),
   longitude: z.number().optional(),
   broker_id: z.string().uuid().optional(),
+});
+
+// Editable fields only (snake_case from the app). Excludes verified/featured.
+const propertyUpdate = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+  price: z.number().int().nonnegative().optional(),
+  maintenance: z.number().int().nonnegative().optional(),
+  deposit: z.number().int().nonnegative().optional(),
+  photos: z.array(z.string()).optional(),
+  address: z.string().optional(),
+  floor: z.string().optional(),
+  total_floors: z.string().optional(),
+  facing: z.string().optional(),
+  possession: z.enum(['ready', 'under-construction']).optional(),
+  age_years: z.number().int().nonnegative().optional(),
+  amenities: z.array(z.string()).optional(),
+  bedrooms: z.number().int().nonnegative().optional(),
+  bathrooms: z.number().int().nonnegative().optional(),
+  kitchens: z.number().int().nonnegative().optional(),
+  parkings: z.number().int().nonnegative().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 
 propertyRoutes.post('/', requireAuth, async (c) => {
@@ -265,19 +301,33 @@ propertyRoutes.patch('/:id', requireAuth, async (c) => {
   const owns = existing.ownerId === u.id || existing.brokerId === u.id || u.role === 'admin';
   if (!owns) throw forbidden('You cannot edit this listing');
 
-  const patch = (await c.req.json()) as Record<string, unknown>;
-  // Whitelist: clients can't flip verified/featured (admin route handles that).
-  const allowed: (keyof typeof properties.$inferInsert)[] = [
-    'title', 'description', 'price', 'maintenance', 'deposit', 'photos', 'address',
-    'floor', 'totalFloors', 'facing', 'possession', 'ageYears', 'amenities',
-    'bedrooms', 'bathrooms', 'kitchens', 'parkings', 'latitude', 'longitude',
-  ];
+  // Validated whitelist (snake_case from the app). Clients can't flip
+  // verified/featured — the admin route owns those. Unknown keys are dropped.
+  const b = propertyUpdate.parse(await c.req.json());
   const set: Record<string, unknown> = { updatedAt: new Date() };
-  for (const k of Object.keys(patch)) {
-    // accept both snake_case (from app) and camelCase
-    const camel = k.replace(/_([a-z])/g, (_, x) => x.toUpperCase());
-    if ((allowed as string[]).includes(camel)) set[camel] = patch[k];
-  }
+  const assign = <K extends keyof typeof b>(key: K, col: string) => {
+    if (b[key] !== undefined) set[col] = b[key];
+  };
+  assign('title', 'title');
+  assign('description', 'description');
+  assign('price', 'price');
+  assign('maintenance', 'maintenance');
+  assign('deposit', 'deposit');
+  assign('photos', 'photos');
+  assign('address', 'address');
+  assign('floor', 'floor');
+  assign('total_floors', 'totalFloors');
+  assign('facing', 'facing');
+  assign('possession', 'possession');
+  assign('age_years', 'ageYears');
+  assign('amenities', 'amenities');
+  assign('bedrooms', 'bedrooms');
+  assign('bathrooms', 'bathrooms');
+  assign('kitchens', 'kitchens');
+  assign('parkings', 'parkings');
+  assign('latitude', 'latitude');
+  assign('longitude', 'longitude');
+
   const [row] = await db.update(properties).set(set).where(eq(properties.id, id)).returning();
   return c.json(row);
 });
