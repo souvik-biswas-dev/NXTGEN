@@ -11,6 +11,7 @@ import {
 import { Property } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFavoritesStore } from '@/stores/favoritesStore';
 import { useCompareStore } from '@/stores/compareStore';
 import { useTheme } from '@/hooks/useTheme';
@@ -21,12 +22,9 @@ interface PropertyCardProps {
   variant?: 'default' | 'featured';
 }
 
-// Visual identity:
-//   • asymmetric radii — large top-left + bottom-right, small top-right + bottom-left
-//   • floating price "tag" that breaks the image/body edge
-//   • locality rendered as a chip instead of plain text
-//   • verified broker shown as a vertical ribbon on the image
-// Deliberately different from the flat, symmetric cards on 99acres/Housing.
+// Clean, image-forward card: photo with a gradient foot that carries the price
+// chip, a verified/featured badge rail on top, then a tight info block. Reads
+// well in both light and dark themes (all colors come from the active palette).
 
 const PropertyCardInner: React.FC<PropertyCardProps> = ({ property, variant = 'default' }) => {
   const router = useRouter();
@@ -59,121 +57,118 @@ const PropertyCardInner: React.FC<PropertyCardProps> = ({ property, variant = 'd
 
   const isFeatured = variant === 'featured';
   const isRent = property.type === 'rent';
+  const area = property.area_sqft ? `${property.area_sqft}` : '—';
 
   return (
     <MotiView
       from={{ opacity: 0, translateY: 12 }}
       animate={{ opacity: 1, translateY: 0 }}
       transition={{ type: 'timing', duration: 320 }}
+      style={isFeatured ? styles.wrapFeatured : styles.wrapDefault}
     >
-    <TouchableOpacity
-      onPress={() => router.push(`/(tabs)/search/${property.id}`)}
-      activeOpacity={0.85}
-      style={[styles.card, isFeatured ? styles.cardFeatured : styles.cardDefault]}
-    >
-      {/* Image with asymmetric corner */}
-      <View style={[styles.imageWrap, isFeatured ? { height: 200 } : { height: 150 }]}>
-        <Image
-          source={{ uri: property.photos[0] || 'https://via.placeholder.com/400x300' }}
-          style={styles.image}
-          resizeMode="cover"
-          fadeDuration={0}
-        />
-
-        {/* Top-left "verified broker" strap */}
-        {property.broker?.verified_broker && (
-          <View style={styles.verifiedStrap}>
-            <Ionicons name="shield-checkmark" size={11} color="#fff" />
-            <Text style={styles.verifiedText}>VERIFIED</Text>
-          </View>
-        )}
-
-        {/* Top-right favorite button */}
-        <Pressable onPress={handleFavorite} style={styles.favoriteBtn} hitSlop={8}>
-          <Ionicons
-            name={isLiked ? 'heart' : 'heart-outline'}
-            size={18}
-            color={isLiked ? colors.primary : colors.secondary}
+      <TouchableOpacity
+        onPress={() => router.push(`/(tabs)/search/${property.id}`)}
+        activeOpacity={0.88}
+        style={styles.card}
+      >
+        {/* Image */}
+        <View style={[styles.imageWrap, { height: isFeatured ? 190 : 150 }]}>
+          <Image
+            source={{ uri: property.photos[0] || 'https://via.placeholder.com/400x300' }}
+            style={styles.image}
+            resizeMode="cover"
+            fadeDuration={0}
           />
-        </Pressable>
 
-        {/* Compare toggle — sits just below the favorite button */}
-        <Pressable
-          onPress={handleCompare}
-          style={[styles.compareBtn, inCompare && { backgroundColor: colors.primary }]}
-          hitSlop={8}
-        >
-          <Ionicons name="git-compare" size={14} color={inCompare ? '#fff' : colors.secondary} />
-        </Pressable>
-
-        {/* Featured gold ribbon (corner) */}
-        {property.featured && (
-          <View style={styles.featuredRibbon}>
-            <Ionicons name="star" size={10} color="#1B2838" />
-            <Text style={styles.featuredRibbonText}>FEATURED</Text>
+          {/* badge rail */}
+          <View style={styles.badgeRail}>
+            {property.featured && (
+              <View style={[styles.badge, { backgroundColor: colors.gold }]}>
+                <Ionicons name="star" size={9} color="#1B2838" />
+                <Text style={styles.badgeTextDark} numberOfLines={1}>
+                  FEATURED
+                </Text>
+              </View>
+            )}
+            {property.broker?.verified_broker && (
+              <View style={[styles.badge, { backgroundColor: colors.success }]}>
+                <Ionicons name="shield-checkmark" size={9} color="#fff" />
+                <Text style={styles.badgeText} numberOfLines={1}>
+                  VERIFIED
+                </Text>
+              </View>
+            )}
           </View>
-        )}
-      </View>
 
-      {/* Floating price tag — sits over the image/body boundary.
-            Using a negative top-margin on the body would clip the tag under
-            `overflow: hidden`, so we render it as an absolute overlay with a
-            per-variant top offset matched to the image height. */}
-      <View style={[styles.priceTag, { top: (isFeatured ? 200 : 150) - 14 }]} pointerEvents="none">
-        <Text style={styles.priceText}>{formatPrice(property.price)}</Text>
-        {isRent && <Text style={styles.priceUnit}>/mo</Text>}
-      </View>
+          {/* favorite + compare */}
+          <View style={styles.actionRail}>
+            <Pressable onPress={handleFavorite} style={styles.roundBtn} hitSlop={8}>
+              <Ionicons
+                name={isLiked ? 'heart' : 'heart-outline'}
+                size={17}
+                color={isLiked ? colors.primary : '#1B2838'}
+              />
+            </Pressable>
+            <Pressable
+              onPress={handleCompare}
+              style={[styles.roundBtn, inCompare && { backgroundColor: colors.primary }]}
+              hitSlop={8}
+            >
+              <Ionicons name="git-compare" size={14} color={inCompare ? '#fff' : '#1B2838'} />
+            </Pressable>
+          </View>
 
-      {/* Body */}
-      <View style={styles.body}>
-        <Text style={styles.title} numberOfLines={isFeatured ? 2 : 1}>
-          {property.title}
-        </Text>
+          {/* price foot */}
+          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.75)']} style={styles.priceFoot}>
+            <Text style={styles.priceText}>{formatPrice(property.price)}</Text>
+            {isRent && <Text style={styles.priceUnit}>/mo</Text>}
+          </LinearGradient>
+        </View>
 
-        <View style={styles.localityChip}>
-          <Ionicons name="location" size={11} color={colors.primary} />
-          <Text style={styles.localityText} numberOfLines={1}>
-            {property.locality}, {property.city}
+        {/* Body */}
+        <View style={styles.body}>
+          <Text style={styles.title} numberOfLines={1}>
+            {property.title}
           </Text>
-        </View>
 
-        {/* Info pills — compact two-column grid on default, row on featured */}
-        <View style={[styles.pillsRow, !isFeatured && { flexWrap: 'wrap' }]}>
-          <InfoPill
-            icon="bed-outline"
-            label={`${property.bedrooms}`}
-            suffix="BHK"
-            styles={styles}
-            iconColor={colors.primary}
-          />
-          <InfoPill
-            icon="resize-outline"
-            label={`${property.area_sqft}`}
-            suffix="sqft"
-            styles={styles}
-            iconColor={colors.primary}
-          />
-          {isFeatured && (
+          <View style={styles.localityRow}>
+            <Ionicons name="location" size={11} color={colors.primary} />
+            <Text style={styles.localityText} numberOfLines={1}>
+              {property.locality}, {property.city}
+            </Text>
+          </View>
+
+          <View style={styles.infoRow}>
             <InfoPill
-              icon="water-outline"
-              label={`${property.bathrooms}`}
-              suffix="Bath"
+              icon="bed-outline"
+              label={`${property.bedrooms}`}
+              suffix="BHK"
               styles={styles}
-              iconColor={colors.primary}
+              color={colors.primary}
             />
-          )}
-          {isFeatured && (
+            <View style={styles.dot} />
             <InfoPill
-              icon="car-outline"
-              label={`${property.parkings}`}
-              suffix="Park"
+              icon="resize-outline"
+              label={area}
+              suffix="sqft"
               styles={styles}
-              iconColor={colors.primary}
+              color={colors.primary}
             />
-          )}
+            {isFeatured && (
+              <>
+                <View style={styles.dot} />
+                <InfoPill
+                  icon="water-outline"
+                  label={`${property.bathrooms}`}
+                  suffix="Bath"
+                  styles={styles}
+                  color={colors.primary}
+                />
+              </>
+            )}
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
     </MotiView>
   );
 };
@@ -185,92 +180,86 @@ function InfoPill({
   label,
   suffix,
   styles,
-  iconColor,
+  color,
 }: {
   icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
   suffix: string;
   styles: ReturnType<typeof makeStyles>;
-  iconColor: string;
+  color: string;
 }) {
   return (
     <View style={styles.pill}>
-      <Ionicons name={icon} size={11} color={iconColor} />
+      <Ionicons name={icon} size={12} color={color} />
       <Text style={styles.pillValue}>{label}</Text>
       <Text style={styles.pillSuffix}>{suffix}</Text>
     </View>
   );
 }
 
-const CORNER_LG = 22;
-const CORNER_SM = 6;
-
 type PaletteColors = ReturnType<typeof useTheme>['colors'];
 
 const makeStyles = (colors: PaletteColors) =>
   StyleSheet.create({
+    wrapDefault: { width: '48%' },
+    wrapFeatured: { width: '100%' },
     card: {
-      // Asymmetric radii: signature shape.
-      borderTopLeftRadius: CORNER_LG,
-      borderTopRightRadius: CORNER_SM,
-      borderBottomLeftRadius: CORNER_SM,
-      borderBottomRightRadius: CORNER_LG,
-      backgroundColor: colors.surface,
-      overflow: 'visible',
+      borderRadius: 18,
+      backgroundColor: colors.cardBackground,
+      overflow: 'hidden',
       marginBottom: 16,
-      shadowColor: '#1B2838',
+      shadowColor: '#000',
       shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.1,
-      shadowRadius: 14,
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
       elevation: 4,
       borderWidth: 1,
       borderColor: colors.outlineVariant,
     },
-    cardDefault: {
-      width: '48%' as any,
-    },
-    cardFeatured: {
-      width: '100%',
-    },
     imageWrap: {
-      borderTopLeftRadius: CORNER_LG,
-      borderTopRightRadius: CORNER_SM,
-      overflow: 'hidden',
       backgroundColor: colors.surfaceVariant,
       position: 'relative',
     },
-    image: {
-      width: '100%',
-      height: '100%',
-    },
-    verifiedStrap: {
+    image: { width: '100%', height: '100%' },
+    badgeRail: {
       position: 'absolute',
       top: 10,
-      left: 0,
-      backgroundColor: colors.secondary,
-      paddingLeft: 8,
-      paddingRight: 10,
-      paddingVertical: 3,
-      borderTopRightRadius: 10,
-      borderBottomRightRadius: 10,
+      left: 10,
+      flexDirection: 'row',
+      gap: 6,
+    },
+    badge: {
       flexDirection: 'row',
       alignItems: 'center',
+      paddingHorizontal: 7,
+      paddingVertical: 3,
+      borderRadius: 7,
     },
-    verifiedText: {
+    badgeText: {
       color: '#fff',
-      fontSize: 9,
+      fontSize: 8.5,
       fontWeight: '800',
       marginLeft: 3,
-      letterSpacing: 0.5,
+      letterSpacing: 0.4,
     },
-    favoriteBtn: {
+    badgeTextDark: {
+      color: '#1B2838',
+      fontSize: 8.5,
+      fontWeight: '800',
+      marginLeft: 3,
+      letterSpacing: 0.4,
+    },
+    actionRail: {
       position: 'absolute',
       top: 10,
       right: 10,
-      width: 34,
-      height: 34,
-      borderRadius: 17,
-      backgroundColor: 'rgba(255, 251, 255, 0.95)',
+      gap: 8,
+    },
+    roundBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: 'rgba(255,255,255,0.95)',
       alignItems: 'center',
       justifyContent: 'center',
       shadowColor: '#000',
@@ -279,122 +268,39 @@ const makeStyles = (colors: PaletteColors) =>
       shadowRadius: 3,
       elevation: 3,
     },
-    compareBtn: {
+    priceFoot: {
       position: 'absolute',
-      top: 50,
-      right: 10,
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      backgroundColor: 'rgba(255, 251, 255, 0.95)',
-      alignItems: 'center',
-      justifyContent: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.12,
-      shadowRadius: 3,
-      elevation: 3,
-    },
-    featuredRibbon: {
-      position: 'absolute',
-      bottom: 8,
-      left: 8,
-      backgroundColor: colors.gold,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-      borderRadius: 6,
-      flexDirection: 'row',
-      alignItems: 'center',
-      maxWidth: '55%',
-    },
-    featuredRibbonText: {
-      color: '#1B2838',
-      fontSize: 8,
-      fontWeight: '800',
-      marginLeft: 3,
-      letterSpacing: 0.4,
-    },
-    priceTag: {
-      position: 'absolute',
-      right: 10,
-      backgroundColor: colors.primary,
-      paddingHorizontal: 9,
-      paddingVertical: 5,
-      borderRadius: 10,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: 56,
+      justifyContent: 'flex-end',
+      paddingHorizontal: 12,
+      paddingBottom: 8,
       flexDirection: 'row',
       alignItems: 'baseline',
-      shadowColor: colors.primary,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 5,
-      zIndex: 10,
     },
-    priceText: {
-      color: '#fff',
-      fontSize: 12,
-      fontWeight: '800',
-      letterSpacing: 0.2,
-    },
-    priceUnit: {
-      color: 'rgba(255,255,255,0.85)',
-      fontSize: 10,
-      fontWeight: '600',
-      marginLeft: 2,
-    },
-    body: {
-      paddingHorizontal: 12,
-      paddingTop: 18,
-      paddingBottom: 12,
-    },
-    title: {
-      fontSize: 14,
-      fontWeight: '700',
-      color: colors.secondary,
-      marginBottom: 6,
-      lineHeight: 18,
-    },
-    localityChip: {
-      alignSelf: 'flex-start',
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.primaryContainer,
-      paddingHorizontal: 8,
-      paddingVertical: 3,
-      borderRadius: 6,
-      marginBottom: 8,
-      maxWidth: '100%',
-    },
+    priceText: { color: '#fff', fontSize: 17, fontWeight: '800', letterSpacing: 0.2 },
+    priceUnit: { color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: '600', marginLeft: 3 },
+    body: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 12 },
+    title: { fontSize: 14, fontWeight: '800', color: colors.onSurface, marginBottom: 5 },
+    localityRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 9 },
     localityText: {
-      color: colors.secondary,
-      fontSize: 10.5,
+      color: colors.outline,
+      fontSize: 11.5,
       fontWeight: '600',
       marginLeft: 3,
+      flex: 1,
     },
-    pillsRow: {
-      flexDirection: 'row',
-      gap: 6,
-      marginTop: 2,
+    infoRow: { flexDirection: 'row', alignItems: 'center' },
+    dot: {
+      width: 3,
+      height: 3,
+      borderRadius: 2,
+      backgroundColor: colors.outlineVariant,
+      marginHorizontal: 8,
     },
-    pill: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.surfaceVariant,
-      paddingHorizontal: 6,
-      paddingVertical: 3,
-      borderRadius: 6,
-      gap: 2,
-    },
-    pillValue: {
-      color: colors.secondary,
-      fontSize: 10.5,
-      fontWeight: '700',
-      marginLeft: 2,
-    },
-    pillSuffix: {
-      color: colors.outline,
-      fontSize: 9,
-      fontWeight: '600',
-      marginLeft: 1,
-    },
+    pill: { flexDirection: 'row', alignItems: 'center' },
+    pillValue: { color: colors.onSurface, fontSize: 12, fontWeight: '800', marginLeft: 3 },
+    pillSuffix: { color: colors.outline, fontSize: 10, fontWeight: '600', marginLeft: 2 },
   });
