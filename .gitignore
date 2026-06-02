@@ -1,6 +1,9 @@
 # ── Admin panel — maintained in a separate repository ────────────
 admin-panel/
 
+# ── Web app (SvelteKit) — maintained in a separate repository ────
+nxt-web/
+
 # ── Untracked project docs (kept locally, not committed) ─────────
 APIKEYSETUP.md
 APP.md
