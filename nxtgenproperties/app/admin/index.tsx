@@ -69,6 +69,7 @@ export default function AdminDashboard() {
   const [reports, setReports] = useState<ReportRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const isAdmin = user?.role === 'admin';
 
   const fetchAll = useCallback(async () => {
     try {
@@ -103,13 +104,18 @@ export default function AdminDashboard() {
 
   useFocusEffect(
     useCallback(() => {
+      // Don't hit the admin-only endpoints (they'd 403) unless the user is one.
+      if (!isAdmin) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       fetchAll();
-    }, [fetchAll])
+    }, [isAdmin, fetchAll])
   );
 
   // Gate: only admins can access this screen
-  if (user?.role !== 'admin') {
+  if (!isAdmin) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.surface }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
