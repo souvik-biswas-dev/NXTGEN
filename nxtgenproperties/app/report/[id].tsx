@@ -38,7 +38,11 @@ export default function ReportListingScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await api.get<ReportReasonItem[]>('/platform-data/report_reasons', undefined, false);
+        const data = await api.get<ReportReasonItem[]>(
+          '/platform-data/report_reasons',
+          undefined,
+          false
+        );
         if (Array.isArray(data)) setReasons(data);
       } catch {
         /* keep fallback */

@@ -37,8 +37,8 @@ export default function InsightsScreen() {
   const [marketTrends, setMarketTrends] = useState<MarketTrend[]>([]);
   const [popularCities, setPopularCities] = useState<PlatformCity[]>([]);
   const [topLocalities, setTopLocalities] = useState<TopLocality[]>([]);
-  const [avgApartmentPrice, setAvgApartmentPrice] = useState<number>(0);
-  const [avgVillaPrice, setAvgVillaPrice] = useState<number>(0);
+  const [avgApartmentPrice] = useState<number>(0);
+  const [avgVillaPrice] = useState<number>(0);
   // Live locality price trends (₹/sqft) computed from listings for the selected city.
   const [localityPsf, setLocalityPsf] = useState<
     { locality: string; avgPsf: number; listings: number }[]
@@ -358,7 +358,9 @@ export default function InsightsScreen() {
       {/* Live ₹/sqft by locality — computed from current listings in the selected city */}
       {localityPsf.length > 0 && (
         <View className="px-4 mt-6">
-          <Text className="text-lg font-bold text-gray-900 mb-1">Live prices in {selectedCity}</Text>
+          <Text className="text-lg font-bold text-gray-900 mb-1">
+            Live prices in {selectedCity}
+          </Text>
           <Text className="text-gray-500 text-sm mb-4">Average ₹/sqft from active listings</Text>
           <View className="bg-white rounded-2xl p-4 shadow-sm">
             {localityPsf.slice(0, 8).map((row, index, arr) => (

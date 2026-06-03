@@ -34,7 +34,7 @@ export default function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   // Native Google sign-in → returns an id_token we exchange with our backend.
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+  const [, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: GOOGLE_CLIENT_ID,
   });
 

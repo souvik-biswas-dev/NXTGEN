@@ -44,7 +44,11 @@ export default function MapViewScreen() {
     let cancelled = false;
     (async () => {
       try {
-        const { items } = await api.get<{ items: Centroid[] }>('/properties/centroids', undefined, false);
+        const { items } = await api.get<{ items: Centroid[] }>(
+          '/properties/centroids',
+          undefined,
+          false
+        );
         if (cancelled) return;
         const map: Record<string, Centroid> = {};
         items.forEach((c: Centroid) => {

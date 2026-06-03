@@ -67,9 +67,9 @@ export default function HomeLoanScreen() {
         phone: phone.trim(),
         email: email.trim() || undefined,
         city: city.trim() || undefined,
-        loanAmount: loanAmount ? toInt(loanAmount) ?? undefined : undefined,
+        loanAmount: loanAmount ? (toInt(loanAmount) ?? undefined) : undefined,
         employmentType,
-        monthlyIncome: income ? toInt(income) ?? undefined : undefined,
+        monthlyIncome: income ? (toInt(income) ?? undefined) : undefined,
         partner: selected?.name || undefined,
       });
       Alert.alert('Request sent', 'A loan advisor will call you within 24 hours.', [

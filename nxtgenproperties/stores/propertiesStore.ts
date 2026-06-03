@@ -148,7 +148,11 @@ export const usePropertiesStore = create<PropertiesState>((set, get) => ({
 
   fetchPlatformData: async () => {
     try {
-      const platformMap = await api.get<Record<string, unknown>>('/platform-data', undefined, false);
+      const platformMap = await api.get<Record<string, unknown>>(
+        '/platform-data',
+        undefined,
+        false
+      );
 
       set({
         popularCities: (platformMap.popular_cities as PlatformCity[]) ?? [],
