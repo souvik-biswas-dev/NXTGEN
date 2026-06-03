@@ -126,7 +126,20 @@ async function request<T>(path: string, opts: RequestOpts = {}): Promise<T> {
   if (res.status === 204) return undefined as T;
 
   const text = await res.text();
-  let data = text ? JSON.parse(text) : null;
+  // The backend sits behind Render, which serves an HTML error page when the
+  // instance is cold or unavailable. Guard JSON.parse so those bodies surface as
+  // a clean ApiError instead of an unhandled "Unexpected token <" SyntaxError.
+  let data: any = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new ApiError(
+        res.status,
+        res.ok ? 'Unexpected response from server' : `Request failed (${res.status})`
+      );
+    }
+  }
   if (!res.ok) {
     throw new ApiError(res.status, data?.error ?? `Request failed (${res.status})`, data?.code);
   }
