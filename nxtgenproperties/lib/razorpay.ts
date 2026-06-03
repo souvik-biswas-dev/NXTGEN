@@ -50,7 +50,11 @@ export function buildCheckoutHtml(opts: {
   description: string;
 }): string {
   const { order, userName, userEmail = '', userPhone = '', description } = opts;
-  const safe = (s: string) => s.replace(/["<>&]/g, '');
+  // Encode every interpolated value as a JS string literal. JSON.stringify
+  // escapes quotes, backslashes and control chars (so a name like `John\` can't
+  // break out of the string); the .replace() turns any "<" into a unicode
+  // escape so a value containing "</script>" can't close the inline script tag.
+  const js = (v: unknown) => JSON.stringify(String(v ?? '')).replace(/</g, '\\u003c');
   return `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -63,13 +67,13 @@ export function buildCheckoutHtml(opts: {
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
   var options = {
-    key: "${safe(order.key_id)}",
+    key: ${js(order.key_id)},
     amount: ${Number(order.amount)},
-    currency: "${safe(order.currency)}",
-    order_id: "${safe(order.order_id)}",
+    currency: ${js(order.currency)},
+    order_id: ${js(order.order_id)},
     name: "NxtGen Properties",
-    description: "${safe(description)}",
-    prefill: { name: "${safe(userName)}", email: "${safe(userEmail)}", contact: "${safe(userPhone)}" },
+    description: ${js(description)},
+    prefill: { name: ${js(userName)}, email: ${js(userEmail)}, contact: ${js(userPhone)} },
     theme: { color: "#0F766E" },
     handler: function (res) {
       window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'success', payload: res }));
