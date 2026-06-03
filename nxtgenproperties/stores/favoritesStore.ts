@@ -37,7 +37,8 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
     const isFav = favorites.has(propertyId);
     // Optimistic update.
     const next = new Set(favorites);
-    isFav ? next.delete(propertyId) : next.add(propertyId);
+    if (isFav) next.delete(propertyId);
+    else next.add(propertyId);
     set({ favorites: next });
     try {
       if (isFav) {

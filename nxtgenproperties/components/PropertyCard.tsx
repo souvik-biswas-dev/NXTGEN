@@ -74,7 +74,7 @@ const PropertyCardInner: React.FC<PropertyCardProps> = ({ property, variant = 'd
         {/* Image */}
         <View style={[styles.imageWrap, { height: isFeatured ? 190 : 150 }]}>
           <Image
-            source={{ uri: property.photos[0] || 'https://via.placeholder.com/400x300' }}
+            source={{ uri: property.photos?.[0] || 'https://via.placeholder.com/400x300' }}
             style={styles.image}
             resizeMode="cover"
             fadeDuration={0}

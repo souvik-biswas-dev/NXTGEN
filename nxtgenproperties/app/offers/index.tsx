@@ -96,7 +96,10 @@ export default function OffersScreen() {
         if (amt > 0) respond(id, 'countered', amt);
       });
     } else {
-      Alert.alert('Counter offer', 'Counter-offers can be sent from a device that supports text prompts.');
+      Alert.alert(
+        'Counter offer',
+        'Counter-offers can be sent from a device that supports text prompts.'
+      );
     }
   };
 
@@ -114,9 +117,18 @@ export default function OffersScreen() {
           marginBottom: 12,
         }}
       >
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+          }}
+        >
           <View style={{ flex: 1, paddingRight: 12 }}>
-            <Text style={{ color: theme.colors.secondary, fontWeight: '700', fontSize: 15 }} numberOfLines={1}>
+            <Text
+              style={{ color: theme.colors.secondary, fontWeight: '700', fontSize: 15 }}
+              numberOfLines={1}
+            >
               {item.property?.title ?? 'Property'}
             </Text>
             <Text style={{ color: theme.colors.outline, fontSize: 12, marginTop: 2 }}>
@@ -132,7 +144,14 @@ export default function OffersScreen() {
               borderRadius: 999,
             }}
           >
-            <Text style={{ color: STATUS_COLOR[item.status], fontSize: 11, fontWeight: '700', textTransform: 'capitalize' }}>
+            <Text
+              style={{
+                color: STATUS_COLOR[item.status],
+                fontSize: 11,
+                fontWeight: '700',
+                textTransform: 'capitalize',
+              }}
+            >
               {item.status}
             </Text>
           </View>
@@ -154,7 +173,9 @@ export default function OffersScreen() {
           </Text>
         ) : null}
         {item.message ? (
-          <Text style={{ color: theme.colors.secondary, fontSize: 13, marginTop: 6 }}>{item.message}</Text>
+          <Text style={{ color: theme.colors.secondary, fontSize: 13, marginTop: 6 }}>
+            {item.message}
+          </Text>
         ) : null}
 
         {/* Actions */}
@@ -162,12 +183,28 @@ export default function OffersScreen() {
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
             {isReceived ? (
               <>
-                <ActionBtn label="Accept" color={theme.colors.success} onPress={() => respond(item.id, 'accepted')} />
-                <ActionBtn label="Counter" color={theme.colors.primary} onPress={() => promptCounter(item.id)} />
-                <ActionBtn label="Reject" color={theme.colors.error} onPress={() => respond(item.id, 'rejected')} />
+                <ActionBtn
+                  label="Accept"
+                  color={theme.colors.success}
+                  onPress={() => respond(item.id, 'accepted')}
+                />
+                <ActionBtn
+                  label="Counter"
+                  color={theme.colors.primary}
+                  onPress={() => promptCounter(item.id)}
+                />
+                <ActionBtn
+                  label="Reject"
+                  color={theme.colors.error}
+                  onPress={() => respond(item.id, 'rejected')}
+                />
               </>
             ) : (
-              <ActionBtn label="Withdraw" color={theme.colors.outline} onPress={() => respond(item.id, 'withdrawn')} />
+              <ActionBtn
+                label="Withdraw"
+                color={theme.colors.outline}
+                onPress={() => respond(item.id, 'withdrawn')}
+              />
             )}
           </View>
         )}
@@ -177,11 +214,20 @@ export default function OffersScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.surface }} edges={['top']}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+        }}
+      >
         <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.secondary} />
         </TouchableOpacity>
-        <Text style={{ marginLeft: 12, fontSize: 18, fontWeight: '800', color: theme.colors.secondary }}>
+        <Text
+          style={{ marginLeft: 12, fontSize: 18, fontWeight: '800', color: theme.colors.secondary }}
+        >
           My Offers
         </Text>
       </View>
@@ -210,7 +256,15 @@ export default function OffersScreen() {
             <View style={{ alignItems: 'center', marginTop: 80 }}>
               <Ionicons name="pricetag-outline" size={48} color={theme.colors.outlineVariant} />
               <Text style={{ color: theme.colors.outline, marginTop: 12 }}>No offers yet</Text>
-              <Text style={{ color: theme.colors.outlineVariant, fontSize: 12, marginTop: 4, textAlign: 'center', paddingHorizontal: 40 }}>
+              <Text
+                style={{
+                  color: theme.colors.outlineVariant,
+                  fontSize: 12,
+                  marginTop: 4,
+                  textAlign: 'center',
+                  paddingHorizontal: 40,
+                }}
+              >
                 Make an offer from any property page to negotiate the price.
               </Text>
             </View>
@@ -221,7 +275,15 @@ export default function OffersScreen() {
   );
 }
 
-function ActionBtn({ label, color, onPress }: { label: string; color: string; onPress: () => void }) {
+function ActionBtn({
+  label,
+  color,
+  onPress,
+}: {
+  label: string;
+  color: string;
+  onPress: () => void;
+}) {
   return (
     <TouchableOpacity
       onPress={onPress}

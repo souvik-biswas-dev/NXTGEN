@@ -57,7 +57,11 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
 
   fetchPlans: async () => {
     try {
-      const data = await api.get<PlanDefinition[]>('/platform-data/subscription_plans', undefined, false);
+      const data = await api.get<PlanDefinition[]>(
+        '/platform-data/subscription_plans',
+        undefined,
+        false
+      );
       if (Array.isArray(data)) set({ plans: data });
     } catch {
       // Keep DEFAULT_PLANS on error
