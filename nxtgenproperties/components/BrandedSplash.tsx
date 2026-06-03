@@ -65,7 +65,11 @@ export default function BrandedSplash() {
       style={styles.root}
     >
       <Animated.View
-        style={{ opacity: fade, transform: [{ translateY: rise }, { scale }], alignItems: 'center' }}
+        style={{
+          opacity: fade,
+          transform: [{ translateY: rise }, { scale }],
+          alignItems: 'center',
+        }}
       >
         <View style={styles.logoWrap}>
           <Animated.View

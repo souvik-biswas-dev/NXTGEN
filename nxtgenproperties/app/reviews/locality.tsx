@@ -15,7 +15,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { formatDistanceToNow } from 'date-fns';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
-import { LocalityReviewDetailed, PUBLIC_PROFILE_COLUMNS, User } from '@/types';
+import { LocalityReviewDetailed, User } from '@/types';
 import { theme } from '@/constants/theme';
 
 type ReviewRow = LocalityReviewDetailed & { reviewer?: User };
