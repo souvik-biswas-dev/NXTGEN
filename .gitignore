@@ -1,8 +1,7 @@
-# ── Admin panel — maintained in a separate repository ────────────
-admin-panel/
-
-# ── Web app (SvelteKit) — maintained in a separate repository ────
-nxt-web/
+# ── Launch presentation build + generated decks/reports (local only)
+.launch_build/
+NxtGenProperties-Client-Report.html
+NxtGenProperties-User-Guide.html
 
 # ── Untracked project docs (kept locally, not committed) ─────────
 APIKEYSETUP.md
